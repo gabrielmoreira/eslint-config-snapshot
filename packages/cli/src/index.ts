@@ -270,7 +270,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   if (format !== 'status') {
     writeRunContextHeader(cwd, defaultInvocation ? 'check' : `check:${format}`, foundConfig?.path, storedSnapshots)
     if (shouldShowRunLogs()) {
-      writeSubtleInfo('Analyzing current ESLint configuration...\n')
+      writeSubtleInfo('🔎 Checking current ESLint configuration...\n')
     }
   }
 
@@ -356,7 +356,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   const storedSnapshots = await loadStoredSnapshots(cwd)
   writeRunContextHeader(cwd, 'update', foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
-    writeSubtleInfo('Analyzing current ESLint configuration...\n')
+    writeSubtleInfo('🔎 Checking current ESLint configuration...\n')
   }
 
   if (!foundConfig) {
@@ -399,7 +399,7 @@ async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
   const storedSnapshots = await loadStoredSnapshots(cwd)
   writeRunContextHeader(cwd, `print:${format}`, foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
-    writeSubtleInfo('Analyzing current ESLint configuration...\n')
+    writeSubtleInfo('🔎 Checking current ESLint configuration...\n')
   }
   const currentSnapshots = await computeCurrentSnapshots(cwd)
 
@@ -420,7 +420,7 @@ async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   const storedSnapshots = await loadStoredSnapshots(cwd)
   writeRunContextHeader(cwd, `config:${format}`, foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
-    writeSubtleInfo('Resolving effective runtime configuration...\n')
+    writeSubtleInfo('🔎 Resolving effective runtime configuration...\n')
   }
   const config = await loadConfig(cwd)
   const resolved = await resolveWorkspaceAssignments(cwd, config)
@@ -1091,9 +1091,12 @@ function endRunTimer(exitCode: number): void {
 
   const elapsedMs = Math.max(0, Date.now() - activeRunTimer.startedAtMs - activeRunTimer.pausedMs)
   const color = createColorizer()
-  const status = exitCode === 0 ? color.green('done') : color.red('failed')
   const seconds = (elapsedMs / 1000).toFixed(2)
-  writeSubtleInfo(`Run ${status} in ${seconds}s\n`)
+  if (exitCode === 0) {
+    writeSubtleInfo(`${color.green('✅')} Finished in ${seconds}s\n`)
+  } else {
+    writeSubtleInfo(`${color.red('❌')} Finished in ${seconds}s\n`)
+  }
   activeRunTimer = undefined
 }
 
@@ -1169,11 +1172,11 @@ function writeRunContextHeader(
   }
 
   const color = createColorizer()
-  process.stdout.write(color.bold(`eslint-config-snapshot v${readCliVersion()}\n`))
-  process.stdout.write(`Command: ${commandLabel}\n`)
-  process.stdout.write(`Repository: ${cwd}\n`)
-  process.stdout.write(`Config: ${formatConfigSource(cwd, configPath)}\n`)
-  process.stdout.write(`Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n\n`)
+  process.stdout.write(color.bold(`✨ eslint-config-snapshot v${readCliVersion()}\n`))
+  process.stdout.write(`🧭 Command: ${commandLabel}\n`)
+  process.stdout.write(`📁 Repository: ${cwd}\n`)
+  process.stdout.write(`⚙️ Config source: ${formatConfigSource(cwd, configPath)}\n`)
+  process.stdout.write(`🗂️ Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n\n`)
 }
 
 function formatConfigSource(cwd: string, configPath: string | undefined): string {
