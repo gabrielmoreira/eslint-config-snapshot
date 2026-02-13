@@ -1913,3 +1913,29 @@ Result:
 
 - Release intent is now explicit and human-controlled via manual workflow run.
 - Tagging is centralized in GitHub CI, reducing local/manual drift and forgotten-step risk.
+
+## 2026-02-13 - Request 089
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add command-line ergonomics for triggering manual release workflow, so publish does not depend on GitHub UI clicks.
+
+Key decisions:
+
+- Added `scripts/run-publish-workflow.mjs` to dispatch `publish-npm.yml` using GitHub CLI.
+- Added npm scripts:
+  - `pnpm release:run`
+  - `pnpm release:run:watch`
+- Script behavior:
+  - validates `gh` availability and auth,
+  - dispatches on current branch by default,
+  - supports `--ref <branch>` override,
+  - optional watch mode to follow run progress.
+- Updated release docs in `README.md` and `docs/CONTRIBUTING.md`.
+
+Result:
+
+- Releases can now be triggered from terminal with one command.
+- Manual control remains explicit, but without UI-only friction.

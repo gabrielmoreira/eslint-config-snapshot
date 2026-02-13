@@ -177,7 +177,10 @@ This repository uses Changesets so package versions and release tags stay aligne
    - `pnpm release:version`
 3. Commit version changes.
 4. Push to `main`.
-5. Run the `Publish to npm` workflow manually (`workflow_dispatch`).
+5. Run the release workflow from CLI (requires `gh` auth):
+   - `pnpm release:run`
+   - optional watch mode: `pnpm release:run:watch`
+   - optional ref override: `pnpm release:run -- --ref main`
 6. The workflow publishes via Changesets and creates/pushes `vX.Y.Z` automatically.
 
 ## Documentation

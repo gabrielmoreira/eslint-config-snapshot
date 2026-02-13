@@ -85,8 +85,17 @@ This repository uses Changesets for package versioning and release preparation.
    - This also syncs the root `package.json` version to match package release version.
 3. Commit version and changelog files.
 4. Push changes to `main`.
-5. Run `Publish to npm` workflow manually via `workflow_dispatch`.
+5. Trigger publish workflow from CLI (requires GitHub CLI):
+   - `pnpm release:run`
+   - optional live watch: `pnpm release:run:watch`
+   - optional ref override: `pnpm release:run -- --ref main`
 6. The workflow publishes with Changesets and creates/pushes `vX.Y.Z` automatically.
+
+GitHub CLI setup (once):
+
+```bash
+gh auth login
+```
 
 Trusted Publishing note:
 

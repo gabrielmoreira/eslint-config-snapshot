@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Add CLI-based release workflow trigger scripts (`release:run`, `release:run:watch`) using GitHub CLI dispatch.
 - [x] Refactor release flow to manual GitHub dispatch publishing with automatic tag creation in workflow (no manual local tagging).
 - [x] Expand `.gitignore` to cover generated test report artifacts (`**/test-results/`, `*.junit.xml`, `.vitest/`).
 - [x] Fix CI reports workflow by building before coverage tests and hardening test-reporter permissions/behavior for forked PR contexts.

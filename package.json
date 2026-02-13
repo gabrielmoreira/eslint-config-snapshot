@@ -28,7 +28,9 @@
     "cli:dev": "pnpm exec tsx packages/cli/src/index.ts",
     "changeset": "changeset",
     "release:version": "changeset version && node scripts/sync-root-version.mjs",
-    "release:publish": "changeset publish"
+    "release:publish": "changeset publish",
+    "release:run": "node scripts/run-publish-workflow.mjs",
+    "release:run:watch": "node scripts/run-publish-workflow.mjs --watch"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
