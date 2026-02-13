@@ -19,7 +19,6 @@ import fg from 'fast-glob'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createInterface } from 'node:readline'
-import { pathToFileURL } from 'node:url'
 
 
 const SNAPSHOT_DIR = '.eslint-config-snapshot'
@@ -711,7 +710,17 @@ export async function main(): Promise<void> {
   process.exit(code)
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+function isDirectCliExecution(): boolean {
+  const entry = process.argv[1]
+  if (!entry) {
+    return false
+  }
+
+  const normalized = path.basename(entry).toLowerCase()
+  return normalized === 'index.js' || normalized === 'index.cjs' || normalized === 'index.ts' || normalized === 'eslint-config-snapshot'
+}
+
+if (isDirectCliExecution()) {
   void main()
 }
 

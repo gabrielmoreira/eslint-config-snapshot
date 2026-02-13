@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { access, cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const templateRoot = path.resolve('test/fixtures/npm-isolated-template')
@@ -29,6 +30,22 @@ function run(command: string, args: string[], cwd: string): { status: number; st
   }
 }
 
+async function runWithRetry(
+  command: string,
+  args: string[],
+  cwd: string,
+  retries = 2
+): Promise<{ status: number; stdout: string; stderr: string }> {
+  let attempt = 0
+  let lastResult = run(command, args, cwd)
+  while (lastResult.status !== 0 && attempt < retries) {
+    attempt += 1
+    await delay(1000 * attempt)
+    lastResult = run(command, args, cwd)
+  }
+  return lastResult
+}
+
 describe('cli npm-isolated integration', () => {
   beforeAll(async () => {
     const tmpBase = await mkdtemp(path.join(os.tmpdir(), 'snapshot-npm-it-'))
@@ -38,11 +55,11 @@ describe('cli npm-isolated integration', () => {
     const wsA = path.join(fixtureRoot, 'packages/ws-a')
     const wsB = path.join(fixtureRoot, 'packages/ws-b')
 
-    const installA = run(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsA)
+    const installA = await runWithRetry(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsA)
     expect(installA.status, `${installA.stdout}\n${installA.stderr}`).toBe(0)
     await access(path.join(wsA, 'node_modules/eslint/package.json'))
 
-    const installB = run(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsB)
+    const installB = await runWithRetry(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsB)
     expect(installB.status, `${installB.stdout}\n${installB.stderr}`).toBe(0)
     await access(path.join(wsB, 'node_modules/eslint/package.json'))
   }, 180000)

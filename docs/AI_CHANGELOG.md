@@ -630,3 +630,21 @@ Result:
 
 - CI and publish workflows are now aligned with repository package manager version policy.
 - The setup phase should no longer fail due to pnpm version mismatch.
+
+## 2026-02-13 - Request 030
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate current pipeline warnings/errors and fix the CJS build warning about `import.meta`.
+
+Key decisions:
+
+- Removed `import.meta` usage from CLI direct-execution bootstrap.
+- Replaced it with a path/basename-based direct invocation guard that works for current CLI execution patterns.
+
+Result:
+
+- `tsup` CJS build warning (`import.meta` unavailable in CJS output) is eliminated.
+- CLI behavior remains unchanged for normal direct execution (`node dist/index.js`, `tsx src/index.ts`, bin entry).
