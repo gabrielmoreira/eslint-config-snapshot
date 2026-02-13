@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.3.2
+
+### Patch Changes
+
+- Fix deterministic aggregation when same-severity ESLint rule options differ across sampled files, preventing update crashes.
+
 ## 0.3.1
 
 ### Patch Changes

@@ -1135,3 +1135,25 @@ Key decisions:
 Result:
 
 - Prepared patch release metadata for both publishable packages and proceeded with version/push workflow.
+
+## 2026-02-13 - Request 054
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix runtime crash during `--update` when a rule appears with same severity but different options across sampled files.
+
+Key decisions:
+
+- Replaced hard-fail conflict behavior in `aggregateRules` with deterministic conflict resolution.
+- Kept severity precedence unchanged.
+- For same-severity conflicts:
+  - prefer entries that include explicit options over bare severity-only entries
+  - when both sides include options, pick lexicographically smaller canonicalized JSON to keep order-independent deterministic output
+- Added tests for both conflict-resolution and explicit-options preference scenarios.
+
+Result:
+
+- CLI no longer crashes on mixed per-file option shapes for the same rule/severity.
+- Snapshot generation remains deterministic and stable.

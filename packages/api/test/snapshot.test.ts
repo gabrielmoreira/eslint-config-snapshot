@@ -53,12 +53,25 @@ describe('snapshot', () => {
     })
   })
 
-  it('throws on conflicting options at same severity', () => {
-    expect(() =>
-      aggregateRules([
-        new Map([['no-restricted-imports', ['error', { paths: ['a'] }] as const]]),
-        new Map([['no-restricted-imports', ['error', { paths: ['b'] }] as const]])
-      ])
-    ).toThrow('Conflicting rule options for no-restricted-imports at severity error')
+  it('resolves conflicting options at same severity deterministically', () => {
+    const result = aggregateRules([
+      new Map([['no-restricted-imports', ['error', { paths: ['b'] }] as const]]),
+      new Map([['no-restricted-imports', ['error', { paths: ['a'] }] as const]])
+    ])
+
+    expect(Object.fromEntries(result.entries())).toEqual({
+      'no-restricted-imports': ['error', { paths: ['a'] }]
+    })
+  })
+
+  it('prefers configured options over bare severity at same level', () => {
+    const result = aggregateRules([
+      new Map([['@typescript-eslint/consistent-type-imports', ['warn'] as const]]),
+      new Map([['@typescript-eslint/consistent-type-imports', ['warn', { fixStyle: 'inline-type-imports' }] as const]])
+    ])
+
+    expect(Object.fromEntries(result.entries())).toEqual({
+      '@typescript-eslint/consistent-type-imports': ['warn', { fixStyle: 'inline-type-imports' }]
+    })
   })
 })

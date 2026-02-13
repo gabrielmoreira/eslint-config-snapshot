@@ -36,8 +36,23 @@ export function aggregateRules(ruleMaps: readonly Map<string, NormalizedRuleEntr
       const currentOptions = currentEntry.length > 1 ? canonicalizeJson(currentEntry[1]) : undefined
       const nextOptions = nextEntry.length > 1 ? canonicalizeJson(nextEntry[1]) : undefined
 
-      if (JSON.stringify(currentOptions) !== JSON.stringify(nextOptions)) {
-        throw new Error(`Conflicting rule options for ${ruleName} at severity ${currentEntry[0]}`)
+      if (currentOptions === undefined && nextOptions !== undefined) {
+        aggregated.set(ruleName, canonicalizeJson(nextEntry))
+        continue
+      }
+
+      if (currentOptions !== undefined && nextOptions === undefined) {
+        continue
+      }
+
+      if (currentOptions === undefined && nextOptions === undefined) {
+        continue
+      }
+
+      const currentJson = JSON.stringify(currentOptions)
+      const nextJson = JSON.stringify(nextOptions)
+      if (nextJson < currentJson) {
+        aggregated.set(ruleName, canonicalizeJson(nextEntry))
       }
     }
   }
