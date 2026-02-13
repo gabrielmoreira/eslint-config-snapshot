@@ -19,6 +19,13 @@ The common pain:
 
 This tool gives you a deterministic baseline and a fast answer to: "what changed in our lint policy?"
 
+## Runtime Requirements
+
+- Node.js `>=20`
+- pnpm `>=10.29.3` (for workspace development)
+
+This repository enforces engines strictly during install.
+
 ## Quick Start (No Install)
 
 Use one of:

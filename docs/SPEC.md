@@ -57,7 +57,7 @@ Each project must expose Nx targets:
 ## 3. Tooling Requirements
 
 - Language: TypeScript
-- Runtime: Node.js 18+
+- Runtime: Node.js 20+
 - Testing: Vitest
 - Linting: ESLint
 - Workspace discovery: `@manypkg/get-packages`

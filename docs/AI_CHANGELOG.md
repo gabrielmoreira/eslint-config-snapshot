@@ -668,3 +668,27 @@ Result:
 - CI lint no longer fails from Node 18 + unicorn incompatibility.
 - CLI integration/terminal tests no longer fail with ENOENT for missing fixture directories.
 - pnpm isolated test execution is more reliable on Linux GitHub runners.
+
+## 2026-02-13 - Request 032
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Make minimum supported runtime explicit and fail fast on incompatible Node versions.
+
+Key decisions:
+
+- Added strict engine constraints:
+  - root `package.json`: Node `>=20.0.0`, pnpm `>=10.29.3`
+  - package `@eslint-config-snapshot/api`: Node `>=20.0.0`
+  - package `@eslint-config-snapshot/cli`: Node `>=20.0.0`
+- Added `.npmrc` with `engine-strict=true` to enforce failure on unsupported engines during install.
+- Updated docs to reflect enforced minimum runtime:
+  - `README.md` runtime requirements section
+  - `docs/SPEC.md` runtime requirement updated to Node 20+
+
+Result:
+
+- Runtime expectations are now explicit for users and contributors.
+- Incompatible Node versions fail early instead of failing later during lint/test/build.
