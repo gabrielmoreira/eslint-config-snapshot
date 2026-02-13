@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.5.0
+
+### Minor Changes
+
+- Add ESLint runtime version reporting by group in CLI summaries and improve pnpm/corepack isolated test resilience.
+
 ## 0.4.0
 
 ### Minor Changes
