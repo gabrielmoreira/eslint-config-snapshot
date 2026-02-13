@@ -25,6 +25,8 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Centralize CLI color behavior in terminal abstraction and keep output-format module color-agnostic.
+- [x] Enforce deterministic rule-variant sorting by canonical JSON lexical order (not insertion order).
 - [x] Introduce semantic `TerminalIO` abstraction for CLI I/O, TTY capability checks, prompts, and paused timing behavior.
 - [x] Restructure CLI command execution into dedicated command modules and keep `index.ts` focused on parser/dispatcher wiring.
 - [x] Preserve multiple observed `severity+options` rule combinations in snapshot output with deterministic variant ordering.

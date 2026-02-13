@@ -153,7 +153,7 @@ Rule entry encoding:
 
 - A rule with one observed configuration is stored as a single compact ESLint-style entry.
 - A rule with multiple observed runtime combinations is stored as an array of compact entries.
-- Each variant is unique by `severity + options` combination and sorted deterministically.
+- Each variant is unique by `severity + options` combination and sorted deterministically by canonical JSON lexical ordering.
 
 ---
 

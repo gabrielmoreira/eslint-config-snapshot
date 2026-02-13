@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { canonicalizeJson, compareSeverity, sortUnique } from './core.js'
+import { canonicalizeJson, sortUnique } from './core.js'
 
 import type { NormalizedRuleEntry } from './extract.js'
 
@@ -78,11 +78,6 @@ function toVariantKey(entry: NormalizedRuleEntry): string {
 }
 
 function compareVariants(a: NormalizedRuleEntry, b: NormalizedRuleEntry): number {
-  const severityCompare = compareSeverity(b[0], a[0])
-  if (severityCompare !== 0) {
-    return severityCompare
-  }
-
   const aJson = JSON.stringify(canonicalizeJson(a))
   const bJson = JSON.stringify(canonicalizeJson(b))
   return aJson.localeCompare(bJson)

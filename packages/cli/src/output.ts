@@ -105,18 +105,6 @@ export function decorateDiffLine(
   return line
 }
 
-export function createColorizer() {
-  const enabled = process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== 'dumb'
-  const wrap = (code: string, text: string) => (enabled ? `\u001B[${code}m${text}\u001B[0m` : text)
-  return {
-    green: (text: string) => wrap('32', text),
-    yellow: (text: string) => wrap('33', text),
-    red: (text: string) => wrap('31', text),
-    bold: (text: string) => wrap('1', text),
-    dim: (text: string) => wrap('2', text)
-  }
-}
-
 export function formatShortPrint(snapshots: SnapshotLike[]): string {
   const lines: string[] = []
   const sorted = [...snapshots].sort((a, b) => a.groupId.localeCompare(b.groupId))

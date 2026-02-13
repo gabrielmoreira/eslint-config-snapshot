@@ -298,7 +298,7 @@ function getFullPresetObject() {
     },
     sampling: {
       maxFilesPerWorkspace: 10,
-      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
+      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs,md,mdx}'],
       excludeGlobs: ['**/node_modules/**', '**/dist/**'],
       tokenHints: [
         'chunk',

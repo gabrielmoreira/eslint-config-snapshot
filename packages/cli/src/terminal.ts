@@ -1,6 +1,12 @@
 import { createInterface } from 'node:readline'
 
-import { createColorizer } from './output.js'
+type Colorizer = {
+  green: (text: string) => string
+  yellow: (text: string) => string
+  red: (text: string) => string
+  bold: (text: string) => string
+  dim: (text: string) => string
+}
 
 export type RunTimer = {
   label: string
@@ -26,6 +32,10 @@ export class TerminalIO {
       return false
     }
     return this.isTTY
+  }
+
+  get colors(): Colorizer {
+    return this.color
   }
 
   write(text: string): void {
@@ -153,4 +163,16 @@ export function resolveInvocationLabel(argv: string[]): string {
     return 'help'
   }
   return 'check'
+}
+
+function createColorizer(): Colorizer {
+  const enabled = process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== 'dumb'
+  const wrap = (code: string, text: string) => (enabled ? `\u001B[${code}m${text}\u001B[0m` : text)
+  return {
+    green: (text: string) => wrap('32', text),
+    yellow: (text: string) => wrap('33', text),
+    red: (text: string) => wrap('31', text),
+    bold: (text: string) => wrap('1', text),
+    dim: (text: string) => wrap('2', text)
+  }
 }

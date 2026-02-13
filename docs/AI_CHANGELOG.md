@@ -1714,3 +1714,25 @@ Result:
 - `index.ts` now primarily handles CLI contract wiring.
 - Full quality gates pass:
   - `pnpm nx run-many -t build lint typecheck test`.
+
+## 2026-02-13 - Request 080
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure multi-variant rule arrays are sorted by stable canonical value order (not insertion order).
+- Consolidate color handling in terminal abstraction instead of keeping color logic in output formatting helpers.
+
+Key decisions:
+
+- Updated variant ordering to canonical JSON lexical sorting in snapshot aggregation.
+- Removed color-creation logic from `output` module.
+- Moved and centralized color capability handling inside `TerminalIO`, including no-color behavior based on terminal support/environment.
+- Updated check command rendering to consume terminal-provided color methods.
+
+Result:
+
+- Variant arrays are now insertion-independent and deterministically sorted by stable canonical string representation.
+- CLI color behavior is fully encapsulated in terminal I/O abstraction.
+- Output module now remains focused on pure formatting transformations.

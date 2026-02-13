@@ -1,6 +1,6 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
 
-import { countUniqueWorkspaces, createColorizer, decorateDiffLine, formatDiff, summarizeChanges, summarizeSnapshots } from '../output.js'
+import { countUniqueWorkspaces, decorateDiffLine, formatDiff, summarizeChanges, summarizeSnapshots } from '../output.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../presentation.js'
 import {
   type BuiltSnapshot,
@@ -118,7 +118,7 @@ function printWhatChanged(
   currentSnapshots: Map<string, BuiltSnapshot>,
   eslintVersionsByGroup: GroupEslintVersions
 ): number {
-  const color = createColorizer()
+  const color = terminal.colors
   const currentSummary = summarizeSnapshots(currentSnapshots)
   const workspaceCount = countUniqueWorkspaces(currentSnapshots)
   const changeSummary = summarizeChanges(changes)

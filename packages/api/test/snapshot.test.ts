@@ -95,9 +95,9 @@ describe('snapshot', () => {
     expect(Object.fromEntries(result.entries())).toEqual({
       'sample/rule': [
         ['error', { z: true }],
+        ['off'],
         ['warn', { a: 1 }],
-        ['warn', { b: 1 }],
-        ['off']
+        ['warn', { b: 1 }]
       ]
     })
   })
