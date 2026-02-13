@@ -138,6 +138,18 @@ Advanced patterns and recipes are in:
 
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
 
+## Release Versioning (Changesets)
+
+This repository uses Changesets so package versions and release tags stay aligned.
+
+1. Create a release note:
+   - `pnpm changeset`
+2. Apply version bumps:
+   - `pnpm release:version`
+3. Commit version changes.
+4. Create and push a release tag (`vX.Y.Z`).
+5. GitHub publish workflow runs `changeset publish`.
+
 ## Documentation
 
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)

@@ -772,3 +772,27 @@ Result:
 
 - Release pipeline is aligned with npm's recommended secure model for CI/CD.
 - No long-lived npm publish token is required when trusted publishing is correctly configured.
+
+## 2026-02-13 - Request 037
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Adopt Changesets to automate and standardize package versioning according to chosen release tags.
+
+Key decisions:
+
+- Added `@changesets/cli` and initialized `.changeset` configuration.
+- Set Changesets publish access to `public`.
+- Added root scripts:
+  - `pnpm changeset`
+  - `pnpm release:version`
+  - `pnpm release:publish`
+- Updated npm publish workflow to publish through Changesets (`changeset publish`).
+- Documented release flow in README.
+
+Result:
+
+- Versioning workflow is now standardized for monorepo packages.
+- Reduced risk of mismatch between intended release version and published package versions.

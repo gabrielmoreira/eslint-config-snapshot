@@ -47,8 +47,5 @@ jobs:
       - name: Test
         run: pnpm nx run-many -t test
 
-      - name: Publish @eslint-config-snapshot/api
-        run: pnpm --filter @eslint-config-snapshot/api publish --access public --no-git-checks --provenance
-
-      - name: Publish @eslint-config-snapshot/cli
-        run: pnpm --filter @eslint-config-snapshot/cli publish --access public --no-git-checks --provenance
+      - name: Publish via Changesets
+        run: pnpm changeset publish --no-git-checks --provenance

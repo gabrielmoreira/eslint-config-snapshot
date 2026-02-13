@@ -17,9 +17,13 @@
     "lint": "pnpm nx run-many -t lint",
     "typecheck": "pnpm nx run-many -t typecheck",
     "test": "pnpm nx run-many -t test",
-    "cli:dev": "pnpm exec tsx packages/cli/src/index.ts"
+    "cli:dev": "pnpm exec tsx packages/cli/src/index.ts",
+    "changeset": "changeset",
+    "release:version": "changeset version",
+    "release:publish": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
     "@eslint/js": "^10.0.1",
