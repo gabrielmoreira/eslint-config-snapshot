@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 
 import { sampleWorkspaceFiles } from '../src/index.js'
 
-const tmp = path.join(os.tmpdir(), `snapshotter-sampling-${Date.now()}`)
+const tmp = path.join(os.tmpdir(), `snapshot-sampling-${Date.now()}`)
 
 afterAll(async () => {
   await import('node:fs/promises').then((fs) => fs.rm(tmp, { recursive: true, force: true }))

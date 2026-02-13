@@ -16,29 +16,29 @@ afterEach(async () => {
 
 describe('loadConfig', () => {
   it('returns defaults when no config is found', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     const config = await loadConfig(tmp)
     expect(config).toEqual(DEFAULT_CONFIG)
   })
 
   it('uses deterministic search order and picks the first matching file', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
-    await writeFile(path.join(tmp, '.eslint-config-snapshotter.cjs'), 'module.exports = { sampling: { maxFilesPerWorkspace: 2 } }\n')
-    await writeFile(path.join(tmp, 'eslint-config-snapshotter.config.mjs'), 'export default { sampling: { maxFilesPerWorkspace: 9 } }\n')
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
+    await writeFile(path.join(tmp, '.eslint-config-snapshot.cjs'), 'module.exports = { sampling: { maxFilesPerWorkspace: 2 } }\n')
+    await writeFile(path.join(tmp, 'eslint-config-snapshot.config.mjs'), 'export default { sampling: { maxFilesPerWorkspace: 9 } }\n')
 
     const config = await loadConfig(tmp)
     expect(config.sampling.maxFilesPerWorkspace).toBe(2)
   })
 
   it('loads config from package.json field', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     await writeFile(
       path.join(tmp, 'package.json'),
       JSON.stringify(
         {
           name: 'fixture',
           private: true,
-          'eslint-config-snapshotter': {
+          'eslint-config-snapshot': {
             workspaceInput: { mode: 'manual', workspaces: ['packages/z', 'packages/a'] },
             grouping: { mode: 'standalone' },
             sampling: { maxFilesPerWorkspace: 5, includeGlobs: ['**/*.tsx'] }
@@ -58,17 +58,17 @@ describe('loadConfig', () => {
   })
 
   it('loads config from rc json file', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
-    await writeFile(path.join(tmp, '.eslint-config-snapshotterrc.json'), JSON.stringify({ sampling: { maxFilesPerWorkspace: 7 } }))
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
+    await writeFile(path.join(tmp, '.eslint-config-snapshotrc.json'), JSON.stringify({ sampling: { maxFilesPerWorkspace: 7 } }))
 
     const config = await loadConfig(tmp)
     expect(config.sampling.maxFilesPerWorkspace).toBe(7)
   })
 
   it('executes function exports', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     await writeFile(
-      path.join(tmp, '.eslint-config-snapshotter.js'),
+      path.join(tmp, '.eslint-config-snapshot.js'),
       'export default () => ({ grouping: { mode: "standalone" }, sampling: { hintGlobs: ["src/**"] } })\n'
     )
 
@@ -78,9 +78,9 @@ describe('loadConfig', () => {
   })
 
   it('executes async function exports', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     await writeFile(
-      path.join(tmp, '.eslint-config-snapshotter.mjs'),
+      path.join(tmp, '.eslint-config-snapshot.mjs'),
       'export default async () => ({ sampling: { maxFilesPerWorkspace: 3, hintGlobs: ["src/**"] } })\n'
     )
 
@@ -90,8 +90,8 @@ describe('loadConfig', () => {
   })
 
   it('throws deterministic error when config export is invalid', async () => {
-    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
-    await writeFile(path.join(tmp, '.eslint-config-snapshotter.cjs'), 'module.exports = 42\n')
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
+    await writeFile(path.join(tmp, '.eslint-config-snapshot.cjs'), 'module.exports = 42\n')
 
     await expect(loadConfig(tmp)).rejects.toThrow(
       'Invalid config export: expected object, function, or async function returning an object'

@@ -1,5 +1,5 @@
 {
-  "name": "eslint-config-snapshotter",
+  "name": "eslint-config-snapshot",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,7 @@
   "workspaces": [
     "packages/*"
   ],
+  "eslint-config-snapshot": {},
   "scripts": {
     "prepare": "husky",
     "build": "pnpm nx run-many -t build",

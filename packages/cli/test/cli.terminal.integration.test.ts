@@ -25,7 +25,7 @@ function run(args: string[]): { status: number; stdout: string; stderr: string }
 }
 
 beforeEach(async () => {
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-cli-terminal-'))
+  tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshot-cli-terminal-'))
   repoRoot = path.join(tmpDir, 'repo')
   await cp(fixtureRoot, repoRoot, { recursive: true })
 
@@ -47,7 +47,7 @@ describe('cli terminal invocation', () => {
   it('prints help text and exits 0', () => {
     const result = run(['--help'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('Usage: eslint-config-snapshotter [options] [command]')
+    expect(result.stdout).toContain('Usage: eslint-config-snapshot [options] [command]')
     expect(result.stdout).toContain('check [options]')
     expect(result.stdout).toContain('update|snapshot')
     expect(result.stdout).toContain('print [options]')
@@ -85,7 +85,7 @@ describe('cli terminal invocation', () => {
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'No local snapshots found to compare against.\nRun `eslint-config-snapshotter --update` first.\n'
+      'No local snapshots found to compare against.\nRun `eslint-config-snapshot --update` first.\n'
     )
   })
 
@@ -197,17 +197,17 @@ no-debugger: off
     await cp(fixtureRoot, initRoot, { recursive: true })
     repoRoot = initRoot
 
-    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
 
     const created = run(['init', '--yes', '--target', 'file', '--preset', 'minimal'])
     expect(created.status).toBe(0)
-    expect(created.stdout).toBe('Created eslint-config-snapshotter.config.mjs\n')
+    expect(created.stdout).toBe('Created eslint-config-snapshot.config.mjs\n')
     expect(created.stderr).toBe('')
 
     const existing = run(['init', '--yes', '--target', 'file'])
     expect(existing.status).toBe(1)
     expect(existing.stdout).toBe('')
-    expect(existing.stderr).toBe('Config already exists: eslint-config-snapshotter.config.mjs\n')
+    expect(existing.stderr).toBe('Config already exists: eslint-config-snapshot.config.mjs\n')
   })
 
   it('init can write config to package.json', async () => {
@@ -216,21 +216,21 @@ no-debugger: off
     await cp(fixtureRoot, initRoot, { recursive: true })
     repoRoot = initRoot
 
-    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
 
     const created = run(['init', '--yes', '--target', 'package-json', '--preset', 'minimal'])
     expect(created.status).toBe(0)
-    expect(created.stdout).toBe('Created config in package.json under "eslint-config-snapshotter"\n')
+    expect(created.stdout).toBe('Created config in package.json under "eslint-config-snapshot"\n')
     expect(created.stderr).toBe('')
 
     const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
-    const parsed = JSON.parse(packageJsonRaw) as { 'eslint-config-snapshotter'?: Record<string, unknown> }
-    expect(parsed['eslint-config-snapshotter']).toEqual({})
+    const parsed = JSON.parse(packageJsonRaw) as { 'eslint-config-snapshot'?: Record<string, unknown> }
+    expect(parsed['eslint-config-snapshot']).toEqual({})
   })
 
   it('surfaces runtime errors with exit code 1', async () => {
     await writeFile(
-      path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'),
+      path.join(repoRoot, 'eslint-config-snapshot.config.mjs'),
       `export default {
   workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a'] },
   grouping: { mode: 'match', allowEmptyGroups: false, groups: [{ name: 'never', match: ['ops/**'] }] },
@@ -246,7 +246,7 @@ no-debugger: off
   })
 
   it('loads config from package.json through cosmiconfig', async () => {
-    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
     await writeFile(
       path.join(repoRoot, 'package.json'),
       JSON.stringify(
@@ -254,7 +254,7 @@ no-debugger: off
           name: 'fixture-repo',
           private: true,
           workspaces: ['packages/*'],
-          'eslint-config-snapshotter': {
+          'eslint-config-snapshot': {
             workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a'] },
             grouping: { mode: 'match', groups: [{ name: 'default', match: ['**/*'] }] },
             sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'], hintGlobs: [] }
@@ -268,7 +268,7 @@ no-debugger: off
     const snapshot = run(['snapshot'])
     expect(snapshot.status).toBe(0)
 
-    const raw = await readFile(path.join(repoRoot, '.eslint-config-snapshots/default.json'), 'utf8')
+    const raw = await readFile(path.join(repoRoot, '.eslint-config-snapshot/default.json'), 'utf8')
     const parsed = JSON.parse(raw) as { workspaces: string[] }
     expect(parsed.workspaces).toEqual(['packages/ws-a'])
   })
@@ -291,13 +291,13 @@ no-debugger: off
   })
 
   it('explains missing config when running default command', async () => {
-    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
     await writeFile(path.join(repoRoot, 'package.json'), JSON.stringify({ name: 'fixture-repo', private: true }, null, 2))
 
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'No snapshotter config found.\nRun `eslint-config-snapshotter init` to create one, then run `eslint-config-snapshotter --update`.\n'
+      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
     )
   })
 })

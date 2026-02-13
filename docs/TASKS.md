@@ -15,8 +15,8 @@ If any conflict exists, follow document priority from `AGENTS.md`.
 ## Required Workstream
 
 1. Keep monorepo architecture aligned with `SPEC.md`.
-2. Implement and maintain `@eslint-config-snapshotter/api`.
-3. Implement and maintain `@eslint-config-snapshotter/cli`.
+2. Implement and maintain `@eslint-config-snapshot/api`.
+3. Implement and maintain `@eslint-config-snapshot/cli`.
 4. Keep hooks and commit standards operational.
 5. Keep docs aligned with shipped behavior.
 

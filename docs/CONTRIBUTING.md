@@ -1,6 +1,6 @@
 # CONTRIBUTING.md
 
-Thanks for contributing to ESLint Config Snapshotter.
+Thanks for contributing to ESLint Config Snapshot.
 
 ## Development Setup
 

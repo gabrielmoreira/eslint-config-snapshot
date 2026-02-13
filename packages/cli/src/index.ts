@@ -13,7 +13,7 @@ import {
   readSnapshotFile,
   sampleWorkspaceFiles,
   writeSnapshotFile
-} from '@eslint-config-snapshotter/api'
+} from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import fg from 'fast-glob'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -22,7 +22,7 @@ import { createInterface } from 'node:readline'
 import { pathToFileURL } from 'node:url'
 
 
-const SNAPSHOT_DIR = '.eslint-config-snapshots'
+const SNAPSHOT_DIR = '.eslint-config-snapshot'
 
 type BuiltSnapshot = Awaited<ReturnType<typeof buildSnapshot>>
 type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
@@ -92,14 +92,14 @@ async function runDefaultInvocation(argv: string[], cwd: string): Promise<number
     return executeUpdate(cwd, true)
   }
 
-  return executeCheck(cwd, 'summary')
+  return executeCheck(cwd, 'summary', true)
 }
 
 function createProgram(cwd: string, onActionExit: (code: number) => void): Command {
   const program = new Command()
 
   program
-    .name('eslint-config-snapshotter')
+    .name('eslint-config-snapshot')
     .description('Deterministic ESLint config snapshot drift checker for workspaces')
     .showHelpAfterError('(add --help for usage)')
     .option('-u, --update', 'Update snapshots (default mode only)')
@@ -122,7 +122,7 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
   program
     .command('update')
     .alias('snapshot')
-    .description('Compute and write snapshots to .eslint-config-snapshots/')
+    .description('Compute and write snapshots to .eslint-config-snapshot/')
     .action(async () => {
       onActionExit(await executeUpdate(cwd, true))
     })
@@ -207,11 +207,32 @@ function parseInitPreset(value: string): InitPreset {
   throw new InvalidArgumentError('Expected one of: minimal, full')
 }
 
-async function executeCheck(cwd: string, format: CheckFormat): Promise<number> {
+async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
+    if (defaultInvocation && process.stdin.isTTY && process.stdout.isTTY) {
+      const shouldInit = await askYesNo(
+        'No config initialized for eslint-config-snapshot. Run init now? [Y/n] ',
+        true
+      )
+      if (shouldInit) {
+        const initCode = await runInit(cwd)
+        if (initCode !== 0) {
+          return initCode
+        }
+
+        const shouldUpdate = await askYesNo('Create first baseline snapshot now? [Y/n] ', true)
+        if (shouldUpdate) {
+          return executeUpdate(cwd, true)
+        }
+
+        process.stdout.write('Initialization complete. Run `eslint-config-snapshot --update` when ready.\n')
+        return 0
+      }
+    }
+
     process.stdout.write(
-      'No snapshotter config found.\nRun `eslint-config-snapshotter init` to create one, then run `eslint-config-snapshotter --update`.\n'
+      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
     )
     return 1
   }
@@ -220,7 +241,7 @@ async function executeCheck(cwd: string, format: CheckFormat): Promise<number> {
   const storedSnapshots = await loadStoredSnapshots(cwd)
 
   if (storedSnapshots.size === 0) {
-    process.stdout.write('No local snapshots found to compare against.\nRun `eslint-config-snapshotter --update` first.\n')
+    process.stdout.write('No local snapshots found to compare against.\nRun `eslint-config-snapshot --update` first.\n')
     return 1
   }
 
@@ -256,7 +277,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
     process.stdout.write(
-      'No snapshotter config found.\nRun `eslint-config-snapshotter init` to create one, then run `eslint-config-snapshotter --update`.\n'
+      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
     )
     return 1
   }
@@ -496,14 +517,29 @@ function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Pr
   })
 }
 
+async function askYesNo(prompt: string, defaultYes: boolean): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    const answerRaw = await askQuestion(rl, prompt)
+    const answer = answerRaw.trim().toLowerCase()
+    if (answer.length === 0) {
+      return defaultYes
+    }
+
+    return answer === 'y' || answer === 'yes'
+  } finally {
+    rl.close()
+  }
+}
+
 async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
   const candidates = [
-    '.eslint-config-snapshotter.js',
-    '.eslint-config-snapshotter.cjs',
-    '.eslint-config-snapshotter.mjs',
-    'eslint-config-snapshotter.config.js',
-    'eslint-config-snapshotter.config.cjs',
-    'eslint-config-snapshotter.config.mjs'
+    '.eslint-config-snapshot.js',
+    '.eslint-config-snapshot.cjs',
+    '.eslint-config-snapshot.mjs',
+    'eslint-config-snapshot.config.js',
+    'eslint-config-snapshot.config.cjs',
+    'eslint-config-snapshot.config.mjs'
   ]
 
   for (const candidate of candidates) {
@@ -516,7 +552,7 @@ async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
     }
   }
 
-  const target = path.join(cwd, 'eslint-config-snapshotter.config.mjs')
+  const target = path.join(cwd, 'eslint-config-snapshot.config.mjs')
   await writeFile(target, getConfigScaffold(preset), 'utf8')
   process.stdout.write(`Created ${path.basename(target)}\n`)
   return 0
@@ -541,14 +577,14 @@ async function runInitInPackageJson(cwd: string, preset: InitPreset): Promise<nu
     return 1
   }
 
-  if (parsed['eslint-config-snapshotter'] !== undefined) {
-    process.stderr.write('Config already exists in package.json: eslint-config-snapshotter\n')
+  if (parsed['eslint-config-snapshot'] !== undefined) {
+    process.stderr.write('Config already exists in package.json: eslint-config-snapshot\n')
     return 1
   }
 
-  parsed['eslint-config-snapshotter'] = preset === 'full' ? getFullPresetObject() : {}
+  parsed['eslint-config-snapshot'] = preset === 'full' ? getFullPresetObject() : {}
   await writeFile(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
-  process.stdout.write('Created config in package.json under "eslint-config-snapshotter"\n')
+  process.stdout.write('Created config in package.json under "eslint-config-snapshot"\n')
   return 0
 }
 

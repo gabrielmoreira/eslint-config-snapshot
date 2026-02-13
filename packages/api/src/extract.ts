@@ -10,7 +10,7 @@ export type NormalizedRuleEntry = [severity: 'off' | 'warn' | 'error'] | [severi
 export type ExtractedWorkspaceRules = Map<string, NormalizedRuleEntry>
 
 export function resolveEslintBinForWorkspace(workspaceAbs: string): string {
-  const anchor = path.join(workspaceAbs, '__snapshotter_anchor__.cjs')
+  const anchor = path.join(workspaceAbs, '__snapshot_anchor__.cjs')
   const req = createRequire(anchor)
   try {
     return req.resolve('eslint/bin/eslint.js')

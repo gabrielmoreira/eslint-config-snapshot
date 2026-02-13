@@ -14,7 +14,7 @@
     "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
-      "@eslint-config-snapshotter/api": ["packages/api/src/index.ts"]
+      "@eslint-config-snapshot/api": ["packages/api/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]

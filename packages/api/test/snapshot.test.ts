@@ -15,7 +15,7 @@ afterAll(async () => {
 
 describe('snapshot', () => {
   it('writes deterministic json', async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-snapshot-'))
+    tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshot-snapshot-'))
 
     const snapshot = buildSnapshot('default', ['packages/b', 'packages/a'], new Map([
       ['z-rule', ['warn']],

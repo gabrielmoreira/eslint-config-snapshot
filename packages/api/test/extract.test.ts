@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 
 import { extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from '../src/index.js'
 
-const workspace = path.join(os.tmpdir(), `snapshotter-extract-${Date.now()}`)
+const workspace = path.join(os.tmpdir(), `snapshot-extract-${Date.now()}`)
 
 afterAll(async () => {
   await rm(workspace, { recursive: true, force: true })

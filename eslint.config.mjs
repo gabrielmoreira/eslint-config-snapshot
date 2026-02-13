@@ -46,7 +46,7 @@ export default defineConfig(
     }
   },
   {
-    files: ['eslint.config.mjs', 'eslint-config-snapshotter.config.mjs', 'scripts/**/*.mjs'],
+    files: ['eslint.config.mjs', 'eslint-config-snapshot.config.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
       ...tseslint.configs.disableTypeChecked.languageOptions
     },

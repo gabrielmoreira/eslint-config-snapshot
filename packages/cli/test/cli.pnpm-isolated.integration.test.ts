@@ -31,7 +31,7 @@ function run(command: string, args: string[], cwd: string): { status: number; st
 
 describe('cli pnpm-isolated integration', () => {
   beforeAll(async () => {
-    const tmpBase = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-pnpm-it-'))
+    const tmpBase = await mkdtemp(path.join(os.tmpdir(), 'snapshot-pnpm-it-'))
     fixtureRoot = path.join(tmpBase, 'repo')
     await cp(templateRoot, fixtureRoot, { recursive: true })
 
@@ -57,7 +57,7 @@ describe('cli pnpm-isolated integration', () => {
     const snapshot = run(process.execPath, [cliDist, 'snapshot'], fixtureRoot)
     expect(snapshot.status, snapshot.stderr).toBe(0)
 
-    const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshots/default.json'), 'utf8')
+    const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
     const parsed = JSON.parse(snapshotRaw)
     expect(parsed).toEqual({
       formatVersion: 1,

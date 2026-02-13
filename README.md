@@ -1,11 +1,11 @@
-# ESLint Config Snapshotter
+# ESLint Config Snapshot
 
-[![npm version](https://img.shields.io/npm/v/%40eslint-config-snapshotter%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshotter/cli)
-[![npm downloads](https://img.shields.io/npm/dm/%40eslint-config-snapshotter%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshotter/cli)
+[![npm version](https://img.shields.io/npm/v/%40eslint-config-snapshot%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshot/cli)
+[![npm downloads](https://img.shields.io/npm/dm/%40eslint-config-snapshot%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshot/cli)
 
 Keep your ESLint policy healthy over time.
 
-`eslint-config-snapshotter` captures the effective ESLint rule set in your repo and tells you what drifted after dependency/config changes.
+`eslint-config-snapshot` captures the effective ESLint rule set in your repo and tells you what drifted after dependency/config changes.
 
 ## Why it matters
 
@@ -24,23 +24,23 @@ This tool gives you a deterministic baseline and a fast answer to: "what changed
 Use one of:
 
 ```bash
-pnpm dlx @eslint-config-snapshotter/cli@latest init
+pnpm dlx @eslint-config-snapshot/cli@latest init
 ```
 
 ```bash
-npx @eslint-config-snapshotter/cli@latest init
+npx @eslint-config-snapshot/cli@latest init
 ```
 
 Then create your first baseline:
 
 ```bash
-pnpm dlx @eslint-config-snapshotter/cli@latest --update
+pnpm dlx @eslint-config-snapshot/cli@latest --update
 ```
 
 And run drift checks anytime:
 
 ```bash
-pnpm dlx @eslint-config-snapshotter/cli@latest
+pnpm dlx @eslint-config-snapshot/cli@latest
 ```
 
 Default command (no subcommand) runs `check` summary output.
@@ -66,7 +66,7 @@ Recommended for most teams:
 You can also run it non-interactively:
 
 ```bash
-pnpm dlx @eslint-config-snapshotter/cli@latest init --yes --target package-json --preset minimal
+pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --preset minimal
 ```
 
 ## Core Commands

@@ -2,7 +2,7 @@ import { cosmiconfig } from 'cosmiconfig'
 import path from 'node:path'
 
 
-export type SnapshotterConfig = {
+export type SnapshotConfig = {
   workspaceInput:
     | {
         mode: 'discover'
@@ -28,7 +28,7 @@ export type SnapshotterConfig = {
   }
 }
 
-export const DEFAULT_CONFIG: SnapshotterConfig = {
+export const DEFAULT_CONFIG: SnapshotConfig = {
   workspaceInput: { mode: 'discover' },
   grouping: {
     mode: 'match',
@@ -43,23 +43,23 @@ export const DEFAULT_CONFIG: SnapshotterConfig = {
 }
 
 const SPEC_SEARCH_PLACES = [
-  '.eslint-config-snapshotter.js',
-  '.eslint-config-snapshotter.cjs',
-  '.eslint-config-snapshotter.mjs',
-  'eslint-config-snapshotter.config.js',
-  'eslint-config-snapshotter.config.cjs',
-  'eslint-config-snapshotter.config.mjs',
+  '.eslint-config-snapshot.js',
+  '.eslint-config-snapshot.cjs',
+  '.eslint-config-snapshot.mjs',
+  'eslint-config-snapshot.config.js',
+  'eslint-config-snapshot.config.cjs',
+  'eslint-config-snapshot.config.mjs',
   'package.json',
-  '.eslint-config-snapshotterrc',
-  '.eslint-config-snapshotterrc.json',
-  '.eslint-config-snapshotterrc.yaml',
-  '.eslint-config-snapshotterrc.yml',
-  '.eslint-config-snapshotterrc.js',
-  '.eslint-config-snapshotterrc.cjs',
-  '.eslint-config-snapshotterrc.mjs'
+  '.eslint-config-snapshotrc',
+  '.eslint-config-snapshotrc.json',
+  '.eslint-config-snapshotrc.yaml',
+  '.eslint-config-snapshotrc.yml',
+  '.eslint-config-snapshotrc.js',
+  '.eslint-config-snapshotrc.cjs',
+  '.eslint-config-snapshotrc.mjs'
 ]
 
-export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
+export async function loadConfig(cwd?: string): Promise<SnapshotConfig> {
   const found = await findConfigPath(cwd)
   if (!found) {
     return DEFAULT_CONFIG
@@ -70,9 +70,9 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
 
 export async function findConfigPath(
   cwd?: string
-): Promise<{ path: string; config: SnapshotterConfig } | null> {
+): Promise<{ path: string; config: SnapshotConfig } | null> {
   const root = path.resolve(cwd ?? process.cwd())
-  const explorer = cosmiconfig('eslint-config-snapshotter', {
+  const explorer = cosmiconfig('eslint-config-snapshot', {
     searchPlaces: SPEC_SEARCH_PLACES,
     stopDir: root
   })
@@ -84,7 +84,7 @@ export async function findConfigPath(
 
   const maybeConfig = await loadUserConfig(result.config)
 
-  const config: SnapshotterConfig = {
+  const config: SnapshotConfig = {
     ...DEFAULT_CONFIG,
     ...maybeConfig,
     grouping: {
@@ -103,7 +103,7 @@ export async function findConfigPath(
   }
 }
 
-async function loadUserConfig(rawConfig: unknown): Promise<Partial<SnapshotterConfig>> {
+async function loadUserConfig(rawConfig: unknown): Promise<Partial<SnapshotConfig>> {
   const resolved = typeof rawConfig === 'function' ? await rawConfig() : rawConfig
   if (resolved === null || resolved === undefined) {
     return {}
@@ -113,7 +113,7 @@ async function loadUserConfig(rawConfig: unknown): Promise<Partial<SnapshotterCo
     throw new TypeError('Invalid config export: expected object, function, or async function returning an object')
   }
 
-  return resolved as Partial<SnapshotterConfig>
+  return resolved as Partial<SnapshotConfig>
 }
 
 export type ConfigPreset = 'minimal' | 'full'

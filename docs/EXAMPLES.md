@@ -1,13 +1,21 @@
 # Configuration Examples
 
-This project keeps the local `eslint-config-snapshotter.config.mjs` minimal (`export default {}`) and relies on built-in defaults.
+This project prefers minimal initialization in `package.json`:
+
+```json
+{
+  "eslint-config-snapshot": {}
+}
+```
+
+You can still use `eslint-config-snapshot.config.mjs` when you prefer a dedicated file.
 
 Use the examples below when you need explicit behavior.
 
 ## 1. Minimal (recommended default)
 
 ```js
-// eslint-config-snapshotter.config.mjs
+// eslint-config-snapshot.config.mjs
 export default {}
 ```
 
@@ -19,7 +27,7 @@ When to use:
 ## 2. Manual workspace input
 
 ```js
-// eslint-config-snapshotter.config.mjs
+// eslint-config-snapshot.config.mjs
 export default {
   workspaceInput: {
     mode: 'manual',
@@ -36,7 +44,7 @@ When to use:
 ## 3. Grouped workspaces with ordered matching
 
 ```js
-// eslint-config-snapshotter.config.mjs
+// eslint-config-snapshot.config.mjs
 export default {
   grouping: {
     mode: 'match',
@@ -57,7 +65,7 @@ When to use:
 ## 4. Standalone workspace grouping
 
 ```js
-// eslint-config-snapshotter.config.mjs
+// eslint-config-snapshot.config.mjs
 export default {
   grouping: {
     mode: 'standalone'
@@ -72,7 +80,7 @@ When to use:
 ## 5. Custom sampling policy
 
 ```js
-// eslint-config-snapshotter.config.mjs
+// eslint-config-snapshot.config.mjs
 export default {
   sampling: {
     maxFilesPerWorkspace: 8,

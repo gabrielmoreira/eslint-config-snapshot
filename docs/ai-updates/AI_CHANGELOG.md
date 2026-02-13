@@ -40,7 +40,7 @@ Request summary:
 
 Result:
 
-- Consolidated to `@eslint-config-snapshotter/api` and `@eslint-config-snapshotter/cli`.
+- Consolidated to `@eslint-config-snapshot/api` and `@eslint-config-snapshot/cli`.
 - Removed obsolete split package structure.
 
 ## 2026-02-13 - Request 004
@@ -181,7 +181,7 @@ Request summary:
 
 - Replace pattern-based deprecated checks with TypeScript-aware deprecation detection.
 - Enforce cleaner import organization (sorting, deduplication, type imports).
-- Keep local project snapshotter config minimal and provide practical configuration examples.
+- Keep local project snapshot config minimal and provide practical configuration examples.
 
 Key decisions:
 
@@ -237,9 +237,45 @@ Result:
 
 - End-user README now presents a modern, concise, high-signal UX.
 - `init` can now create config either as:
-  - `eslint-config-snapshotter.config.mjs`
-  - `package.json` field `eslint-config-snapshotter`
+  - `eslint-config-snapshot.config.mjs`
+  - `package.json` field `eslint-config-snapshot`
 - Added/updated CLI tests for:
   - `init --target file --preset full`
   - `init --target package-json --preset minimal`
 - Full CLI tests and lint/typecheck checks pass after the update.
+
+## 2026-02-13 - Request 014
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Rename the product identity from `eslint-config-snapshotter` to `eslint-config-snapshot` everywhere.
+- Rename snapshot directory from `.eslint-config-snapshots` to `.eslint-config-snapshot`.
+- Rename config filename to `eslint-config-snapshot.config.mjs` and config key to `eslint-config-snapshot`.
+- Prefer local minimal initialization in `package.json` for this repository instead of a dedicated config file.
+- When running the CLI with no command/options and no local initialization:
+  - in interactive terminals, suggest and guide `init`;
+  - in non-interactive contexts, fail with clear initialization guidance.
+
+Key decisions:
+
+- Applied full naming migration across:
+  - package names (`@eslint-config-snapshot/api`, `@eslint-config-snapshot/cli`)
+  - CLI binary name (`eslint-config-snapshot`)
+  - Cosmiconfig namespace and supported filenames/prefixes
+  - docs, specs, tests, fixtures, and output strings
+- Migrated default snapshot output directory to `.eslint-config-snapshot/`.
+- Updated this repository root configuration strategy:
+  - removed local config file from root
+  - added minimal `eslint-config-snapshot: {}` to root `package.json`
+- Implemented default-command onboarding behavior:
+  - if config is missing and terminal is interactive, prompt to run init and optionally create first baseline
+  - if not interactive, return error with explicit init/update instructions
+
+Result:
+
+- Naming is now consistent with `eslint-config-snapshot` across code and documentation.
+- Default snapshot baseline path is now `.eslint-config-snapshot/default.json`.
+- CLI default UX is improved for first run without adding command sprawl.
+- Integration and terminal tests were updated and continue to pass with the renamed identity.

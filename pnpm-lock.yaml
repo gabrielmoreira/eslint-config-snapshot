@@ -101,7 +101,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@eslint-config-snapshotter/api':
+      '@eslint-config-snapshot/api':
         specifier: workspace:*
         version: link:../api
       commander:

@@ -17,7 +17,7 @@ This report summarizes implementation alignment, test hardening, and known remai
 1. Added positive and negative config-loading tests:
 - deterministic precedence
 - `package.json` field loading
-- `.eslint-config-snapshotterrc.json` loading
+- `.eslint-config-snapshotrc.json` loading
 - sync function and async function exports
 - invalid export type rejection
 

@@ -1,4 +1,4 @@
-# ESLint Config Snapshotter
+# ESLint Config Snapshot
 
 ## Specification Authority
 
@@ -12,7 +12,7 @@ Implementation must follow `SPEC.md`. If `SPEC_ENHANCED.md` has active items, th
 
 ## 0. Overview
 
-ESLint Config Snapshotter is a deterministic CLI for capturing and comparing the effective ESLint rule state across workspaces.
+ESLint Config Snapshot is a deterministic CLI for capturing and comparing the effective ESLint rule state across workspaces.
 
 It does not lint files. It resolves ESLint config via `--print-config`, aggregates rule state, and persists minimal snapshots for drift detection.
 
@@ -40,10 +40,10 @@ Goals:
 
 The project is a TypeScript monorepo with pnpm + Nx and two publishable packages:
 
-1. `@eslint-config-snapshotter/api`
-2. `@eslint-config-snapshotter/cli`
+1. `@eslint-config-snapshot/api`
+2. `@eslint-config-snapshot/cli`
 
-All internal concerns (`core`, `config`, `workspace`, `sampling`, `extract`, `snapshot`, `diff`) live as internal modules inside `@eslint-config-snapshotter/api`.
+All internal concerns (`core`, `config`, `workspace`, `sampling`, `extract`, `snapshot`, `diff`) live as internal modules inside `@eslint-config-snapshot/api`.
 
 Each project must expose Nx targets:
 
@@ -72,9 +72,9 @@ Configuration loading must use `cosmiconfig`.
 
 Supported configuration prefixes and entry points:
 
-- `.eslint-config-snapshotter*`
-- `eslint-config-snapshotter.config.*`
-- `package.json` field: `eslint-config-snapshotter`
+- `.eslint-config-snapshot*`
+- `eslint-config-snapshot.config.*`
+- `package.json` field: `eslint-config-snapshot`
 
 Search order is `cosmiconfig` default behavior.
 
