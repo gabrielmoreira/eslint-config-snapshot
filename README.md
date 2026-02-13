@@ -165,7 +165,7 @@ node packages/cli/dist/index.js --help
 
 ## Authoritative Docs
 
-- `SPEC.md` (base specification)
-- `SPEC_ENHANCED.md` (required staged enhancements/deviations)
-- `AGENTS.md`
-- `TASKS.md`
+- `docs/SPEC.md` (base specification)
+- `docs/SPEC_ENHANCED.md` (required staged enhancements/deviations)
+- `docs/AGENTS.md`
+- `docs/TASKS.md`
