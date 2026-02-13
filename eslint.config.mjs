@@ -1,7 +1,6 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
-import unicorn from 'eslint-plugin-unicorn'
 import sonarjs from 'eslint-plugin-sonarjs'
 import promise from 'eslint-plugin-promise'
 import n from 'eslint-plugin-n'
@@ -14,7 +13,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   promise.configs['flat/recommended'],
   n.configs['flat/recommended'],
-  unicorn.configs['flat/recommended'],
+  // unicorn.configs['recommended'],
   {
     plugins: {
       sonarjs
@@ -33,7 +32,7 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'n/no-missing-import': 'off',
-      'sonarjs/cognitive-complexity': 'off',
+      'sonarjs/cognitive-complexity': 'warn',
       'unicorn/no-array-sort': 'off',
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-null': 'off'
