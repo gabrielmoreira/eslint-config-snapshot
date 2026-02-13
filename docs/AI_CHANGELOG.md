@@ -1822,3 +1822,29 @@ Result:
 
 - `cli.npm-isolated.integration.test.ts` and `cli.pnpm-isolated.integration.test.ts` now assert the correct snapshot shape.
 - `pnpm nx run cli:test` passes locally with all suites green.
+
+## 2026-02-13 - Request 085
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add richer GitHub pipeline reporting similar to Azure DevOps test/coverage capture.
+- Expose clearer test and coverage visibility in CI run outputs.
+
+Key decisions:
+
+- Added a dedicated `reports` job to `.github/workflows/ci.yml` (Node 22) after validation succeeds.
+- Configured per-package Vitest execution with:
+  - JUnit output (`test-results/junit.xml`)
+  - coverage outputs (`text-summary`, `json-summary`, `cobertura`)
+- Added test report publishing via `dorny/test-reporter`.
+- Added coverage summary publishing via `irongut/CodeCoverageSummary`.
+- Added artifact upload for test and coverage report files.
+- Added `@vitest/coverage-v8` and documented it in `docs/DEPENDENCIES.md`.
+
+Result:
+
+- CI now surfaces richer test and coverage reporting directly in GitHub workflow runs.
+- Coverage and JUnit outputs are retained as downloadable artifacts for debugging/history.
+- Existing local test flow remains unchanged.

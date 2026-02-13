@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-snapshot",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "repository": {
@@ -41,6 +41,7 @@
     "@types/debug": "^4.1.12",
     "@types/node": "^24.10.1",
     "@types/picomatch": "^4.0.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-n": "^17.23.2",

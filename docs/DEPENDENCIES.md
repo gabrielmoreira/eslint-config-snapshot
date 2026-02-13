@@ -11,3 +11,4 @@
 - `tsup`: Esbuild-based package builds for fast deterministic JavaScript output.
 - `tsx`: Run the TypeScript CLI directly from source during local development (no stale dist artifacts).
 - `vitest`: Test runner required by SPEC.md.
+- `@vitest/coverage-v8`: Coverage provider used in GitHub CI reports (Cobertura + JSON summary + step summary output).

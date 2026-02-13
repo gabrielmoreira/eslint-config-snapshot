@@ -1,5 +1,12 @@
 # @eslint-config-snapshot/api
 
+## 0.13.0
+
+### Minor Changes
+
+- Add richer GitHub CI reporting with JUnit test publication and coverage summaries.
+  Include Vitest coverage provider dependency for report generation.
+
 ## 0.12.1
 
 ### Patch Changes
