@@ -12,6 +12,7 @@ import {
   loadConfig,
   normalizePath,
   readSnapshotFile,
+  resolveEslintVersionForWorkspace,
   sampleWorkspaceFiles,
   writeSnapshotFile
 } from '@eslint-config-snapshot/api'
@@ -35,6 +36,7 @@ type InitTarget = 'file' | 'package-json'
 type InitPreset = 'recommended' | 'minimal' | 'full'
 type RuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
 type RuleObject = Record<string, RuleEntry>
+type GroupEslintVersions = Map<string, string[]>
 
 type RootOptions = {
   update?: boolean
@@ -318,6 +320,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   }
 
   const changes = compareSnapshotMaps(storedSnapshots, currentSnapshots)
+  const eslintVersionsByGroup = shouldShowRunLogs() ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
 
   if (format === 'status') {
     if (changes.length === 0) {
@@ -333,6 +336,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   if (format === 'diff') {
     if (changes.length === 0) {
       process.stdout.write('Great news: no snapshot changes detected.\n')
+      writeEslintVersionSummary(eslintVersionsByGroup)
       return 0
     }
 
@@ -344,7 +348,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
     return 1
   }
 
-  return printWhatChanged(changes, currentSnapshots)
+  return printWhatChanged(changes, currentSnapshots, eslintVersionsByGroup)
 }
 
 async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
@@ -379,10 +383,12 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
     const color = createColorizer()
+    const eslintVersionsByGroup = shouldShowRunLogs() ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
     writeSectionTitle('Summary', color)
     process.stdout.write(
       `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
     )
+    writeEslintVersionSummary(eslintVersionsByGroup)
   }
 
   return 0
@@ -941,7 +947,11 @@ if (isDirectCliExecution()) {
   void main()
 }
 
-function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }>, currentSnapshots: Map<string, BuiltSnapshot>): number {
+function printWhatChanged(
+  changes: Array<{ groupId: string; diff: SnapshotDiff }>,
+  currentSnapshots: Map<string, BuiltSnapshot>,
+  eslintVersionsByGroup: GroupEslintVersions
+): number {
   const color = createColorizer()
   const currentSummary = summarizeSnapshots(currentSnapshots)
   const changeSummary = summarizeChanges(changes)
@@ -952,6 +962,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     process.stdout.write(
       `- baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
     )
+    writeEslintVersionSummary(eslintVersionsByGroup)
     return 0
   }
 
@@ -960,6 +971,8 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
   process.stdout.write(
     `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n\n`
   )
+  writeEslintVersionSummary(eslintVersionsByGroup)
+  process.stdout.write('\n')
 
   writeSectionTitle('Changes', color)
   for (const change of changes) {
@@ -1183,6 +1196,48 @@ function formatStoredSnapshotSummary(storedSnapshots: Map<string, StoredSnapshot
 
   const summary = summarizeStoredSnapshots(storedSnapshots)
   return `${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off)`
+}
+
+async function resolveGroupEslintVersions(cwd: string): Promise<GroupEslintVersions> {
+  const config = await loadConfig(cwd)
+  const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
+  const result = new Map<string, string[]>()
+
+  for (const group of assignments) {
+    const versions = new Set<string>()
+    for (const workspaceRel of group.workspaces) {
+      const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
+      versions.add(resolveEslintVersionForWorkspace(workspaceAbs))
+    }
+    result.set(group.name, [...versions].sort((a, b) => a.localeCompare(b)))
+  }
+
+  return result
+}
+
+function writeEslintVersionSummary(eslintVersionsByGroup: GroupEslintVersions): void {
+  if (!shouldShowRunLogs() || eslintVersionsByGroup.size === 0) {
+    return
+  }
+
+  const allVersions = new Set<string>()
+  for (const versions of eslintVersionsByGroup.values()) {
+    for (const version of versions) {
+      allVersions.add(version)
+    }
+  }
+
+  const sortedAllVersions = [...allVersions].sort((a, b) => a.localeCompare(b))
+  if (sortedAllVersions.length === 1) {
+    process.stdout.write(`- eslint runtime: ${sortedAllVersions[0]} (all groups)\n`)
+    return
+  }
+
+  process.stdout.write('- eslint runtime by group:\n')
+  const sortedEntries = [...eslintVersionsByGroup.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  for (const [groupName, versions] of sortedEntries) {
+    process.stdout.write(`  - ${groupName}: ${versions.join(', ')}\n`)
+  }
 }
 
 function summarizeStoredSnapshots(snapshots: Map<string, StoredSnapshot>) {

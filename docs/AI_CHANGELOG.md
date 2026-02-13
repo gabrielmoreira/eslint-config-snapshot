@@ -1288,3 +1288,29 @@ Result:
 - CI coverage across supported/current Node versions is stronger.
 - Dependency maintenance workflow is automated and configurable.
 - Interactive CLI runs provide clearer progress context and elapsed-time visibility without counting user prompt wait time.
+
+## 2026-02-13 - Request 061
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Clarify workspace ESLint runtime behavior, improve pnpm/corepack resilience in isolated integration tests, and expose ESLint runtime version context in command summaries.
+
+Key decisions:
+
+- Confirmed workspace-scoped ESLint resolution remains anchored to each workspace install via `createRequire`.
+- Added API helper to resolve ESLint package version per workspace.
+- Updated CLI summary flow to print ESLint runtime version context:
+  - single line when all groups share one version
+  - per-group breakdown when versions differ.
+- Improved pnpm-isolated integration test command discovery with fallback order:
+  - `npm_execpath` (when pnpm)
+  - `corepack pnpm`
+  - `pnpm` direct
+- Kept graceful skip behavior for environments where pnpm is unavailable.
+
+Result:
+
+- Runtime diagnostics now include actionable ESLint version visibility per group.
+- Isolated pnpm integration tests are more robust across heterogeneous CI environments.

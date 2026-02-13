@@ -24,13 +24,14 @@ type ExecCandidate = {
 }
 
 function getPnpmCandidates(): ExecCandidate[] {
-  const candidates: ExecCandidate[] = []
+  const candidates: ExecCandidate[] = [
+    { command: process.platform === 'win32' ? 'corepack.cmd' : 'corepack', argsPrefix: ['pnpm'] },
+    { command: process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', argsPrefix: [] }
+  ]
   const execPath = process.env.npm_execpath
   if (execPath && execPath.toLowerCase().includes('pnpm')) {
-    candidates.push({ command: process.execPath, argsPrefix: [execPath] })
+    candidates.unshift({ command: process.execPath, argsPrefix: [execPath] })
   }
-
-  candidates.push({ command: process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', argsPrefix: [] })
 
   return candidates
 }
@@ -77,7 +78,12 @@ async function runPnpmWithRetry(args: string[], cwd: string, retries = 2): Promi
     }
 
     lastResult = attempt
-    if (attempt.errorCode !== 'ENOENT' && !attempt.stderr.includes('ENOENT')) {
+    if (
+      attempt.errorCode !== 'ENOENT' &&
+      attempt.errorCode !== 'EINVAL' &&
+      !attempt.stderr.includes('ENOENT') &&
+      !attempt.stderr.includes('EINVAL')
+    ) {
       return attempt
     }
   }

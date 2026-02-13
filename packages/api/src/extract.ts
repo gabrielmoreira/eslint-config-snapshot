@@ -91,6 +91,23 @@ export function extractRulesFromPrintConfig(workspaceAbs: string, fileAbs: strin
   return normalizeRules(rules)
 }
 
+export function resolveEslintVersionForWorkspace(workspaceAbs: string): string {
+  const anchor = path.join(workspaceAbs, '__snapshot_anchor__.cjs')
+  const req = createRequire(anchor)
+
+  try {
+    const packageJsonPath = req.resolve('eslint/package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { version?: string }
+    if (typeof packageJson.version === 'string' && packageJson.version.length > 0) {
+      return packageJson.version
+    }
+  } catch {
+    // fall through to deterministic unknown marker
+  }
+
+  return 'unknown'
+}
+
 export async function extractRulesForWorkspaceSamples(
   workspaceAbs: string,
   fileAbsList: string[]
