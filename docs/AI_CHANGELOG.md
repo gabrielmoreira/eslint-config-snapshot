@@ -1454,3 +1454,22 @@ Result:
 
 - Sampling now better captures potential rule-variance contexts across common file roles before region-based completion.
 - Deterministic behavior preserved and verified by existing sampling tests.
+
+## 2026-02-13 - Request 069
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Guarantee that regional fallback selection covers at least three regions (top, middle, bottom) whenever possible.
+
+Key decisions:
+
+- Updated regional selector to seed explicit anchors (`first`, `middle`, `last`) when fallback count is at least 3.
+- Kept deterministic distributed candidates after anchor seeding to fill remaining slots.
+- Added dedicated sampling test to validate regional anchor behavior.
+
+Result:
+
+- Regional fallback now consistently includes top/middle/bottom coverage when there are 3+ fallback slots.
+- All API sampling tests pass with deterministic output.

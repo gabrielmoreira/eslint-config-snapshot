@@ -111,14 +111,65 @@ function pickUniformly(files: string[], count: number): string[] {
   const picked: string[] = []
   const usedIndices = new Set<number>()
 
-  for (let index = 0; index < count; index += 1) {
-    const raw = Math.round((index * (files.length - 1)) / (count - 1))
-    const safeIndex = nextFreeIndex(raw, usedIndices, files.length)
+  // Ensure regional coverage when possible: top, middle, bottom.
+  if (count >= 3) {
+    const anchorIndices = [0, Math.floor((files.length - 1) / 2), files.length - 1]
+    for (const anchorIndex of anchorIndices) {
+      if (picked.length >= count || usedIndices.has(anchorIndex)) {
+        continue
+      }
+      usedIndices.add(anchorIndex)
+      const anchored = files[anchorIndex]
+      if (anchored !== undefined) {
+        picked.push(anchored)
+      }
+    }
+  }
+
+  for (const candidate of buildDistributedCandidates(files.length, count)) {
+    if (picked.length >= count) {
+      break
+    }
+    const safeIndex = nextFreeIndex(candidate, usedIndices, files.length)
+    if (usedIndices.has(safeIndex)) {
+      continue
+    }
     usedIndices.add(safeIndex)
-    picked.push(files[safeIndex])
+    const selected = files[safeIndex]
+    if (selected !== undefined) {
+      picked.push(selected)
+    }
+  }
+
+  if (picked.length < count) {
+    for (let index = 0; index < files.length && picked.length < count; index += 1) {
+      if (usedIndices.has(index)) {
+        continue
+      }
+      usedIndices.add(index)
+      const fallback = files[index]
+      if (fallback !== undefined) {
+        picked.push(fallback)
+      }
+    }
   }
 
   return picked
+}
+
+function buildDistributedCandidates(length: number, count: number): number[] {
+  if (length <= 0 || count <= 0) {
+    return []
+  }
+  if (count === 1) {
+    return [0]
+  }
+
+  const candidates: number[] = []
+  for (let index = 0; index < count; index += 1) {
+    candidates.push(Math.round((index * (length - 1)) / (count - 1)))
+  }
+  return candidates
 }
 
 function nextFreeIndex(candidate: number, used: Set<number>, max: number): number {

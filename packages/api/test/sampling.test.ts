@@ -44,11 +44,11 @@ describe('sampleWorkspaceFiles', () => {
     expect(result).toEqual([
       'many/file-00.ts',
       'many/file-01.ts',
+      'many/file-02.ts',
       'many/file-04.ts',
       'many/file-07.ts',
       'many/file-10.ts',
-      'many/file-13.ts',
-      'many/file-16.ts',
+      'many/file-11.ts',
       'many/file-19.ts'
     ])
   })
@@ -87,5 +87,24 @@ describe('sampleWorkspaceFiles', () => {
       'tokens/shared.format.ts',
       'tokens/shared.view.ts'
     ])
+  })
+
+  it('ensures top-middle-bottom regional anchors when regional fill has 3+ slots', async () => {
+    await mkdir(path.join(tmp, 'region'), { recursive: true })
+    for (let index = 0; index < 30; index += 1) {
+      const name = `file-${String(index).padStart(2, '0')}.ts`
+      await writeFile(path.join(tmp, 'region', name), '')
+    }
+
+    const result = await sampleWorkspaceFiles(tmp, {
+      maxFilesPerWorkspace: 4,
+      includeGlobs: ['region/**/*.ts'],
+      excludeGlobs: [],
+      hintGlobs: []
+    })
+
+    expect(result).toContain('region/file-01.ts')
+    expect(result).toContain('region/file-15.ts')
+    expect(result).toContain('region/file-29.ts')
   })
 })
