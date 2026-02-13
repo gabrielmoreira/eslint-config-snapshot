@@ -1389,3 +1389,21 @@ Key decisions:
 Result:
 
 - CLI version display is now resilient across `npx`, workspace, and direct binary execution scenarios.
+
+## 2026-02-13 - Request 066
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Slightly increase default sampling coverage and improve default hint behavior for better file-type diversity.
+
+Key decisions:
+
+- Increased default `sampling.maxFilesPerWorkspace` from `8` to `10`.
+- Added conservative default `hintGlobs` to prioritize representative config/setup and common architecture-layer files.
+- Updated `full` scaffold defaults to match runtime defaults.
+
+Result:
+
+- Default runs now sample a bit more files and have better out-of-the-box diversity bias without major runtime impact.

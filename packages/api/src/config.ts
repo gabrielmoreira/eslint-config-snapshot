@@ -35,10 +35,13 @@ export const DEFAULT_CONFIG: SnapshotConfig = {
     groups: [{ name: 'default', match: ['**/*'] }]
   },
   sampling: {
-    maxFilesPerWorkspace: 8,
+    maxFilesPerWorkspace: 10,
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-    hintGlobs: []
+    hintGlobs: [
+      '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
+      '**/*.{service,controller,route,routes,handler,model,schema,repository}.{js,jsx,ts,tsx}'
+    ]
   }
 }
 
@@ -130,10 +133,13 @@ export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
     groups: [{ name: 'default', match: ['**/*'] }]
   },
   sampling: {
-    maxFilesPerWorkspace: 8,
+    maxFilesPerWorkspace: 10,
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-    hintGlobs: []
+    hintGlobs: [
+      '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
+      '**/*.{service,controller,route,routes,handler,model,schema,repository}.{js,jsx,ts,tsx}'
+    ]
   }
 }\n`
 }
