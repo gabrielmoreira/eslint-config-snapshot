@@ -1,6 +1,6 @@
+import { cosmiconfig } from 'cosmiconfig'
 import path from 'node:path'
 
-import { cosmiconfig } from 'cosmiconfig'
 
 export type SnapshotterConfig = {
   workspaceInput:

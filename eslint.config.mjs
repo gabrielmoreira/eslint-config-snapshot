@@ -1,12 +1,12 @@
 import js from '@eslint/js'
 import { defineConfig } from 'eslint/config'
-import tseslint from 'typescript-eslint'
-import globals from 'globals'
-import unicorn from 'eslint-plugin-unicorn'
-import sonarjs from 'eslint-plugin-sonarjs'
-import promise from 'eslint-plugin-promise'
+import importPlugin from 'eslint-plugin-import'
 import n from 'eslint-plugin-n'
-import deprecate from 'eslint-plugin-deprecate'
+import promise from 'eslint-plugin-promise'
+import sonarjs from 'eslint-plugin-sonarjs'
+import unicorn from 'eslint-plugin-unicorn'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
@@ -19,24 +19,34 @@ export default defineConfig(
   unicorn.configs['recommended'],
   {
     plugins: {
-      deprecate,
+      import: importPlugin,
       sonarjs
     },
     rules: {
-      'deprecate/member-expression': [
-        'warn',
-        { name: 'fs.rmdir', use: 'fs.rm' },
-        { name: 'fs.rmdirSync', use: 'fs.rmSync' },
-        { name: 'util.isArray', use: 'Array.isArray' },
-        { name: 'util.isDate', use: 'value instanceof Date' },
-        { name: 'util.isRegExp', use: 'value instanceof RegExp' },
-        { name: 'url.parse', use: 'new URL(...)' }
+      'import/no-duplicates': 'error',
+      'import/order': [
+        'error',
+        {
+          alphabetize: {
+            caseInsensitive: true,
+            order: 'asc'
+          },
+          groups: [
+            ['builtin', 'external'],
+            ['internal'],
+            ['parent', 'sibling', 'index', 'object'],
+            ['type']
+          ],
+          'newlines-between': 'always',
+          warnOnUnassignedImports: false
+        }
       ],
+      'sort-imports': ['error', { ignoreCase: true, ignoreDeclarationSort: true }],
       ...sonarjs.configs.recommended.rules
     }
   },
   {
-    files: ['eslint.config.mjs', 'scripts/**/*.mjs'],
+    files: ['eslint.config.mjs', 'eslint-config-snapshotter.config.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
       ...tseslint.configs.disableTypeChecked.languageOptions
     },
@@ -56,6 +66,14 @@ export default defineConfig(
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-deprecated': 'warn',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          fixStyle: 'separate-type-imports',
+          prefer: 'type-imports'
+        }
+      ],
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -77,6 +95,13 @@ export default defineConfig(
       ...tseslint.configs.disableTypeChecked.rules,
       'n/no-extraneous-import': 'off',
       'n/no-unsupported-features/node-builtins': 'off',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          fixStyle: 'separate-type-imports',
+          prefer: 'type-imports'
+        }
+      ],
       'sonarjs/no-nested-template-literals': 'off',
       'unicorn/no-null': 'off',
       'unicorn/numeric-separators-style': 'off',

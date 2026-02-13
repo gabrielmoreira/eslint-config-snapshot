@@ -1,7 +1,6 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-
 import { afterAll, describe, expect, it } from 'vitest'
 
 import { extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from '../src/index.js'
@@ -103,6 +102,21 @@ describe('extract', () => {
 
     expect(() => extractRulesFromPrintConfig(invalidWorkspace, fileAbs)).toThrow(
       `Invalid JSON from eslint --print-config for ${fileAbs}`
+    )
+  })
+
+  it('throws when eslint print-config returns undefined output', async () => {
+    const undefinedWorkspace = `${workspace}-undefined`
+    await mkdir(path.join(undefinedWorkspace, 'node_modules/eslint/bin'), { recursive: true })
+    await mkdir(path.join(undefinedWorkspace, 'src'), { recursive: true })
+    await writeFile(path.join(undefinedWorkspace, 'node_modules/eslint/package.json'), JSON.stringify({ name: 'eslint', version: '0.0.0' }, null, 2))
+    await writeFile(path.join(undefinedWorkspace, 'node_modules/eslint/bin/eslint.js'), "console.log('undefined')\n")
+
+    const fileAbs = path.join(undefinedWorkspace, 'src/index.ts')
+    await writeFile(fileAbs, 'export {}\n')
+
+    expect(() => extractRulesFromPrintConfig(undefinedWorkspace, fileAbs)).toThrow(
+      `Empty ESLint print-config output for ${fileAbs}`
     )
   })
 

@@ -22,6 +22,15 @@ Run built CLI:
 node packages/cli/dist/index.js [command]
 ```
 
+Project config is intentionally minimal:
+
+```js
+// eslint-config-snapshotter.config.mjs
+export default {}
+```
+
+Use `docs/EXAMPLES.md` for advanced configuration patterns.
+
 ## Commands
 
 Canonical commands:
@@ -74,4 +83,5 @@ No volatile metadata is stored.
 - `docs/AGENTS.md`
 - `docs/TASKS.md`
 - `docs/CONTRIBUTING.md`
+- `docs/EXAMPLES.md`
 - `docs/ai-updates/AI_CHANGELOG.md`

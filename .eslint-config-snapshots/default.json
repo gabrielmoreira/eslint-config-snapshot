@@ -12,6 +12,35 @@
     "@typescript-eslint/ban-ts-comment": [
       "error"
     ],
+    "@typescript-eslint/consistent-return": [
+      "off",
+      {
+        "treatUndefinedAsUnspecified": false
+      }
+    ],
+    "@typescript-eslint/consistent-type-exports": [
+      "off"
+    ],
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "fixStyle": "separate-type-imports",
+        "prefer": "type-imports"
+      }
+    ],
+    "@typescript-eslint/dot-notation": [
+      "off",
+      {
+        "allowIndexSignaturePropertyAccess": false,
+        "allowKeywords": true,
+        "allowPattern": "",
+        "allowPrivateClassPropertyAccess": false,
+        "allowProtectedClassPropertyAccess": false
+      }
+    ],
+    "@typescript-eslint/naming-convention": [
+      "off"
+    ],
     "@typescript-eslint/no-array-constructor": [
       "error"
     ],
@@ -20,6 +49,12 @@
     ],
     "@typescript-eslint/no-base-to-string": [
       "error"
+    ],
+    "@typescript-eslint/no-confusing-void-expression": [
+      "off"
+    ],
+    "@typescript-eslint/no-deprecated": [
+      "warn"
     ],
     "@typescript-eslint/no-duplicate-enum-values": [
       "error"
@@ -31,7 +66,7 @@
       "error"
     ],
     "@typescript-eslint/no-explicit-any": [
-      "off"
+      "error"
     ],
     "@typescript-eslint/no-extra-non-null-assertion": [
       "error"
@@ -45,11 +80,20 @@
     "@typescript-eslint/no-implied-eval": [
       "error"
     ],
+    "@typescript-eslint/no-meaningless-void-operator": [
+      "off"
+    ],
     "@typescript-eslint/no-misused-new": [
       "error"
     ],
     "@typescript-eslint/no-misused-promises": [
       "error"
+    ],
+    "@typescript-eslint/no-misused-spread": [
+      "off"
+    ],
+    "@typescript-eslint/no-mixed-enums": [
+      "off"
     ],
     "@typescript-eslint/no-namespace": [
       "error"
@@ -66,11 +110,32 @@
     "@typescript-eslint/no-this-alias": [
       "error"
     ],
+    "@typescript-eslint/no-unnecessary-boolean-literal-compare": [
+      "off"
+    ],
+    "@typescript-eslint/no-unnecessary-condition": [
+      "off"
+    ],
+    "@typescript-eslint/no-unnecessary-qualifier": [
+      "off"
+    ],
+    "@typescript-eslint/no-unnecessary-template-expression": [
+      "off"
+    ],
+    "@typescript-eslint/no-unnecessary-type-arguments": [
+      "off"
+    ],
     "@typescript-eslint/no-unnecessary-type-assertion": [
       "error"
     ],
     "@typescript-eslint/no-unnecessary-type-constraint": [
       "error"
+    ],
+    "@typescript-eslint/no-unnecessary-type-conversion": [
+      "off"
+    ],
+    "@typescript-eslint/no-unnecessary-type-parameters": [
+      "off"
     ],
     "@typescript-eslint/no-unsafe-argument": [
       "error"
@@ -96,6 +161,9 @@
     "@typescript-eslint/no-unsafe-return": [
       "off"
     ],
+    "@typescript-eslint/no-unsafe-type-assertion": [
+      "off"
+    ],
     "@typescript-eslint/no-unsafe-unary-minus": [
       "error"
     ],
@@ -110,8 +178,14 @@
     "@typescript-eslint/no-unused-vars": [
       "error"
     ],
+    "@typescript-eslint/no-useless-default-assignment": [
+      "off"
+    ],
     "@typescript-eslint/no-wrapper-object-types": [
       "error"
+    ],
+    "@typescript-eslint/non-nullable-type-assertion-style": [
+      "off"
     ],
     "@typescript-eslint/only-throw-error": [
       "error"
@@ -119,11 +193,53 @@
     "@typescript-eslint/prefer-as-const": [
       "error"
     ],
+    "@typescript-eslint/prefer-destructuring": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-find": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-includes": [
+      "off"
+    ],
     "@typescript-eslint/prefer-namespace-keyword": [
       "error"
     ],
+    "@typescript-eslint/prefer-nullish-coalescing": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-optional-chain": [
+      "off"
+    ],
     "@typescript-eslint/prefer-promise-reject-errors": [
       "error"
+    ],
+    "@typescript-eslint/prefer-readonly": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-readonly-parameter-types": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-reduce-type-parameter": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-regexp-exec": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-return-this-type": [
+      "off"
+    ],
+    "@typescript-eslint/prefer-string-starts-ends-with": [
+      "off"
+    ],
+    "@typescript-eslint/promise-function-async": [
+      "off"
+    ],
+    "@typescript-eslint/related-getter-setter-pairs": [
+      "off"
+    ],
+    "@typescript-eslint/require-array-sort-compare": [
+      "off"
     ],
     "@typescript-eslint/require-await": [
       "error"
@@ -134,43 +250,29 @@
     "@typescript-eslint/restrict-template-expressions": [
       "error"
     ],
+    "@typescript-eslint/return-await": [
+      "off"
+    ],
+    "@typescript-eslint/strict-boolean-expressions": [
+      "off"
+    ],
+    "@typescript-eslint/strict-void-return": [
+      "off"
+    ],
+    "@typescript-eslint/switch-exhaustiveness-check": [
+      "off"
+    ],
     "@typescript-eslint/triple-slash-reference": [
       "error"
     ],
     "@typescript-eslint/unbound-method": [
       "error"
     ],
-    "constructor-super": [
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": [
       "off"
     ],
-    "deprecate/member-expression": [
-      "warn",
-      [
-        {
-          "name": "fs.rmdir",
-          "use": "fs.rm"
-        },
-        {
-          "name": "fs.rmdirSync",
-          "use": "fs.rmSync"
-        },
-        {
-          "name": "util.isArray",
-          "use": "Array.isArray"
-        },
-        {
-          "name": "util.isDate",
-          "use": "value instanceof Date"
-        },
-        {
-          "name": "util.isRegExp",
-          "use": "value instanceof RegExp"
-        },
-        {
-          "name": "url.parse",
-          "use": "new URL(...)"
-        }
-      ]
+    "constructor-super": [
+      "off"
     ],
     "for-direction": [
       "error"
@@ -179,6 +281,42 @@
       "off",
       {
         "allowImplicit": false
+      }
+    ],
+    "import/no-duplicates": [
+      "error"
+    ],
+    "import/order": [
+      "error",
+      {
+        "alphabetize": {
+          "caseInsensitive": true,
+          "order": "asc",
+          "orderImportKind": "ignore"
+        },
+        "distinctGroup": true,
+        "groups": [
+          [
+            "builtin",
+            "external"
+          ],
+          [
+            "internal"
+          ],
+          [
+            "parent",
+            "sibling",
+            "index",
+            "object"
+          ],
+          [
+            "type"
+          ]
+        ],
+        "named": false,
+        "newlines-between": "always",
+        "sortTypesGroup": false,
+        "warnOnUnassignedImports": false
       }
     ],
     "n/hashbang": [
@@ -197,7 +335,7 @@
       "error"
     ],
     "n/no-missing-import": [
-      "off"
+      "error"
     ],
     "n/no-missing-require": [
       "error"
@@ -666,7 +804,7 @@
       "error"
     ],
     "sonarjs/cognitive-complexity": [
-      "warn",
+      "error",
       15
     ],
     "sonarjs/comma-or-logical-or-case": [
@@ -730,7 +868,7 @@
       "off"
     ],
     "sonarjs/different-types-comparison": [
-      "off"
+      "error"
     ],
     "sonarjs/disabled-auto-escaping": [
       "error"
@@ -898,7 +1036,7 @@
       "error"
     ],
     "sonarjs/no-alphabetical-sort": [
-      "off"
+      "error"
     ],
     "sonarjs/no-angular-bypass-sanitization": [
       "error"
@@ -1438,6 +1576,21 @@
     "sonarjs/xpath": [
       "off"
     ],
+    "sort-imports": [
+      "error",
+      {
+        "allowSeparatedGroups": false,
+        "ignoreCase": true,
+        "ignoreDeclarationSort": true,
+        "ignoreMemberSort": false,
+        "memberSyntaxSortOrder": [
+          "none",
+          "all",
+          "multiple",
+          "single"
+        ]
+      }
+    ],
     "unicorn/better-regex": [
       "off",
       {
@@ -1558,7 +1711,7 @@
       }
     ],
     "unicorn/no-array-sort": [
-      "off",
+      "error",
       {
         "allowExpressionStatement": true
       }

@@ -172,3 +172,36 @@ Result:
 - Sampling strategy is now more representative for large candidate sets while remaining deterministic.
 - Added/updated sampling tests for distribution and hinted diversity behavior.
 - Project checks pass with current policy (`build/lint/typecheck/test`).
+
+## 2026-02-13 - Request 012
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Replace pattern-based deprecated checks with TypeScript-aware deprecation detection.
+- Enforce cleaner import organization (sorting, deduplication, type imports).
+- Keep local project snapshotter config minimal and provide practical configuration examples.
+
+Key decisions:
+
+- Replaced `eslint-plugin-deprecate` with `@typescript-eslint/no-deprecated` on typed source files.
+- Added import hygiene rules using `eslint-plugin-import` plus TypeScript type-import enforcement:
+  - `import/order`
+  - `import/no-duplicates`
+  - `sort-imports` (member sorting only)
+  - `@typescript-eslint/consistent-type-imports`
+- Kept project config intentionally minimal (`export default {}`) and documented advanced variants in a dedicated examples document.
+- Fixed a robustness gap in CLI snapshot extraction for ignored sample files where ESLint prints `undefined` instead of JSON.
+
+Result:
+
+- Deprecated API usage warnings now rely on type-aware TypeScript metadata (`@deprecated`) in source files.
+- Import blocks across code and tests are now consistently grouped, deduplicated, and type-separated.
+- Added `docs/EXAMPLES.md` with concrete configuration scenarios and rationale.
+- README now references minimal config strategy and links to examples.
+- Snapshot update now succeeds with minimal config in this repository.
+
+Follow-up notes:
+
+- Current lint baseline still keeps existing cognitive-complexity warnings in API/CLI source as warnings (no behavior change in this request).

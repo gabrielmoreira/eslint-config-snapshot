@@ -1,6 +1,5 @@
-import path from 'node:path'
-
 import { getPackages } from '@manypkg/get-packages'
+import path from 'node:path'
 import picomatch from 'picomatch'
 
 import { normalizePath, sortUnique } from './core.js'

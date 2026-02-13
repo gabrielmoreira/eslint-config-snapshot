@@ -1,8 +1,7 @@
+import { spawnSync } from 'node:child_process'
 import { access, cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { spawnSync } from 'node:child_process'
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const templateRoot = path.resolve('test/fixtures/npm-isolated-template')

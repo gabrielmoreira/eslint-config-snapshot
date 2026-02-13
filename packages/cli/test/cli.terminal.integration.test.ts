@@ -1,8 +1,7 @@
+import { spawnSync } from 'node:child_process'
 import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { spawnSync } from 'node:child_process'
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 const fixtureRoot = path.resolve('test/fixtures/repo')

@@ -1,11 +1,4 @@
 #!/usr/bin/env node
-import { access, mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
-import { pathToFileURL } from 'node:url'
-
-import { Command, CommanderError, InvalidArgumentError } from 'commander'
-import fg from 'fast-glob'
-
 import {
   aggregateRules,
   assignGroupsByMatch,
@@ -21,6 +14,12 @@ import {
   sampleWorkspaceFiles,
   writeSnapshotFile
 } from '@eslint-config-snapshotter/api'
+import { Command, CommanderError, InvalidArgumentError } from 'commander'
+import fg from 'fast-glob'
+import { access, mkdir, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+
 
 const SNAPSHOT_DIR = '.eslint-config-snapshots'
 
@@ -289,10 +288,33 @@ async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSn
     for (const workspaceRel of group.workspaces) {
       const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
       const sampled = await sampleWorkspaceFiles(workspaceAbs, config.sampling)
+      let extractedCount = 0
+      let lastExtractionError: string | undefined
 
       for (const sampledRel of sampled) {
         const sampledAbs = path.resolve(workspaceAbs, sampledRel)
-        extractedForGroup.push(extractRulesFromPrintConfig(workspaceAbs, sampledAbs))
+        try {
+          extractedForGroup.push(extractRulesFromPrintConfig(workspaceAbs, sampledAbs))
+          extractedCount += 1
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error)
+          if (
+            message.startsWith('Invalid JSON from eslint --print-config') ||
+            message.startsWith('Empty ESLint print-config output')
+          ) {
+            lastExtractionError = message
+            continue
+          }
+
+          throw error
+        }
+      }
+
+      if (extractedCount === 0) {
+        const context = lastExtractionError ? ` Last error: ${lastExtractionError}` : ''
+        throw new Error(
+          `Unable to extract ESLint config for workspace ${workspaceRel}. All sampled files were ignored or produced non-JSON output.${context}`
+        )
       }
     }
 

@@ -73,9 +73,14 @@ export function extractRulesFromPrintConfig(workspaceAbs: string, fileAbs: strin
     throw new Error(`Failed to run eslint --print-config for ${fileAbs}`)
   }
 
+  const stdout = proc.stdout.trim()
+  if (stdout.length === 0 || stdout === 'undefined') {
+    throw new Error(`Empty ESLint print-config output for ${fileAbs}`)
+  }
+
   let parsed: unknown
   try {
-    parsed = JSON.parse(proc.stdout)
+    parsed = JSON.parse(stdout)
   } catch {
     throw new Error(`Invalid JSON from eslint --print-config for ${fileAbs}`)
   }

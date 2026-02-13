@@ -1,7 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-
 import { afterAll, describe, expect, it } from 'vitest'
 
 import { sampleWorkspaceFiles } from '../src/index.js'
