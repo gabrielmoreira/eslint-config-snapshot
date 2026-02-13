@@ -1407,3 +1407,26 @@ Key decisions:
 Result:
 
 - Default runs now sample a bit more files and have better out-of-the-box diversity bias without major runtime impact.
+
+## 2026-02-13 - Request 067
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve sampling tokenization strategy using explicit domain token groups to increase representative file diversity.
+
+Key decisions:
+
+- Extended token extraction to consider both basename and directory tokens (with directory proximity bias).
+- Added normalized token matching (`plural -> singular` heuristics) before priority scoring.
+- Implemented known-token priority groups based on provided vocabulary:
+  - group 2 terms as highest priority
+  - group 3 terms as medium priority
+  - group 1 terms as lower priority
+- Kept existing deterministic fallback (non-generic token selection + uniform spacing) when no known token applies.
+
+Result:
+
+- Sampling now prefers semantically representative files more consistently in larger candidate sets.
+- Updated sampling tests to match the new deterministic token-priority behavior.

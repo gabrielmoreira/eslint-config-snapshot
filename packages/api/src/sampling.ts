@@ -115,22 +115,190 @@ function nextFreeIndex(candidate: number, used: Set<number>, max: number): numbe
 }
 
 function getPrimaryToken(file: string): string | null {
-  const parts = file.split('/')
-  const basename = parts.slice(-1)[0]
-  if (!basename) {
+  const parts = file.split('/').filter((entry) => entry.length > 0)
+  if (parts.length === 0) {
     return null
   }
-  const nameOnly = basename.replace(/\.[^.]+$/u, '')
-  const expanded = nameOnly
+
+  const basename = parts[parts.length - 1]
+  if (basename === undefined) {
+    return null
+  }
+  const basenameTokens = tokenizePathPart(basename, true)
+  const directoryTokensForward = parts.slice(0, -1).flatMap((entry) => tokenizePathPart(entry, false))
+  const directoryTokens: string[] = []
+  for (let index = directoryTokensForward.length - 1; index >= 0; index -= 1) {
+    const token = directoryTokensForward[index]
+    if (token !== undefined) {
+      directoryTokens.push(token)
+    }
+  }
+  const allTokens = [...basenameTokens, ...directoryTokens].filter((entry) => entry.length > 1)
+
+  const bestKnownToken = pickBestKnownToken(allTokens)
+  if (bestKnownToken !== null) {
+    return bestKnownToken
+  }
+
+  const fallback = allTokens.find((entry) => !GENERIC_TOKENS.has(entry))
+  return fallback ?? null
+}
+
+function tokenizePathPart(part: string, stripExtension: boolean): string[] {
+  const normalized = stripExtension ? part.replace(/\.[^.]+$/u, '') : part
+  const expanded = normalized
     .replaceAll(/([a-z])([A-Z])/gu, '$1 $2')
     .replaceAll(/[_\-.]+/gu, ' ')
     .toLowerCase()
 
-  const token = expanded
+  return expanded
     .split(/\s+/u)
-    .find((entry) => entry.length > 1 && !GENERIC_TOKENS.has(entry))
+    .filter((entry) => entry.length > 0)
+}
 
-  return token ?? null
+function pickBestKnownToken(tokens: string[]): string | null {
+  let bestToken: string | null = null
+  let bestGroupPriority = Number.POSITIVE_INFINITY
+
+  for (const token of tokens) {
+    const normalizedToken = normalizeToken(token)
+    const groupPriority = TOKEN_GROUP_PRIORITY.get(normalizedToken)
+    if (groupPriority === undefined) {
+      continue
+    }
+    if (groupPriority < bestGroupPriority) {
+      bestGroupPriority = groupPriority
+      bestToken = normalizedToken
+    }
+  }
+
+  return bestToken
+}
+
+function normalizeToken(token: string): string {
+  if (token.endsWith('ies') && token.length > 3) {
+    return `${token.slice(0, -3)}y`
+  }
+  if (token.endsWith('s') && token.length > 3) {
+    return token.slice(0, -1)
+  }
+  return token
 }
 
 const GENERIC_TOKENS = new Set(['src', 'index', 'main', 'test', 'spec', 'package', 'packages', 'lib', 'dist'])
+
+const TOKEN_GROUP_PRIORITY = new Map<string, number>([
+  ...toPriorityEntries([
+    'adapter',
+    'api',
+    'apis',
+    'builder',
+    'client',
+    'component',
+    'components',
+    'constants',
+    'context',
+    'core',
+    'dto',
+    'entity',
+    'entry',
+    'env',
+    'factory',
+    'fetcher',
+    'handler',
+    'hook',
+    'hooks',
+    'init',
+    'integration',
+    'interceptor',
+    'interface',
+    'layout',
+    'layouts',
+    'listener',
+    'logger',
+    'manager',
+    'mapper',
+    'meta',
+    'middleware',
+    'model',
+    'module',
+    'normalizer',
+    'options',
+    'page',
+    'pages',
+    'parser',
+    'plugin',
+    'provider',
+    'registry',
+    'repository',
+    'resolver',
+    'route',
+    'router',
+    'runtime',
+    'serializer',
+    'server',
+    'service',
+    'settings',
+    'shared',
+    'slice',
+    'state',
+    'store',
+    'subscriber',
+    'theme',
+    'tracker',
+    'transform',
+    'unit',
+    'validator',
+    'view',
+    'views'
+  ], 1),
+  ...toPriorityEntries([
+    'base',
+    'bundle',
+    'common',
+    'compiler',
+    'contract',
+    'definition',
+    'definitions',
+    'deserializer',
+    'event',
+    'events',
+    'fixture',
+    'fixtures',
+    'guard',
+    'internal',
+    'loader',
+    'publisher',
+    'reducer',
+    'routes',
+    'stub',
+    'stubs',
+    'tests',
+    'util'
+  ], 2),
+  ...toPriorityEntries([
+    'chunk',
+    'conf',
+    'config',
+    'container',
+    'controller',
+    'helpers',
+    'mock',
+    'mocks',
+    'presentation',
+    'schema',
+    'setup',
+    'spec',
+    'stories',
+    'style',
+    'styles',
+    'test',
+    'type',
+    'types',
+    'utils'
+  ], 3)
+])
+
+function toPriorityEntries(tokens: string[], priority: number): Array<[string, number]> {
+  return tokens.map((token) => [normalizeToken(token), priority])
+}

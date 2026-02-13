@@ -83,7 +83,7 @@ describe('sampleWorkspaceFiles', () => {
       'tokens/auth.controller.ts',
       'tokens/auth.service.ts',
       'tokens/billing.service.ts',
-      'tokens/catalog.service.ts',
+      'tokens/catalog.controller.ts',
       'tokens/shared.format.ts',
       'tokens/shared.view.ts'
     ])
