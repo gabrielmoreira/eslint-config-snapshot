@@ -752,3 +752,23 @@ Result:
 
 - Publish workflow now surfaces missing/invalid auth with clear actionable messages.
 - Release failures become easier to diagnose before package publish steps run.
+
+## 2026-02-13 - Request 036
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Migrate npm publish automation from token-based auth to Trusted Publishing (OIDC) and explain setup.
+
+Key decisions:
+
+- Updated publish workflow to rely on GitHub OIDC + npm trusted publishing flow.
+- Removed token-specific preflight/auth steps from workflow.
+- Kept `id-token: write` permission and `--provenance` publishing.
+- Upgraded publish job runtime to Node 22 and added explicit tool version output for release diagnostics.
+
+Result:
+
+- Release pipeline is aligned with npm's recommended secure model for CI/CD.
+- No long-lived npm publish token is required when trusted publishing is correctly configured.

@@ -12,8 +12,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
       - name: Checkout
@@ -27,29 +25,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Ensure npm supports trusted publishing
+        run: npm install --global npm@latest
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+          pnpm --version
+
       - name: Build
         run: pnpm nx run-many -t build
 
       - name: Test
         run: pnpm nx run-many -t test
-
-      - name: Validate npm token presence
-        run: |
-          if [ -z "${NODE_AUTH_TOKEN}" ]; then
-            echo "NPM_TOKEN is not configured in repository secrets."
-            echo "Set Settings > Secrets and variables > Actions > New repository secret > NPM_TOKEN."
-            exit 1
-          fi
-
-      - name: Validate npm authentication
-        run: npm whoami
 
       - name: Publish @eslint-config-snapshot/api
         run: pnpm --filter @eslint-config-snapshot/api publish --access public --no-git-checks --provenance
