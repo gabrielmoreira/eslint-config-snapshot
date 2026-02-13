@@ -163,10 +163,8 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
       `
 Examples:
   $ eslint-config-snapshot init
-    Runs interactive numbered prompts:
-      target: 1) package-json, 2) file
-      preset: 1) recommended, 2) minimal, 3) full
-      recommended preset uses checkbox selection for non-default workspaces and numeric group assignment.
+    Runs interactive select prompts for target/preset.
+    Recommended preset uses checkbox selection for non-default workspaces and group selection.
 
   $ eslint-config-snapshot init --yes --target package-json --preset recommended --show-effective
     Non-interactive recommended setup in package.json, with effective preview.
@@ -595,73 +593,35 @@ async function runInit(
 }
 
 async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout })
-  try {
-    const target = await askInitTarget(rl)
-    const preset = await askInitPreset(rl)
-    return { target, preset }
-  } finally {
-    rl.close()
-  }
+  const { select } = await import('@inquirer/prompts')
+  const target = await askInitTarget(select)
+  const preset = await askInitPreset(select)
+  return { target, preset }
 }
 
-async function askInitTarget(rl: ReturnType<typeof createInterface>): Promise<InitTarget> {
-  while (true) {
-    const answer = await askQuestion(
-      rl,
-      'Select config target:\n  1) package-json (recommended)\n  2) file\nChoose [1]: '
-    )
-    const parsed = parseInitTargetChoice(answer)
-    if (parsed) {
-      return parsed
-    }
-    process.stdout.write('Please choose 1 (package-json) or 2 (file).\n')
-  }
+async function askInitTarget(
+  selectPrompt: (options: { message: string; choices: Array<{ name: string; value: InitTarget }> }) => Promise<InitTarget>
+): Promise<InitTarget> {
+  return selectPrompt({
+    message: 'Select config target',
+    choices: [
+      { name: 'package-json (recommended)', value: 'package-json' },
+      { name: 'file', value: 'file' }
+    ]
+  })
 }
 
-async function askInitPreset(rl: ReturnType<typeof createInterface>): Promise<InitPreset> {
-  while (true) {
-    const answer = await askQuestion(
-      rl,
-      'Select preset:\n  1) recommended (default group "*" + numbered overrides)\n  2) minimal\n  3) full\nChoose [1]: '
-    )
-    const parsed = parseInitPresetChoice(answer)
-    if (parsed) {
-      return parsed
-    }
-    process.stdout.write('Please choose 1 (recommended), 2 (minimal), or 3 (full).\n')
-  }
-}
-
-export function parseInitTargetChoice(value: string): InitTarget | undefined {
-  const normalized = value.trim().toLowerCase()
-  if (normalized === '') {
-    return 'package-json'
-  }
-  if (normalized === '1' || normalized === 'package-json' || normalized === 'packagejson' || normalized === 'package' || normalized === 'pkg') {
-    return 'package-json'
-  }
-  if (normalized === '2' || normalized === 'file') {
-    return 'file'
-  }
-  return undefined
-}
-
-export function parseInitPresetChoice(value: string): InitPreset | undefined {
-  const normalized = value.trim().toLowerCase()
-  if (normalized === '') {
-    return 'recommended'
-  }
-  if (normalized === '1' || normalized === 'recommended' || normalized === 'rec' || normalized === 'grouped') {
-    return 'recommended'
-  }
-  if (normalized === '2' || normalized === 'minimal' || normalized === 'min') {
-    return 'minimal'
-  }
-  if (normalized === '3' || normalized === 'full') {
-    return 'full'
-  }
-  return undefined
+async function askInitPreset(
+  selectPrompt: (options: { message: string; choices: Array<{ name: string; value: InitPreset }> }) => Promise<InitPreset>
+): Promise<InitPreset> {
+  return selectPrompt({
+    message: 'Select preset',
+    choices: [
+      { name: 'recommended (default group "*" + static overrides)', value: 'recommended' },
+      { name: 'minimal', value: 'minimal' },
+      { name: 'full', value: 'full' }
+    ]
+  })
 }
 
 function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
@@ -837,7 +797,7 @@ function trimTrailingSlashes(value: string): string {
 }
 
 async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map<string, number>> {
-  const { checkbox, input } = await import('@inquirer/prompts')
+  const { checkbox, select } = await import('@inquirer/prompts')
   process.stdout.write('Recommended setup: select only workspaces that should leave default group "*".\n')
   const overrides = await checkbox<string>({
     message: 'Workspaces outside default group:',
@@ -846,19 +806,22 @@ async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map
   })
 
   const assignments = new Map<string, number>()
+  let nextGroup = 1
   for (const workspace of overrides) {
-    const raw = await input({
-      message: `Group number for ${workspace} [1]:`,
-      default: '1',
-      validate: (value) => {
-        const parsed = Number.parseInt(value, 10)
-        if (Number.isInteger(parsed) && parsed >= 1) {
-          return true
-        }
-        return 'Use a positive integer (1, 2, 3, ...).'
-      }
+    const usedGroups = [...new Set(assignments.values())].sort((a, b) => a - b)
+    while (usedGroups.includes(nextGroup)) {
+      nextGroup += 1
+    }
+
+    const selected = await select<number | 'new'>({
+      message: `Select group for ${workspace}`,
+      choices: [
+        ...usedGroups.map((group) => ({ name: `group-${group}`, value: group })),
+        { name: `create new group (group-${nextGroup})`, value: 'new' }
+      ]
     })
-    assignments.set(workspace, Number.parseInt(raw, 10))
+    const groupNumber = selected === 'new' ? nextGroup : selected
+    assignments.set(workspace, groupNumber)
   }
 
   return assignments

@@ -198,8 +198,8 @@ CLI parsing/help generation should be command-metadata driven (for example via `
 
 `init` interactive UX requirements:
 
-- target selection should support numbered choices (`1) package-json`, `2) file`)
-- preset selection should support numbered choices (`1) recommended`, `2) minimal`, `3) full`)
+- target selection should use interactive select prompts
+- preset selection should use interactive select prompts
 - interactive mode may accept equivalent text aliases
 - recommended preset should support checkbox selection of non-default workspaces and numeric group assignment for those selections
 - recommended preset should keep a runtime-discovered default group (`**/*`) and place numbered static groups before it (first match wins)

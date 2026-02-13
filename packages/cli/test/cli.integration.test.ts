@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { buildRecommendedConfigFromAssignments, parseInitPresetChoice, parseInitTargetChoice, runCli } from '../src/index.js'
+import { buildRecommendedConfigFromAssignments, runCli } from '../src/index.js'
 
 const fixtureTemplateRoot = path.resolve('test/fixtures/repo')
 let tmpDir = ''
@@ -45,27 +45,6 @@ afterEach(async () => {
 })
 
 describe.sequential('cli integration', () => {
-  it('parses init interactive target choices from numeric and aliases', () => {
-    expect(parseInitTargetChoice('')).toBe('package-json')
-    expect(parseInitTargetChoice('1')).toBe('package-json')
-    expect(parseInitTargetChoice('package')).toBe('package-json')
-    expect(parseInitTargetChoice('pkg')).toBe('package-json')
-    expect(parseInitTargetChoice('2')).toBe('file')
-    expect(parseInitTargetChoice('file')).toBe('file')
-    expect(parseInitTargetChoice('invalid')).toBeUndefined()
-  })
-
-  it('parses init interactive preset choices from numeric and aliases', () => {
-    expect(parseInitPresetChoice('')).toBe('recommended')
-    expect(parseInitPresetChoice('1')).toBe('recommended')
-    expect(parseInitPresetChoice('rec')).toBe('recommended')
-    expect(parseInitPresetChoice('2')).toBe('minimal')
-    expect(parseInitPresetChoice('min')).toBe('minimal')
-    expect(parseInitPresetChoice('3')).toBe('full')
-    expect(parseInitPresetChoice('full')).toBe('full')
-    expect(parseInitPresetChoice('invalid')).toBeUndefined()
-  })
-
   it('builds recommended config as dynamic-only when no static overrides are selected', () => {
     const config = buildRecommendedConfigFromAssignments(['packages/ws-a', 'packages/ws-b'], new Map())
     expect(config).toEqual({})

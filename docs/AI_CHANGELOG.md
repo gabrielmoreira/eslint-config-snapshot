@@ -1059,3 +1059,25 @@ Result:
 
 - Recommended init now avoids duplicated workspace declarations and remains aligned with repository-native workspace resolution (npm/yarn/pnpm/etc.).
 - Static grouping is only introduced when users explicitly opt into exceptions.
+
+## 2026-02-13 - Request 050
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Move remaining init prompt flows to Inquirer and remove numeric typed-choice UX.
+
+Key decisions:
+
+- Replaced numeric text prompt flow for init target/preset with Inquirer `select` prompts.
+- Kept recommended grouping flow fully on Inquirer:
+  - `checkbox` to pick outlier workspaces
+  - `select` to assign each outlier to an existing or new static group
+- Removed exported numeric parser helpers used only by old tests.
+- Updated help text and tests to reflect select-based init UX.
+
+Result:
+
+- Init is now consistently driven by richer Inquirer prompts without numeric typed menu selection.
+- CLI integration and terminal tests were updated and remain green.

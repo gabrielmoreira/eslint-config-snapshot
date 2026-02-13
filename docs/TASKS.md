@@ -35,7 +35,8 @@ If any conflict exists, follow document priority from `AGENTS.md`.
 
 - [x] Improve `init --help` examples with numbered prompt usage and `--force` guidance.
 - [x] Add package-level npm READMEs with cross-links between CLI and API usage docs.
-- [ ] Add one terminal integration case for invalid numbered init input followed by valid retry.
+- [x] Migrate init interactive flow to Inquirer-based select/checkbox prompts (no numeric typed menus).
+- [x] Replace numbered-init retry coverage with Inquirer select/checkbox flow validation.
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
 
 ### Exploration Backlog (Future Ideas)

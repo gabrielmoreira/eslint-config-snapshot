@@ -383,14 +383,13 @@ no-debugger: off
     expect(result.stderr).toBe('')
   })
 
-  it('prints init help with numbered prompt and force guidance', () => {
+  it('prints init help with select-prompt and force guidance', () => {
     const result = run(['init', '--help'])
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Initialize config (file or package.json)')
     expect(result.stdout).toContain('-f, --force')
-    expect(result.stdout).toContain('Runs interactive numbered prompts:')
-    expect(result.stdout).toContain('target: 1) package-json, 2) file')
-    expect(result.stdout).toContain('preset: 1) recommended, 2) minimal, 3) full')
+    expect(result.stdout).toContain('Runs interactive select prompts for target/preset.')
+    expect(result.stdout).toContain('Recommended preset uses checkbox selection')
     expect(result.stdout).toContain('--show-effective')
     expect(result.stdout).toContain('--yes --force --target file --preset full')
     expect(result.stderr).toBe('')
