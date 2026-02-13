@@ -51,24 +51,28 @@ Commands:
 - `init`
 - `help`
 
+Useful print option:
+- `print --short` for compact human-readable output (line-oriented by rule).
+
 Help output (`--help`):
 
 ```text
 eslint-config-snapshotter
 
 Usage:
-  eslint-config-snapshotter <command>
+  eslint-config-snapshotter <command> [options]
 
 Commands:
   snapshot   Compute and write snapshots to .eslint-config-snapshots/
   compare    Compare current state against stored snapshots
   status     Print minimal status (clean/changes)
-  print      Print aggregated rules JSON to stdout
+  print      Print aggregated rules (JSON by default)
   init       Create eslint-config-snapshotter.config.mjs
   help       Show this help
 
 Options:
-  -h, --help Show this help
+  -h, --help   Show this help
+  --short      Print compact human-readable output (print command only)
 ```
 
 ## Config Loading

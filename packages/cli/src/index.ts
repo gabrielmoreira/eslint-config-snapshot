@@ -24,25 +24,28 @@ const SNAPSHOT_DIR = '.eslint-config-snapshots'
 const HELP_TEXT = `eslint-config-snapshotter
 
 Usage:
-  eslint-config-snapshotter <command>
+  eslint-config-snapshotter <command> [options]
 
 Commands:
   snapshot   Compute and write snapshots to .eslint-config-snapshots/
   compare    Compare current state against stored snapshots
   status     Print minimal status (clean/changes)
-  print      Print aggregated rules JSON to stdout
+  print      Print aggregated rules (JSON by default)
   init       Create eslint-config-snapshotter.config.mjs
   help       Show this help
 
 Options:
-  -h, --help Show this help
+  -h, --help   Show this help
+  --short      Print compact human-readable output (print command only)
 `
 
-export async function runCli(command: string, cwd: string): Promise<number> {
+export async function runCli(command: string, cwd: string, flags: string[] = []): Promise<number> {
   if (['help', '-h', '--help'].includes(command)) {
     process.stdout.write(HELP_TEXT)
     return 0
   }
+
+  const options = parseFlags(flags)
 
   if (command === 'init') {
     return runInit(cwd)
@@ -64,11 +67,15 @@ export async function runCli(command: string, cwd: string): Promise<number> {
   }
 
   if (command === 'print') {
-    const output = [...currentSnapshots.values()].map((snapshot) => ({
-      groupId: snapshot.groupId,
-      rules: snapshot.rules
-    }))
-    process.stdout.write(`${JSON.stringify(output, null, 2)}\n`)
+    if (options.short) {
+      process.stdout.write(formatShortPrint([...currentSnapshots.values()]))
+    } else {
+      const output = [...currentSnapshots.values()].map((snapshot) => ({
+        groupId: snapshot.groupId,
+        rules: snapshot.rules
+      }))
+      process.stdout.write(`${JSON.stringify(output, null, 2)}\n`)
+    }
     return 0
   }
 
@@ -239,8 +246,9 @@ async function runInit(cwd: string): Promise<number> {
 
 export async function main(): Promise<void> {
   const command = process.argv[2] ?? 'status'
+  const flags = process.argv.slice(3)
   try {
-    const code = await runCli(command, process.cwd())
+    const code = await runCli(command, process.cwd(), flags)
     process.exit(code)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
@@ -251,4 +259,57 @@ export async function main(): Promise<void> {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main()
+}
+
+type CliFlags = {
+  short: boolean
+}
+
+function parseFlags(flags: readonly string[]): CliFlags {
+  const options: CliFlags = { short: false }
+  for (const flag of flags) {
+    if (flag === '--short') {
+      options.short = true
+      continue
+    }
+    throw new Error(`Unknown option: ${flag}`)
+  }
+  return options
+}
+
+function formatShortPrint(
+  snapshots: Array<{
+    groupId: string
+    workspaces: string[]
+    rules: Record<string, [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]>
+  }>
+): string {
+  const lines: string[] = []
+  const sorted = [...snapshots].sort((a, b) => a.groupId.localeCompare(b.groupId))
+
+  for (const snapshot of sorted) {
+    const ruleNames = Object.keys(snapshot.rules).sort()
+    const severityCounts = { error: 0, warn: 0, off: 0 }
+
+    for (const name of ruleNames) {
+      const severity = snapshot.rules[name][0]
+      severityCounts[severity] += 1
+    }
+
+    lines.push(`group: ${snapshot.groupId}`)
+    lines.push(
+      `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`
+    )
+    lines.push(
+      `rules (${ruleNames.length}): error ${severityCounts.error}, warn ${severityCounts.warn}, off ${severityCounts.off}`
+    )
+
+    for (const ruleName of ruleNames) {
+      const entry = snapshot.rules[ruleName]
+      const suffix = entry.length > 1 ? ` ${JSON.stringify(entry[1])}` : ''
+      lines.push(`${ruleName}: ${entry[0]}${suffix}`)
+    }
+  }
+
+  return `${lines.join('\n')}\n`
 }

@@ -11,18 +11,19 @@ const cliDist = path.resolve('dist/index.js')
 const HELP_TEXT = `eslint-config-snapshotter
 
 Usage:
-  eslint-config-snapshotter <command>
+  eslint-config-snapshotter <command> [options]
 
 Commands:
   snapshot   Compute and write snapshots to .eslint-config-snapshots/
   compare    Compare current state against stored snapshots
   status     Print minimal status (clean/changes)
-  print      Print aggregated rules JSON to stdout
+  print      Print aggregated rules (JSON by default)
   init       Create eslint-config-snapshotter.config.mjs
   help       Show this help
 
 Options:
-  -h, --help Show this help
+  -h, --help   Show this help
+  --short      Print compact human-readable output (print command only)
 `
 
 let tmpDir = ''
@@ -144,6 +145,21 @@ describe('cli terminal invocation', () => {
     }
   }
 ]
+`
+    )
+    expect(result.stderr).toBe('')
+  })
+
+  it('print --short returns compact human-readable output', () => {
+    const result = run(['print', '--short'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toBe(
+      `group: default
+workspaces (2): packages/ws-a, packages/ws-b
+rules (3): error 2, warn 0, off 1
+eqeqeq: error "always"
+no-console: error
+no-debugger: off
 `
     )
     expect(result.stderr).toBe('')

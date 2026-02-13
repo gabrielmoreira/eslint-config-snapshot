@@ -72,6 +72,21 @@ describe('cli integration', () => {
     expect(writeSpy).toHaveBeenCalled()
   })
 
+  it('print --short emits compact human-readable output', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('print', fixtureRoot, ['--short'])
+    expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(
+      `group: default
+workspaces (2): packages/ws-a, packages/ws-b
+rules (3): error 2, warn 0, off 1
+eqeqeq: error "always"
+no-console: error
+no-debugger: off
+`
+    )
+  })
+
   it('init creates scaffold config', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-init-'))
     const code = await runCli('init', tmp)
