@@ -10,9 +10,25 @@ const cliDist = path.resolve('dist/index.js')
 
 let fixtureRoot = ''
 
+function pnpmExecPath(): string | undefined {
+  const execPath = process.env.npm_execpath
+  if (!execPath) {
+    return undefined
+  }
+  return execPath.toLowerCase().includes('pnpm') ? execPath : undefined
+}
+
 function pnpmCmd(): string {
   const base = path.dirname(process.execPath)
   return process.platform === 'win32' ? path.join(base, 'pnpm.cmd') : path.join(base, 'pnpm')
+}
+
+function pnpmCommandWithArgs(args: string[]): { command: string; finalArgs: string[] } {
+  const execPath = pnpmExecPath()
+  if (execPath) {
+    return { command: process.execPath, finalArgs: [execPath, ...args] }
+  }
+  return { command: pnpmCmd(), finalArgs: args }
 }
 
 function run(command: string, args: string[], cwd: string): { status: number; stdout: string; stderr: string } {
@@ -55,11 +71,13 @@ describe('cli pnpm-isolated integration', () => {
     const wsA = path.join(fixtureRoot, 'packages/ws-a')
     const wsB = path.join(fixtureRoot, 'packages/ws-b')
 
-    const installA = await runWithRetry(pnpmCmd(), ['install', '--ignore-workspace', '--no-frozen-lockfile'], wsA)
+    const installACommand = pnpmCommandWithArgs(['install', '--ignore-workspace', '--no-frozen-lockfile'])
+    const installA = await runWithRetry(installACommand.command, installACommand.finalArgs, wsA)
     expect(installA.status, `${installA.stdout}\n${installA.stderr}`).toBe(0)
     await access(path.join(wsA, 'node_modules/eslint/package.json'))
 
-    const installB = await runWithRetry(pnpmCmd(), ['install', '--ignore-workspace', '--no-frozen-lockfile'], wsB)
+    const installBCommand = pnpmCommandWithArgs(['install', '--ignore-workspace', '--no-frozen-lockfile'])
+    const installB = await runWithRetry(installBCommand.command, installBCommand.finalArgs, wsB)
     expect(installB.status, `${installB.stdout}\n${installB.stderr}`).toBe(0)
     await access(path.join(wsB, 'node_modules/eslint/package.json'))
   }, 180000)

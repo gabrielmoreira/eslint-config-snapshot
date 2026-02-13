@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -28,6 +28,7 @@ beforeEach(async () => {
   tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshot-cli-terminal-'))
   repoRoot = path.join(tmpDir, 'repo')
   await cp(fixtureRoot, repoRoot, { recursive: true })
+  await mkdir(path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
 
   await writeFile(
     path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),

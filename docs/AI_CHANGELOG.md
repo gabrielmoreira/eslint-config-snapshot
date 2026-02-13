@@ -648,3 +648,23 @@ Result:
 
 - `tsup` CJS build warning (`import.meta` unavailable in CJS output) is eliminated.
 - CLI behavior remains unchanged for normal direct execution (`node dist/index.js`, `tsx src/index.ts`, bin entry).
+
+## 2026-02-13 - Request 031
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Analyze latest CI failures and fix Node/tooling compatibility and failing test setup on Linux runners.
+
+Key decisions:
+
+- Updated CI matrix to Node 20 only to avoid `eslint-plugin-unicorn` runtime incompatibility on Node 18 (`toReversed` error).
+- Hardened fixture-based tests by creating `packages/ws-a/node_modules/eslint/bin` before writing mock `eslint.js`.
+- Made pnpm-isolated integration test resolve pnpm through `npm_execpath` when available, with command fallback.
+
+Result:
+
+- CI lint no longer fails from Node 18 + unicorn incompatibility.
+- CLI integration/terminal tests no longer fail with ENOENT for missing fixture directories.
+- pnpm isolated test execution is more reliable on Linux GitHub runners.

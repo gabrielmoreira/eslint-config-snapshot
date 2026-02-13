@@ -1,4 +1,4 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -13,6 +13,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await rm(path.join(fixtureRoot, '.eslint-config-snapshot'), { recursive: true, force: true })
+  await mkdir(path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
 
   await writeFile(
     path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
