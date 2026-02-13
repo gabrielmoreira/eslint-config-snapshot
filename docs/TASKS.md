@@ -25,6 +25,8 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Introduce semantic `TerminalIO` abstraction for CLI I/O, TTY capability checks, prompts, and paused timing behavior.
+- [x] Restructure CLI command execution into dedicated command modules and keep `index.ts` focused on parser/dispatcher wiring.
 - [x] Preserve multiple observed `severity+options` rule combinations in snapshot output with deterministic variant ordering.
 - [x] Split additional CLI responsibilities into dedicated `init` and `ui` modules to reduce `index.ts` orchestration overload.
 - [x] Split CLI internals into `output` and `runtime` modules with dedicated unit tests while keeping command behavior stable.

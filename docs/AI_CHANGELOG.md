@@ -1681,3 +1681,36 @@ Result:
 - API and CLI tests were updated for the new snapshot encoding and now pass.
 - Full quality gates pass:
   - `pnpm nx run-many -t build lint typecheck test`.
+
+## 2026-02-13 - Request 079
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve CLI architecture so `index.ts` is parser/dispatcher-focused.
+- Add a semantic terminal abstraction for I/O, TTY awareness, prompts, and run-timing behavior.
+- Continue command decomposition into dedicated modules instead of concentrating execution logic in one file.
+
+Key decisions:
+
+- Introduced `TerminalIO` as a semantic I/O utility (`packages/cli/src/terminal.ts`) with:
+  - TTY and interactive capability properties
+  - semantic output helpers
+  - paused run-timer support
+  - `askYesNo` prompt helper
+- Moved project-specific run header/version presentation into `packages/cli/src/presentation.ts`.
+- Split command execution into dedicated modules:
+  - `packages/cli/src/commands/check.ts`
+  - `packages/cli/src/commands/update.ts`
+  - `packages/cli/src/commands/print.ts` (including `config`)
+- Reduced `packages/cli/src/index.ts` to command parsing, option validation, and command dispatch wiring.
+- Removed obsolete `packages/cli/src/ui.ts` and updated unit tests to target terminal responsibilities.
+
+Result:
+
+- CLI responsibility boundaries are clearer and closer to the API package modular style.
+- Terminal concerns are centralized and reusable.
+- `index.ts` now primarily handles CLI contract wiring.
+- Full quality gates pass:
+  - `pnpm nx run-many -t build lint typecheck test`.

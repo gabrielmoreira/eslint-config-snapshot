@@ -7,7 +7,12 @@
   ],
   "rules": {
     "@typescript-eslint/await-thenable": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/ban-ts-comment": [
       "error"
@@ -45,40 +50,80 @@
       "error"
     ],
     "@typescript-eslint/no-array-delete": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-base-to-string": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-confusing-void-expression": [
       "off"
     ],
     "@typescript-eslint/no-deprecated": [
-      "warn"
+      [
+        "warn"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-duplicate-enum-values": [
       "error"
     ],
     "@typescript-eslint/no-duplicate-type-constituents": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-empty-object-type": [
       "error"
     ],
     "@typescript-eslint/no-explicit-any": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-extra-non-null-assertion": [
       "error"
     ],
     "@typescript-eslint/no-floating-promises": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-for-in-array": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-implied-eval": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-meaningless-void-operator": [
       "off"
@@ -87,7 +132,12 @@
       "error"
     ],
     "@typescript-eslint/no-misused-promises": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-misused-spread": [
       "off"
@@ -102,7 +152,12 @@
       "error"
     ],
     "@typescript-eslint/no-redundant-type-constituents": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-require-imports": [
       "error"
@@ -126,7 +181,12 @@
       "off"
     ],
     "@typescript-eslint/no-unnecessary-type-assertion": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-unnecessary-type-constraint": [
       "error"
@@ -138,7 +198,12 @@
       "off"
     ],
     "@typescript-eslint/no-unsafe-argument": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-unsafe-assignment": [
       "off"
@@ -150,13 +215,23 @@
       "error"
     ],
     "@typescript-eslint/no-unsafe-enum-comparison": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-unsafe-function-type": [
       "error"
     ],
     "@typescript-eslint/no-unsafe-member-access": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-unsafe-return": [
       "off"
@@ -165,7 +240,12 @@
       "off"
     ],
     "@typescript-eslint/no-unsafe-unary-minus": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/no-unused-expressions": [
       "error",
@@ -188,7 +268,12 @@
       "off"
     ],
     "@typescript-eslint/only-throw-error": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/prefer-as-const": [
       "error"
@@ -212,7 +297,12 @@
       "off"
     ],
     "@typescript-eslint/prefer-promise-reject-errors": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/prefer-readonly": [
       "off"
@@ -242,13 +332,28 @@
       "off"
     ],
     "@typescript-eslint/require-await": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/restrict-plus-operands": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/restrict-template-expressions": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/return-await": [
       "off"
@@ -266,7 +371,12 @@
       "error"
     ],
     "@typescript-eslint/unbound-method": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "@typescript-eslint/use-unknown-in-catch-callback-variable": [
       "off"
@@ -320,7 +430,12 @@
       }
     ],
     "n/hashbang": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "n/no-deprecated-api": [
       "error"
@@ -329,19 +444,34 @@
       "error"
     ],
     "n/no-extraneous-import": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "n/no-extraneous-require": [
       "error"
     ],
     "n/no-missing-import": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "n/no-missing-require": [
       "error"
     ],
     "n/no-process-exit": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "n/no-unpublished-bin": [
       "error"
@@ -364,7 +494,12 @@
       }
     ],
     "n/no-unsupported-features/node-builtins": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "n/process-exit-as-throw": [
       "error"
@@ -804,8 +939,14 @@
       "error"
     ],
     "sonarjs/cognitive-complexity": [
-      "error",
-      15
+      [
+        "error",
+        15
+      ],
+      [
+        "warn",
+        15
+      ]
     ],
     "sonarjs/comma-or-logical-or-case": [
       "error"
@@ -868,7 +1009,12 @@
       "off"
     ],
     "sonarjs/different-types-comparison": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "sonarjs/disabled-auto-escaping": [
       "error"
@@ -1036,7 +1182,12 @@
       "error"
     ],
     "sonarjs/no-alphabetical-sort": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "sonarjs/no-angular-bypass-sanitization": [
       "error"
@@ -1262,7 +1413,12 @@
       "off"
     ],
     "sonarjs/no-nested-template-literals": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "sonarjs/no-os-command-from-path": [
       "error"
@@ -1711,10 +1867,18 @@
       }
     ],
     "unicorn/no-array-sort": [
-      "error",
-      {
-        "allowExpressionStatement": true
-      }
+      [
+        "error",
+        {
+          "allowExpressionStatement": true
+        }
+      ],
+      [
+        "off",
+        {
+          "allowExpressionStatement": true
+        }
+      ]
     ],
     "unicorn/no-await-expression-member": [
       "error"
@@ -1875,26 +2039,50 @@
       }
     ],
     "unicorn/numeric-separators-style": [
-      "error",
-      {
-        "binary": {
-          "groupLength": 4,
-          "minimumDigits": 0
-        },
-        "hexadecimal": {
-          "groupLength": 2,
-          "minimumDigits": 0
-        },
-        "number": {
-          "groupLength": 3,
-          "minimumDigits": 5
-        },
-        "octal": {
-          "groupLength": 4,
-          "minimumDigits": 0
-        },
-        "onlyIfContainsSeparator": false
-      }
+      [
+        "error",
+        {
+          "binary": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "hexadecimal": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
+          "number": {
+            "groupLength": 3,
+            "minimumDigits": 5
+          },
+          "octal": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "onlyIfContainsSeparator": false
+        }
+      ],
+      [
+        "off",
+        {
+          "binary": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "hexadecimal": {
+            "groupLength": 2,
+            "minimumDigits": 0
+          },
+          "number": {
+            "groupLength": 3,
+            "minimumDigits": 5
+          },
+          "octal": {
+            "groupLength": 4,
+            "minimumDigits": 0
+          },
+          "onlyIfContainsSeparator": false
+        }
+      ]
     ],
     "unicorn/prefer-add-event-listener": [
       "error",
@@ -1927,11 +2115,20 @@
       "error"
     ],
     "unicorn/prefer-at": [
-      "error",
-      {
-        "checkAllIndexAccess": false,
-        "getLastElementFunctions": []
-      }
+      [
+        "error",
+        {
+          "checkAllIndexAccess": false,
+          "getLastElementFunctions": []
+        }
+      ],
+      [
+        "off",
+        {
+          "checkAllIndexAccess": false,
+          "getLastElementFunctions": []
+        }
+      ]
     ],
     "unicorn/prefer-bigint-literals": [
       "error"
@@ -2064,7 +2261,12 @@
       "error"
     ],
     "unicorn/prefer-string-raw": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "unicorn/prefer-string-replace-all": [
       "error"
@@ -2096,7 +2298,12 @@
       "always"
     ],
     "unicorn/prefer-top-level-await": [
-      "error"
+      [
+        "error"
+      ],
+      [
+        "off"
+      ]
     ],
     "unicorn/prefer-type-error": [
       "error"
