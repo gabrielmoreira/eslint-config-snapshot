@@ -732,3 +732,23 @@ Result:
 
 - pnpm-isolated test no longer depends on a fragile hardcoded pnpm path near the Node binary.
 - Linux runner compatibility for pnpm command discovery is improved.
+
+## 2026-02-13 - Request 035
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate npm publish failure (`ENEEDAUTH`) in GitHub release workflow and improve reliability.
+
+Key decisions:
+
+- Kept npm token-based publish flow and added explicit preflight validation in workflow:
+  - fail early if `NPM_TOKEN` secret is missing
+  - run `npm whoami` before publish to verify authentication
+- Moved token wiring to job-level `NODE_AUTH_TOKEN` for consistent usage across steps.
+
+Result:
+
+- Publish workflow now surfaces missing/invalid auth with clear actionable messages.
+- Release failures become easier to diagnose before package publish steps run.
