@@ -31,43 +31,20 @@ The agent MUST:
 - Each package MUST have project.json defining Nx targets:
   build, typecheck, lint, test
 
-1) packages/core
-- normalizePath, sortUnique, canonicalizeJson, stable key ordering helpers
+1) packages/api
+- include internal modules for core/config/workspace/sampling/extract/snapshot/diff
+- export public API surface including discoverWorkspaces, normalizePath, sortUnique, assignGroupsByMatch, resolveEslintBinForWorkspace
 
-2) packages/workspace
-- discoverWorkspaces (manypkg), manual mode support
-- grouping assignGroupsByMatch (include/exclude, first match wins)
-
-3) packages/sampling
-- deterministic file sampling (no persistence)
-
-4) packages/extract
-- workspace-scoped eslint resolution (createRequire anchored in workspace)
-- node eslintBin --print-config
-
-5) packages/snapshot
-- minimal JSON snapshot format, compact rule representation, stable output
-
-6) packages/diff
-- introduced/removed, severity changes, option changes, membership changes
-
-7) packages/config
-- load supported config filenames and additional cosmiconfig search places
-- support object/function/async function config exports
-
-8) packages/api
-- export discoverWorkspaces, normalizePath, sortUnique, assignGroupsByMatch, resolveEslintBinForWorkspace (optional)
-
-9) packages/cli
+2) packages/cli
 - commands: snapshot/compare/status/print/init
 - integration tests with fixtures
 - terminal-invoked command tests with output assertions
 
-10) Hooks + conventional commits
+3) Hooks + conventional commits
 - husky + commitlint + lint-staged
 - pre-push uses Nx affected test via Node script
 
-11) Root configuration
+4) Root configuration
 - nx.json
 - tsconfig.base.json
 - workspace package.json with workspaces field

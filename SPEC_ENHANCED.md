@@ -30,3 +30,14 @@ The required ordered list is:
 14. `.eslint-config-snapshotterrc.mjs`
 
 For `package.json`, use the `eslint-config-snapshotter` field.
+
+### E-002: Two-Package Monorepo Layout
+
+The monorepo is intentionally collapsed to two publishable packages:
+
+1. `@eslint-config-snapshotter/api`
+2. `@eslint-config-snapshotter/cli`
+
+All previously split internal concerns (`core`, `config`, `workspace`, `sampling`, `extract`, `snapshot`, `diff`) must live as internal modules inside `@eslint-config-snapshotter/api`.
+
+`@eslint-config-snapshotter/cli` must consume those capabilities from `@eslint-config-snapshotter/api`.

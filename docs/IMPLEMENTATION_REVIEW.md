@@ -10,6 +10,7 @@ This report summarizes implementation alignment, test hardening, and known remai
 2. Snapshot loading supports nested group IDs by scanning `**/*.json`.
 3. Snapshot writing creates parent directories for group IDs that include path separators.
 4. ESLint resolution remains workspace-scoped.
+5. Workspace package architecture is consolidated to two packages (`api`, `cli`) with internal API modules.
 
 ## Test Coverage Improvements
 

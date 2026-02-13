@@ -91,7 +91,7 @@ Config loading uses `cosmiconfig` with deterministic ordered `searchPlaces` (fir
 
 Config may export an object, function, or async function.
 
-Default configuration lives in `packages/config/src/index.ts` (`DEFAULT_CONFIG`).
+Default configuration lives in `packages/api/src/config.ts` (`DEFAULT_CONFIG`).
 
 ## Snapshot Output
 
@@ -156,15 +156,8 @@ node packages/cli/dist/index.js --help
 
 ## Package Layout
 
-- `packages/core`: normalization/canonicalization/sorting helpers
-- `packages/workspace`: discovery and grouping
-- `packages/sampling`: deterministic file sampling
-- `packages/extract`: workspace-scoped eslint resolution + print-config extraction
-- `packages/snapshot`: snapshot model/read/write/aggregation
-- `packages/diff`: snapshot diffing
-- `packages/config`: config loading/merging/defaults
-- `packages/api`: public exports
-- `packages/cli`: command orchestration
+- `packages/api`: public API plus internal modules for core/config/workspace/sampling/extract/snapshot/diff
+- `packages/cli`: command orchestration and terminal interface
 
 ## Authoritative Docs
 
