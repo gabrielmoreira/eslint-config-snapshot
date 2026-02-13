@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- Release minor version with improved interactive CLI logging tone and richer runtime context reporting.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
