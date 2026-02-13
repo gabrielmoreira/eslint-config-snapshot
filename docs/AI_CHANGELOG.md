@@ -1182,3 +1182,21 @@ Result:
   - `TASKS.md` for action items
   - `FINDINGS.md` for active technical risks/limitations
 - Current pending work is easier to scan and no longer mixed with historical completed context.
+
+## 2026-02-13 - Request 056
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Validate whether CJS `import.meta` warning and project scan backlog items are still accurate in docs.
+
+Key decisions:
+
+- Confirmed CJS `import.meta` warning is already resolved (current build is clean).
+- Updated planning docs to remove that stale pending item.
+- Clarified scan backlog wording to distinguish current partial v0 recommended assist from a future deep ESLint per-project inspection command.
+
+Result:
+
+- `TASKS.md` and `FINDINGS.md` now match implemented reality and avoid stale unresolved items.

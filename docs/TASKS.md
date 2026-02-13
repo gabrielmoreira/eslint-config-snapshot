@@ -15,12 +15,11 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 ## Active Tasks
 
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
-- [ ] Resolve CJS `import.meta` build warning in dual-format output.
 - [ ] Revisit isolated test process spawning to reduce shell-related warnings.
 
 ## Backlog (Exploration)
 
-- [ ] Add optional config-suggestion command that scans project structure and proposes starter config.
+- [ ] Add advanced config-suggestion command with deep per-project ESLint inspection (current recommended flow already provides a partial v0 workspace grouping assist).
 - [ ] Add optional full-availability baseline mode that tracks available plugin rules (not only configured runtime state).
 - [ ] Evaluate replacing current prompt logic with a lightweight selection UI library if complexity grows.
 
