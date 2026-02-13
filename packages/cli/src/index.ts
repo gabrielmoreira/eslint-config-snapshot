@@ -390,11 +390,12 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
+    const workspaceCount = countUniqueWorkspaces(currentSnapshots)
     const color = createColorizer()
     const eslintVersionsByGroup = shouldShowRunLogs() ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
     writeSectionTitle('📊 Summary', color)
     process.stdout.write(
-      `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
+      `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nWorkspaces scanned: ${workspaceCount}.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
     )
     writeEslintVersionSummary(eslintVersionsByGroup)
   }
@@ -1030,13 +1031,14 @@ function printWhatChanged(
 ): number {
   const color = createColorizer()
   const currentSummary = summarizeSnapshots(currentSnapshots)
+  const workspaceCount = countUniqueWorkspaces(currentSnapshots)
   const changeSummary = summarizeChanges(changes)
 
   if (changes.length === 0) {
     process.stdout.write(color.green('✅ Great news: no snapshot drift detected.\n'))
     writeSectionTitle('📊 Summary', color)
     process.stdout.write(
-      `- 📦 baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- 🎚️ severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
+      `- 📦 baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- 🗂️ workspaces scanned: ${workspaceCount}\n- 🎚️ severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
     )
     writeEslintVersionSummary(eslintVersionsByGroup)
     return 0
@@ -1045,7 +1047,7 @@ function printWhatChanged(
   process.stdout.write(color.red('⚠️ Heads up: snapshot drift detected.\n'))
   writeSectionTitle('📊 Summary', color)
   process.stdout.write(
-    `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
+    `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- 🗂️ workspaces scanned: ${workspaceCount}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
   )
   writeEslintVersionSummary(eslintVersionsByGroup)
   process.stdout.write('\n')
@@ -1088,6 +1090,16 @@ function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }
 function summarizeSnapshots(snapshots: Map<string, BuiltSnapshot>) {
   const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
   return { groups: snapshots.size, rules, error, warn, off }
+}
+
+function countUniqueWorkspaces(snapshots: Map<string, BuiltSnapshot>): number {
+  const workspaces = new Set<string>()
+  for (const snapshot of snapshots.values()) {
+    for (const workspace of snapshot.workspaces) {
+      workspaces.add(workspace)
+    }
+  }
+  return workspaces.size
 }
 
 function decorateDiffLine(line: string, color: ReturnType<typeof createColorizer>): string {

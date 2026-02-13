@@ -1610,3 +1610,22 @@ Key decisions:
 Result:
 
 - Root version now advances together with package version bumps during standard Changesets release flow.
+
+## 2026-02-13 - Request 076
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Include workspace/project scope visibility in summary output by showing how many workspaces were scanned.
+
+Key decisions:
+
+- Added `workspaces scanned` counters to summary outputs in:
+  - default/check summary mode
+  - update summary mode
+- Count is computed from unique workspace membership across current snapshot groups.
+
+Result:
+
+- Summary output now communicates scope coverage (`N` workspaces scanned), making drift interpretation more transparent.
