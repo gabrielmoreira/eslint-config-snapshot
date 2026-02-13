@@ -74,6 +74,35 @@
     "constructor-super": [
       "off"
     ],
+    "deprecate/member-expression": [
+      "warn",
+      [
+        {
+          "name": "fs.rmdir",
+          "use": "fs.rm"
+        },
+        {
+          "name": "fs.rmdirSync",
+          "use": "fs.rmSync"
+        },
+        {
+          "name": "util.isArray",
+          "use": "Array.isArray"
+        },
+        {
+          "name": "util.isDate",
+          "use": "value instanceof Date"
+        },
+        {
+          "name": "util.isRegExp",
+          "use": "value instanceof RegExp"
+        },
+        {
+          "name": "url.parse",
+          "use": "new URL(...)"
+        }
+      ]
+    ],
     "for-direction": [
       "error"
     ],

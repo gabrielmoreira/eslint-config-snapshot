@@ -124,3 +124,27 @@ Result:
 
 - Added `Author` field to all existing entries.
 - Updated process docs to make committer full name mandatory for all future changelog entries.
+
+## 2026-02-13 - Request 010
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Create three commits in sequence: refresh snapshot, re-enable Unicorn, then add a deprecated plugin in warn mode, scan for deprecated usage, apply simple fixes, and document complex follow-up tasks.
+
+Key decisions:
+
+- Used `eslint-plugin-deprecate` (ESLint 9 compatible in this repository) with `deprecate/member-expression` configured as `warn`.
+- Added baseline deprecated member checks for `fs.rmdir`, `fs.rmdirSync`, `url.parse`, `util.isArray`, `util.isDate`, and `util.isRegExp`.
+
+Result:
+
+- Commit 1 refreshed baseline snapshot for the temporary non-Unicorn state.
+- Commit 2 re-enabled Unicorn recommended config and refreshed snapshot.
+- Deprecated plugin guard added and snapshot refreshed to include `deprecate/member-expression`.
+- Scan found no direct deprecated member-expression matches in current source files.
+
+Follow-up notes:
+
+- Dynamic/aliased deprecated API usage is not reliably detectable with the current static member-expression rule; this is tracked as a future task in `docs/IMPLEMENTATION_REVIEW.md`.

@@ -5,6 +5,7 @@ import unicorn from 'eslint-plugin-unicorn'
 import sonarjs from 'eslint-plugin-sonarjs'
 import promise from 'eslint-plugin-promise'
 import n from 'eslint-plugin-n'
+import deprecate from 'eslint-plugin-deprecate'
 
 export default tseslint.config(
   {
@@ -17,9 +18,19 @@ export default tseslint.config(
   unicorn.configs['recommended'],
   {
     plugins: {
+      deprecate,
       sonarjs
     },
     rules: {
+      'deprecate/member-expression': [
+        'warn',
+        { name: 'fs.rmdir', use: 'fs.rm' },
+        { name: 'fs.rmdirSync', use: 'fs.rmSync' },
+        { name: 'util.isArray', use: 'Array.isArray' },
+        { name: 'util.isDate', use: 'value instanceof Date' },
+        { name: 'util.isRegExp', use: 'value instanceof RegExp' },
+        { name: 'url.parse', use: 'new URL(...)' }
+      ],
       ...sonarjs.configs.recommended.rules
     }
   },

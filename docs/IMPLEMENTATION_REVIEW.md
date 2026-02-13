@@ -44,3 +44,9 @@ This report summarizes implementation alignment, test hardening, and known remai
 1. CLI build still emits a CJS warning for `import.meta` in dual-format output.
 2. Windows command execution in isolated tests may require `shell: true` for `.cmd` launchers.
 3. Nx `run-many` may emit listener warnings in large local runs.
+
+## Deprecated API Follow-up
+
+1. The new `deprecate/member-expression` guard is configured for common Node deprecations (`fs.rmdir*`, `url.parse`, legacy `util.is*` helpers).
+2. Current codebase scan did not find direct matches for configured deprecated members.
+3. Future task: expand deprecated checks for dynamic/aliased access patterns that static member matching cannot detect.
