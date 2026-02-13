@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.14.1
+
+### Patch Changes
+
+- Bump package versions for the latest CI-driven publish-dispatch flow improvements.
+
 ## 0.14.0
 
 ### Minor Changes
