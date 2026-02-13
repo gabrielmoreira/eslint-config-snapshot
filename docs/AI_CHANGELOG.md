@@ -1892,3 +1892,24 @@ Result:
 
 - Test/coverage report files generated locally are no longer surfaced as untracked changes.
 - Repository cleanliness is improved for day-to-day local runs and CI parity.
+
+## 2026-02-13 - Request 088
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Move to a clearer release ownership model where publishing is manually triggered in GitHub, and version tags are created by GitHub workflow (not locally).
+
+Key decisions:
+
+- Updated `publish-npm.yml` trigger to `workflow_dispatch` only.
+- Added automatic `vX.Y.Z` tag creation/push in release workflow after publish succeeds.
+- Elevated publish workflow permissions to allow tag push (`contents: write`).
+- Updated release documentation (`README.md`, `docs/CONTRIBUTING.md`) to remove manual local tag creation steps.
+- Removed local `v0.14.0` tag to align with the new operational rule.
+
+Result:
+
+- Release intent is now explicit and human-controlled via manual workflow run.
+- Tagging is centralized in GitHub CI, reducing local/manual drift and forgotten-step risk.

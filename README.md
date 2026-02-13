@@ -176,8 +176,9 @@ This repository uses Changesets so package versions and release tags stay aligne
 2. Apply version bumps:
    - `pnpm release:version`
 3. Commit version changes.
-4. Create and push a release tag (`vX.Y.Z`).
-5. GitHub publish workflow runs `changeset publish`.
+4. Push to `main`.
+5. Run the `Publish to npm` workflow manually (`workflow_dispatch`).
+6. The workflow publishes via Changesets and creates/pushes `vX.Y.Z` automatically.
 
 ## Documentation
 

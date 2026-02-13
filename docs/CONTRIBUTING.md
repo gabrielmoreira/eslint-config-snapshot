@@ -2,7 +2,7 @@
 
 Thanks for contributing to ESLint Config Snapshot.
 
-See also: [`SPEC.md`](SPEC.md), [`TASKS.md`](TASKS.md), [`README.md`](../README.md)
+See also: [`docs/SPEC.md`](SPEC.md), [`docs/TASKS.md`](TASKS.md), [`README.md`](../README.md)
 
 ## Development Setup
 
@@ -84,14 +84,9 @@ This repository uses Changesets for package versioning and release preparation.
    - `pnpm release:version`
    - This also syncs the root `package.json` version to match package release version.
 3. Commit version and changelog files.
-4. Create and push a release tag:
-   - `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
-   - `git push origin vX.Y.Z`
-
-Release trigger options:
-
-- Tag trigger: push `v*` tag (recommended for production releases).
-- Manual trigger: run `Publish to npm` workflow via `workflow_dispatch`.
+4. Push changes to `main`.
+5. Run `Publish to npm` workflow manually via `workflow_dispatch`.
+6. The workflow publishes with Changesets and creates/pushes `vX.Y.Z` automatically.
 
 Trusted Publishing note:
 

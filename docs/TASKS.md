@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Refactor release flow to manual GitHub dispatch publishing with automatic tag creation in workflow (no manual local tagging).
 - [x] Expand `.gitignore` to cover generated test report artifacts (`**/test-results/`, `*.junit.xml`, `.vitest/`).
 - [x] Fix CI reports workflow by building before coverage tests and hardening test-reporter permissions/behavior for forked PR contexts.
 - [x] Add GitHub CI report job with JUnit test publishing, coverage summary, and report artifacts upload.
