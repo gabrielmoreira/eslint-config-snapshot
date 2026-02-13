@@ -5,7 +5,7 @@ import {
   buildSnapshot,
   diffSnapshots,
   discoverWorkspaces,
-  extractRulesFromPrintConfig,
+  extractRulesForWorkspaceSamples,
   findConfigPath,
   getConfigScaffold,
   hasDiff,
@@ -340,7 +340,11 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
-    process.stdout.write(`Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\n`)
+    const color = createColorizer()
+    writeSectionTitle('Summary', color)
+    process.stdout.write(
+      `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
+    )
   }
 
   return 0
@@ -400,23 +404,23 @@ async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSn
       let extractedCount = 0
       let lastExtractionError: string | undefined
 
-      for (const sampledRel of sampled) {
-        const sampledAbs = path.resolve(workspaceAbs, sampledRel)
-        try {
-          extractedForGroup.push(extractRulesFromPrintConfig(workspaceAbs, sampledAbs))
-          extractedCount += 1
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : String(error)
-          if (
-            message.startsWith('Invalid JSON from eslint --print-config') ||
-            message.startsWith('Empty ESLint print-config output')
-          ) {
-            lastExtractionError = message
-            continue
-          }
+      const sampledAbs = sampled.map((sampledRel) => path.resolve(workspaceAbs, sampledRel))
+      const results = await extractRulesForWorkspaceSamples(workspaceAbs, sampledAbs)
 
-          throw error
+      for (const result of results) {
+        if (result.rules) {
+          extractedForGroup.push(result.rules)
+          extractedCount += 1
+          continue
         }
+
+        const message = result.error instanceof Error ? result.error.message : String(result.error)
+        if (isRecoverableExtractionError(message)) {
+          lastExtractionError = message
+          continue
+        }
+
+        throw result.error ?? new Error(message)
       }
 
       if (extractedCount === 0) {
@@ -432,6 +436,15 @@ async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSn
   }
 
   return snapshots
+}
+
+function isRecoverableExtractionError(message: string): boolean {
+  return (
+    message.startsWith('Invalid JSON from eslint --print-config') ||
+    message.startsWith('Empty ESLint print-config output') ||
+    message.includes('File ignored because of a matching ignore pattern') ||
+    message.includes('File ignored by default')
+  )
 }
 
 async function resolveWorkspaceAssignments(cwd: string, config: Awaited<ReturnType<typeof loadConfig>>) {

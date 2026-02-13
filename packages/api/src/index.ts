@@ -7,8 +7,8 @@ export type { GroupAssignment, GroupDefinition, WorkspaceDiscovery, WorkspaceInp
 export { sampleWorkspaceFiles } from './sampling.js'
 export type { SamplingConfig } from './sampling.js'
 
-export { extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from './extract.js'
-export type { ExtractedWorkspaceRules, NormalizedRuleEntry } from './extract.js'
+export { extractRulesForWorkspaceSamples, extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from './extract.js'
+export type { ExtractedWorkspaceRules, NormalizedRuleEntry, WorkspaceExtractionResult } from './extract.js'
 
 export { aggregateRules, buildSnapshot, readSnapshotFile, writeSnapshotFile } from './snapshot.js'
 export type { SnapshotFile } from './snapshot.js'

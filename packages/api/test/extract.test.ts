@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 
-import { extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from '../src/index.js'
+import { extractRulesForWorkspaceSamples, extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from '../src/index.js'
 
 const workspace = path.join(os.tmpdir(), `snapshot-extract-${Date.now()}`)
 
@@ -136,5 +136,30 @@ describe('extract', () => {
     expect(() => extractRulesFromPrintConfig(failingWorkspace, fileAbs)).toThrow(
       `Failed to run eslint --print-config for ${fileAbs}`
     )
+  })
+
+  it('extracts multiple sampled files in one workspace call', async () => {
+    const multiWorkspace = `${workspace}-multi`
+    await mkdir(path.join(multiWorkspace, 'node_modules/eslint/bin'), { recursive: true })
+    await mkdir(path.join(multiWorkspace, 'src'), { recursive: true })
+    await writeFile(path.join(multiWorkspace, 'node_modules/eslint/package.json'), JSON.stringify({ name: 'eslint', version: '0.0.0' }, null, 2))
+    await writeFile(
+      path.join(multiWorkspace, 'node_modules/eslint/bin/eslint.js'),
+      "console.log(JSON.stringify({ rules: { 'no-console': 1 } }))\n"
+    )
+
+    const fileA = path.join(multiWorkspace, 'src/a.ts')
+    const fileB = path.join(multiWorkspace, 'src/b.ts')
+    await writeFile(fileA, 'export const a = 1\n')
+    await writeFile(fileB, 'export const b = 1\n')
+
+    const extracted = await extractRulesForWorkspaceSamples(multiWorkspace, [fileA, fileB])
+    expect(extracted).toHaveLength(2)
+    for (const entry of extracted) {
+      expect(entry.error).toBeUndefined()
+      expect(entry.rules ? Object.fromEntries(entry.rules.entries()) : {}).toEqual({
+        'no-console': ['warn']
+      })
+    }
   })
 })

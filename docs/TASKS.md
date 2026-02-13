@@ -30,6 +30,8 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 - [x] Add effective evaluated config command (`config`).
 - [x] Fix deterministic handling of same-severity rule option conflicts during aggregation.
 - [x] Improve default `check` summary output with clearer section headers and aligned counters.
+- [x] Add output glossary to README for summary counter interpretation.
+- [x] Optimize workspace extraction flow to avoid repeated ESLint process startup per sampled file when ESLint API is available.
 
 ## Quality Gates
 

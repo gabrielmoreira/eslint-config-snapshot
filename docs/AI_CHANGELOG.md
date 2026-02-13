@@ -1220,3 +1220,27 @@ Result:
 - Clean summary now prints a structured `Summary` section instead of a dense single line.
 - Drift summary now prints a structured `Summary` section before grouped diff details.
 - Existing CLI integration/terminal tests remain green after the output refinement.
+
+## 2026-02-13 - Request 058
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Continue CLI output consistency improvements and optimize extraction performance for large monorepos where subprocess-per-file is too slow.
+
+Key decisions:
+
+- Kept script-oriented outputs stable (`status`, `print --format json`) while improving human-facing summary output and documentation.
+- Added a short output glossary in `README.md`.
+- Implemented workspace-scoped batch extraction entrypoint:
+  - prefer in-process ESLint API (`ESLint.calculateConfigForFile`) with one ESLint instance per workspace
+  - keep deterministic fallback to existing subprocess `--print-config` extraction when API loading is unavailable
+- Updated CLI snapshot computation to use batched workspace extraction and centralized recoverable-error filtering.
+- Added API test coverage for multi-file workspace extraction flow.
+
+Result:
+
+- Large repos avoid repeated process startup overhead per sampled file when ESLint API is available, improving runtime significantly.
+- Existing behavior remains compatible through fallback path.
+- Quality gates remain green after the refactor.

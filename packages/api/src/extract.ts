@@ -2,12 +2,14 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { canonicalizeJson, normalizeSeverity } from './core.js'
 
 export type NormalizedRuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
 
 export type ExtractedWorkspaceRules = Map<string, NormalizedRuleEntry>
+export type WorkspaceExtractionResult = { fileAbs: string; rules?: ExtractedWorkspaceRules; error?: Error }
 
 export function resolveEslintBinForWorkspace(workspaceAbs: string): string {
   const anchor = path.join(workspaceAbs, '__snapshot_anchor__.cjs')
@@ -86,6 +88,61 @@ export function extractRulesFromPrintConfig(workspaceAbs: string, fileAbs: strin
   }
 
   const rules = (parsed as { rules?: Record<string, unknown> }).rules ?? {}
+  return normalizeRules(rules)
+}
+
+export async function extractRulesForWorkspaceSamples(
+  workspaceAbs: string,
+  fileAbsList: string[]
+): Promise<WorkspaceExtractionResult[]> {
+  const evaluate = await createWorkspaceEvaluator(workspaceAbs)
+  const results: WorkspaceExtractionResult[] = []
+
+  for (const fileAbs of fileAbsList) {
+    try {
+      const rules = await evaluate(fileAbs)
+      results.push({ fileAbs, rules })
+    } catch (error: unknown) {
+      const normalizedError = error instanceof Error ? error : new Error(String(error))
+      results.push({ fileAbs, error: normalizedError })
+    }
+  }
+
+  return results
+}
+
+async function createWorkspaceEvaluator(
+  workspaceAbs: string
+): Promise<(fileAbs: string) => Promise<ExtractedWorkspaceRules>> {
+  try {
+    const anchor = path.join(workspaceAbs, '__snapshot_anchor__.cjs')
+    const req = createRequire(anchor)
+    const eslintModuleEntry = req.resolve('eslint')
+    const eslintModule = (await import(pathToFileURL(eslintModuleEntry).href)) as {
+      ESLint?: new (options: { cwd: string }) => { calculateConfigForFile: (fileAbs: string) => Promise<{ rules?: Record<string, unknown> } | undefined> }
+      default?: { ESLint?: new (options: { cwd: string }) => { calculateConfigForFile: (fileAbs: string) => Promise<{ rules?: Record<string, unknown> } | undefined> } }
+    }
+
+    const ESLintClass = eslintModule.ESLint ?? eslintModule.default?.ESLint
+    if (ESLintClass) {
+      const eslint = new ESLintClass({ cwd: workspaceAbs })
+      return async (fileAbs: string) => {
+        const config = await eslint.calculateConfigForFile(fileAbs)
+        if (!config || typeof config !== 'object') {
+          throw new Error(`Empty ESLint print-config output for ${fileAbs}`)
+        }
+
+        return normalizeRules(config.rules ?? {})
+      }
+    }
+  } catch {
+    // fall through to subprocess-based extractor
+  }
+
+  return (fileAbs: string) => Promise.resolve(extractRulesFromPrintConfig(workspaceAbs, fileAbs))
+}
+
+function normalizeRules(rules: Record<string, unknown>): ExtractedWorkspaceRules {
   const normalized = new Map<string, NormalizedRuleEntry>()
 
   for (const [ruleName, ruleConfig] of Object.entries(rules)) {

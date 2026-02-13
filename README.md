@@ -118,6 +118,15 @@ Snapshots are deterministic JSON and only store stable rule state:
 
 No timestamps, hashes, absolute paths, sampled files, or env noise.
 
+## Output Glossary
+
+- `changed groups`: snapshot groups with at least one detected difference.
+- `introduced rules`: rules now present that were not in baseline.
+- `removed rules`: rules that existed in baseline and are now absent.
+- `severity changes`: rules whose level changed (`off`, `warn`, `error`).
+- `options changes`: rules with same severity but different options.
+- `workspace membership changes`: workspaces moving in or out of a snapshot group.
+
 ## Scope Boundary
 
 `eslint-config-snapshot` captures the effective rule runtime for your current project configuration.
