@@ -27,7 +27,7 @@
     "test": "pnpm nx run-many -t test",
     "cli:dev": "pnpm exec tsx packages/cli/src/index.ts",
     "changeset": "changeset",
-    "release:version": "changeset version",
+    "release:version": "changeset version && node scripts/sync-root-version.mjs",
     "release:publish": "changeset publish"
   },
   "devDependencies": {

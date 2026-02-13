@@ -1591,3 +1591,22 @@ Key decisions:
 Result:
 
 - Config readability improved without changing API surface.
+
+## 2026-02-13 - Request 075
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Keep root repository version in sync with package versions automatically during release versioning.
+
+Key decisions:
+
+- Added `scripts/sync-root-version.mjs` to sync root `package.json` version from package release version.
+- Wired release flow to run sync automatically via:
+  - `release:version = changeset version && node scripts/sync-root-version.mjs`
+- Added release-process note to `docs/CONTRIBUTING.md`.
+
+Result:
+
+- Root version now advances together with package version bumps during standard Changesets release flow.

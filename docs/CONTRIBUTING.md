@@ -82,6 +82,7 @@ This repository uses Changesets for package versioning and release preparation.
    - `pnpm changeset`
 2. Apply versions:
    - `pnpm release:version`
+   - This also syncs the root `package.json` version to match package release version.
 3. Commit version and changelog files.
 4. Create and push a release tag:
    - `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
