@@ -60,6 +60,17 @@ const SPEC_SEARCH_PLACES = [
 ]
 
 export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
+  const found = await findConfigPath(cwd)
+  if (!found) {
+    return DEFAULT_CONFIG
+  }
+
+  return found.config
+}
+
+export async function findConfigPath(
+  cwd?: string
+): Promise<{ path: string; config: SnapshotterConfig } | null> {
   const root = path.resolve(cwd ?? process.cwd())
   const explorer = cosmiconfig('eslint-config-snapshotter', {
     searchPlaces: SPEC_SEARCH_PLACES,
@@ -68,12 +79,12 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
 
   const result = await explorer.search(root)
   if (!result) {
-    return DEFAULT_CONFIG
+    return null
   }
 
   const maybeConfig = await loadUserConfig(result.config)
 
-  return {
+  const config: SnapshotterConfig = {
     ...DEFAULT_CONFIG,
     ...maybeConfig,
     grouping: {
@@ -84,6 +95,11 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
       ...DEFAULT_CONFIG.sampling,
       ...maybeConfig.sampling
     }
+  }
+
+  return {
+    path: result.filepath,
+    config
   }
 }
 

@@ -11,11 +11,12 @@ const cliDist = path.resolve('dist/index.js')
 const HELP_TEXT = `eslint-config-snapshotter
 
 Usage:
-  eslint-config-snapshotter <command> [options]
+  eslint-config-snapshotter [command] [options]
 
 Commands:
   snapshot   Compute and write snapshots to .eslint-config-snapshots/
   compare    Compare current state against stored snapshots
+  what-changed Compare current state against stored snapshots and print a human summary
   status     Print minimal status (clean/changes)
   print      Print aggregated rules (JSON by default)
   init       Create eslint-config-snapshotter.config.mjs
@@ -23,6 +24,7 @@ Commands:
 
 Options:
   -h, --help   Show this help
+  --update     Update snapshots (usable without command)
   --short      Print compact human-readable output (print command only)
 `
 
@@ -87,6 +89,21 @@ describe('cli terminal invocation', () => {
     expect(compare.status).toBe(0)
     expect(compare.stdout).toBe('No snapshot changes detected.\n')
     expect(compare.stderr).toBe('')
+  })
+
+  it('default command prints clean summary when no drift', () => {
+    expect(run(['snapshot']).status).toBe(0)
+    const result = run([])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('No snapshot drift detected.')
+  })
+
+  it('default command reports missing local snapshots', () => {
+    const result = run([])
+    expect(result.status).toBe(1)
+    expect(result.stdout).toBe(
+      'No local snapshots found to compare against.\nRun `eslint-config-snapshotter --update` first.\n'
+    )
   })
 
   it('compare returns 1 and deterministic diff output when rules change', async () => {
@@ -227,5 +244,23 @@ no-debugger: off
     const raw = await readFile(path.join(repoRoot, '.eslint-config-snapshots/default.json'), 'utf8')
     const parsed = JSON.parse(raw) as { workspaces: string[] }
     expect(parsed.workspaces).toEqual(['packages/ws-a'])
+  })
+
+  it('updates snapshots with --update without command', () => {
+    const result = run(['--update'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('Snapshots updated:')
+    expect(result.stderr).toBe('')
+  })
+
+  it('explains missing config when running default command', async () => {
+    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+    await writeFile(path.join(repoRoot, 'package.json'), JSON.stringify({ name: 'fixture-repo', private: true }, null, 2))
+
+    const result = run([])
+    expect(result.status).toBe(1)
+    expect(result.stdout).toBe(
+      'No snapshotter config found.\nRun `eslint-config-snapshotter init` to create one, then run `eslint-config-snapshotter --update`.\n'
+    )
   })
 })

@@ -105,6 +105,13 @@ no-debugger: off
     expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Usage:'))
   })
 
+  it('runs update mode without command', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli(undefined, fixtureRoot, ['--update'])
+    expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Snapshots updated:'))
+  })
+
   it('supports ordered multi-group matching with first match wins', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-cli-grouped-'))
     await cp(fixtureRoot, tmp, { recursive: true })

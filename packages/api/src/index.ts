@@ -16,5 +16,5 @@ export type { SnapshotFile } from './snapshot.js'
 export { diffSnapshots, hasDiff } from './diff.js'
 export type { RuleOptionChange, RuleSeverityChange, SnapshotDiff, WorkspaceMembershipChange } from './diff.js'
 
-export { DEFAULT_CONFIG, getConfigScaffold, loadConfig } from './config.js'
+export { DEFAULT_CONFIG, findConfigPath, getConfigScaffold, loadConfig } from './config.js'
 export type { SnapshotterConfig } from './config.js'

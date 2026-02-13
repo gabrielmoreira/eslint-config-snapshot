@@ -39,13 +39,16 @@ pnpm nx run-many -t test
 Run built CLI:
 
 ```bash
-node packages/cli/dist/index.js <command>
+node packages/cli/dist/index.js [command]
 ```
+
+No command defaults to `what-changed` style output.
 
 Commands:
 
 - `snapshot`
 - `compare`
+- `what-changed`
 - `status`
 - `print`
 - `init`
@@ -53,6 +56,8 @@ Commands:
 
 Useful print option:
 - `print --short` for compact human-readable output (line-oriented by rule).
+Useful global option:
+- `--update` updates snapshots without explicitly typing the `snapshot` command.
 
 Help output (`--help`):
 
@@ -60,11 +65,12 @@ Help output (`--help`):
 eslint-config-snapshotter
 
 Usage:
-  eslint-config-snapshotter <command> [options]
+  eslint-config-snapshotter [command] [options]
 
 Commands:
   snapshot   Compute and write snapshots to .eslint-config-snapshots/
   compare    Compare current state against stored snapshots
+  what-changed Compare current state against stored snapshots and print a human summary
   status     Print minimal status (clean/changes)
   print      Print aggregated rules (JSON by default)
   init       Create eslint-config-snapshotter.config.mjs
@@ -72,6 +78,7 @@ Commands:
 
 Options:
   -h, --help   Show this help
+  --update     Update snapshots (usable without command)
   --short      Print compact human-readable output (print command only)
 ```
 
