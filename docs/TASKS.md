@@ -26,7 +26,8 @@ If any conflict exists, follow document priority from `AGENTS.md`.
 
 - [ ] Decide and implement final wording for clean/drift/status summaries after latest UX iterations.
 - [ ] Commit pending CLI UX changes and related tests.
-- [ ] Run full repo quality gates (`build`, `lint`, `typecheck`, `test`) after pending commit.
+- [x] Run full repo quality gates (`build`, `lint`, `typecheck`, `test`) after pending commit.
+- [x] Fix npm provenance publish metadata mismatch by setting package `repository` fields.
 
 ### Quick Wins (Practical Near-Term)
 

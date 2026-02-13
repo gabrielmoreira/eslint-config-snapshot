@@ -1,5 +1,13 @@
 # @eslint-config-snapshot/cli
 
+## 0.1.4
+
+### Patch Changes
+
+- Fix npm trusted publishing provenance metadata by adding repository/homepage/bugs fields to package manifests.
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

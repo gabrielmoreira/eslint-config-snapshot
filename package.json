@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gabrielmoreira/eslint-config-snapshot"
+  },
+  "homepage": "https://github.com/gabrielmoreira/eslint-config-snapshot#readme",
+  "bugs": {
+    "url": "https://github.com/gabrielmoreira/eslint-config-snapshot/issues"
+  },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=10.29.3"

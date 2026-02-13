@@ -869,3 +869,26 @@ Key decisions:
 Result:
 
 - Repository is prepared for the next automated npm publish run with versions aligned to the new tag.
+
+## 2026-02-13 - Request 042
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix npm Trusted Publishing failure (`E422`) caused by provenance repository validation mismatch during `changeset publish`.
+
+Key decisions:
+
+- Added explicit repository metadata to all relevant package manifests:
+  - root `package.json`
+  - `packages/api/package.json`
+  - `packages/cli/package.json`
+- Used canonical GitHub repository URL expected by npm provenance:
+  - `https://github.com/gabrielmoreira/eslint-config-snapshot`
+- Added `homepage` and `bugs` metadata for completeness and clearer package registry metadata.
+
+Result:
+
+- Package manifests now include repository metadata required for npm provenance verification.
+- Next tag-triggered publish run can validate repository identity against GitHub OIDC provenance.
