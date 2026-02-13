@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.14.0
+
+### Minor Changes
+
+- Improve repository hygiene by expanding .gitignore for generated test report artifacts and Vitest local cache.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.14.0
+
 ## 0.13.0
 
 ### Minor Changes

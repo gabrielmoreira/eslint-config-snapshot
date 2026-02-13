@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.14.0
+
+### Minor Changes
+
+- Improve repository hygiene by expanding .gitignore for generated test report artifacts and Vitest local cache.
+
 ## 0.13.0
 
 ### Minor Changes

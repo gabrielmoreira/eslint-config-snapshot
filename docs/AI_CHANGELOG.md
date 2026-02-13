@@ -1871,3 +1871,24 @@ Result:
 - Coverage-enabled CLI test execution is stable locally.
 - Reports workflow no longer depends on unavailable dist artifacts.
 - Test report publication is resilient to GitHub token scope limitations in restricted PR contexts.
+
+## 2026-02-13 - Request 087
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure generated test result artifacts are ignored by git and review if additional ignore entries are needed.
+
+Key decisions:
+
+- Added ignore rules for generated report outputs and local Vitest cache:
+  - `**/test-results/`
+  - `*.junit.xml`
+  - `.vitest/`
+- Kept existing ignore entries for coverage and build outputs unchanged.
+
+Result:
+
+- Test/coverage report files generated locally are no longer surfaced as untracked changes.
+- Repository cleanliness is improved for day-to-day local runs and CI parity.
