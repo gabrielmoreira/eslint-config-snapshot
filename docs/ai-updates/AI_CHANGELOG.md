@@ -427,3 +427,147 @@ Result:
 - Console messaging is more positive in the primary human-facing flows.
 - Behavioral semantics and exit codes remain unchanged.
 - CLI terminal tests were updated to reflect the revised wording.
+
+## 2026-02-13 - Request 021
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Avoid making severity counters look like runtime errors in clean summaries while keeping the counts visible.
+
+Key decisions:
+
+- Replaced textual severity labels in summary lines with a compact neutral format:
+  - `levels E/W/O: <error>/<warn>/<off>`
+- Applied the format consistently to:
+  - first-run state summary
+  - clean baseline status summary
+  - drift summary counts line
+
+Result:
+
+- Severity counters remain available and readable.
+- Summary output now feels more neutral and less error-like.
+- CLI tests were updated to match the new output contract.
+
+## 2026-02-13 - Request 022
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Replace the `E/W/O` shorthand with a human-readable summary that still avoids looking like an execution failure.
+
+Key decisions:
+
+- Replaced shorthand severity counters with explicit wording:
+  - `severity mix: <errors> errors, <warnings> warnings, <off> off`
+- Applied consistently to all summary surfaces that present aggregated rule counts.
+
+Result:
+
+- Summaries are now easier to read for humans.
+- Severity context remains explicit without cryptic abbreviations.
+- CLI terminal assertions were updated accordingly.
+
+## 2026-02-13 - Request 023
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve `init` interaction so users do not need precise free-text typing, preferably using a selector-like numeric flow.
+
+Key decisions:
+
+- Reworked interactive `init` prompts to numbered choices:
+  - target: `1) package-json`, `2) file`
+  - preset: `1) minimal`, `2) full`
+- Added validation loops with clear retry messages when input is invalid.
+- Kept compatibility with text aliases (`package`, `pkg`, `file`, `minimal`, `min`, `full`) and default Enter behavior.
+
+Result:
+
+- `init` is easier to use and less typo-prone.
+- Numeric flow provides predictable UX without introducing heavy prompt dependencies.
+- Added parser coverage tests for positive and negative inputs.
+
+## 2026-02-13 - Request 024
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Make `init` fail immediately when any existing config is detected, unless `--force` is explicitly provided, to avoid conflicting config locations.
+
+Key decisions:
+
+- Added an early preflight check in `init` using `findConfigPath`.
+- New behavior:
+  - if config exists and `--force` is not passed: exit with an explicit conflict message and guidance
+  - if `--force` is passed: proceed
+- Added `-f, --force` option to `init`.
+- Kept target-specific overwrite protection, but allowed overwrite when `--force` is set.
+
+Result:
+
+- `init` is now safe-by-default and avoids accidental multi-source config conflicts.
+- Advanced users can intentionally bypass the guard with `--force`.
+- CLI terminal coverage now includes blocked and forced paths.
+
+## 2026-02-13 - Request 025
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve `AGENTS.md` and `TASKS.md` to better reflect the current collaboration style.
+- Rework implementation review into a status-oriented checklist.
+- Separate short-term actionable items from future exploration ideas.
+- Maintain an explicit agent follow-up list for unresolved or deferred work.
+
+Key decisions:
+
+- Expanded `docs/AGENTS.md` with collaboration rhythm and documentation maintenance rules.
+- Reworked `docs/TASKS.md` into a structured checklist board:
+  - core shipped workstream
+  - active short-cycle tasks
+  - quick wins
+  - exploration backlog
+  - agent follow-up list
+- Replaced narrative-heavy `docs/IMPLEMENTATION_REVIEW.md` with a live status board:
+  - shipped
+  - in progress
+  - remaining practical work
+  - fast follow opportunities
+  - exploration ideas
+  - agent tasklist
+
+Result:
+
+- Project process docs now provide faster status scanning and clearer next actions.
+- Long-term ideas are separated from immediate executable tasks.
+- Agent responsibilities for unresolved items are now explicit and continuously trackable.
+
+## 2026-02-13 - Request 026
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve `init --help` with practical examples, including numbered prompt usage and `--force` guidance, then commit.
+
+Key decisions:
+
+- Added explicit examples to `init` command help text:
+  - interactive numbered prompt flow
+  - non-interactive package.json minimal setup
+  - forced run when existing config is detected
+- Added terminal test coverage for `init --help` output to prevent regressions.
+- Marked the related quick-win item as completed in `docs/TASKS.md`.
+
+Result:
+
+- `init --help` now provides clearer onboarding and conflict-resolution guidance.
+- CLI help behavior is now validated by tests.

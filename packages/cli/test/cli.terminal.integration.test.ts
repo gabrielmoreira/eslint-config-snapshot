@@ -85,7 +85,7 @@ describe('cli terminal invocation', () => {
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'Current rule state: 1 groups, 3 rules (2 error, 0 warn, 1 off).\nYou are almost set: no baseline snapshot found yet.\nRun `eslint-config-snapshot --update` to create your first baseline.\n'
+      'Current rule state: 1 groups, 3 rules (severity mix: 2 errors, 0 warnings, 1 off).\nYou are almost set: no baseline snapshot found yet.\nRun `eslint-config-snapshot --update` to create your first baseline.\n'
     )
   })
 
@@ -213,7 +213,8 @@ no-debugger: off
     const existing = run(['init', '--yes', '--target', 'file'])
     expect(existing.status).toBe(1)
     expect(existing.stdout).toBe('')
-    expect(existing.stderr).toBe('Config already exists: eslint-config-snapshot.config.mjs\n')
+    expect(existing.stderr).toContain('Existing config detected at ')
+    expect(existing.stderr).toContain('rerun with --force')
   })
 
   it('init can write config to package.json', async () => {
@@ -232,6 +233,39 @@ no-debugger: off
     const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
     const parsed = JSON.parse(packageJsonRaw) as { 'eslint-config-snapshot'?: Record<string, unknown> }
     expect(parsed['eslint-config-snapshot']).toEqual({})
+  })
+
+  it('init fails early on existing config unless --force is provided', async () => {
+    const initRoot = path.join(tmpDir, 'init-force-case')
+    await rm(initRoot, { recursive: true, force: true })
+    await cp(fixtureRoot, initRoot, { recursive: true })
+    repoRoot = initRoot
+
+    await writeFile(
+      path.join(repoRoot, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'fixture-repo',
+          private: true,
+          'eslint-config-snapshot': {
+            grouping: { mode: 'standalone' }
+          }
+        },
+        null,
+        2
+      )
+    )
+
+    const blocked = run(['init', '--yes', '--target', 'file', '--preset', 'full'])
+    expect(blocked.status).toBe(1)
+    expect(blocked.stdout).toBe('')
+    expect(blocked.stderr).toContain('Existing config detected at ')
+    expect(blocked.stderr).toContain('rerun with --force')
+
+    const forced = run(['init', '--yes', '--force', '--target', 'file', '--preset', 'full'])
+    expect(forced.status).toBe(0)
+    expect(forced.stdout).toBe('Created eslint-config-snapshot.config.mjs\n')
+    expect(forced.stderr).toBe('')
   })
 
   it('surfaces runtime errors with exit code 1', async () => {
@@ -283,6 +317,18 @@ no-debugger: off
     const result = run(['--update'])
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Baseline updated:')
+    expect(result.stderr).toBe('')
+  })
+
+  it('prints init help with numbered prompt and force guidance', () => {
+    const result = run(['init', '--help'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('Initialize config (file or package.json)')
+    expect(result.stdout).toContain('-f, --force')
+    expect(result.stdout).toContain('Runs interactive numbered prompts:')
+    expect(result.stdout).toContain('target: 1) package-json, 2) file')
+    expect(result.stdout).toContain('preset: 1) minimal, 2) full')
+    expect(result.stdout).toContain('--yes --force --target file --preset full')
     expect(result.stderr).toBe('')
   })
 

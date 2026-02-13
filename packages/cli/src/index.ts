@@ -144,8 +144,25 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
     .description('Initialize config (file or package.json)')
     .option('--target <target>', 'Config target: file|package-json', parseInitTarget)
     .option('--preset <preset>', 'Config preset: minimal|full', parseInitPreset)
+    .option('-f, --force', 'Allow init even when an existing config is detected')
     .option('-y, --yes', 'Skip prompts and use defaults/options')
-    .action(async (opts: { target?: InitTarget; preset?: InitPreset; yes?: boolean }) => {
+    .addHelpText(
+      'after',
+      `
+Examples:
+  $ eslint-config-snapshot init
+    Runs interactive numbered prompts:
+      target: 1) package-json, 2) file
+      preset: 1) minimal, 2) full
+
+  $ eslint-config-snapshot init --yes --target package-json --preset minimal
+    Non-interactive minimal setup in package.json.
+
+  $ eslint-config-snapshot init --yes --force --target file --preset full
+    Overwrite-safe bypass when a config is already detected.
+`
+    )
+    .action(async (opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean }) => {
       onActionExit(await runInit(cwd, opts))
     })
 
@@ -234,7 +251,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   if (storedSnapshots.size === 0) {
     const summary = summarizeSnapshots(currentSnapshots)
     process.stdout.write(
-      `Current rule state: ${summary.groups} groups, ${summary.rules} rules (${summary.error} error, ${summary.warn} warn, ${summary.off} off).\n`
+      `Current rule state: ${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off).\n`
     )
 
     const canPromptBaseline = defaultInvocation || format === 'summary'
@@ -499,8 +516,17 @@ function getDisplayOptionChanges(diff: SnapshotDiff): SnapshotDiff['optionChange
 
 async function runInit(
   cwd: string,
-  opts: { target?: InitTarget; preset?: InitPreset; yes?: boolean } = {}
+  opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean } = {}
 ): Promise<number> {
+  const force = opts.force ?? false
+  const existing = await findConfigPath(cwd)
+  if (existing && !force) {
+    process.stderr.write(
+      `Existing config detected at ${existing.path}. Creating another config can cause conflicts. Remove the existing config or rerun with --force.\n`
+    )
+    return 1
+  }
+
   let target = opts.target
   let preset = opts.preset
   if (!opts.yes && !target && !preset && process.stdin.isTTY && process.stdout.isTTY) {
@@ -513,25 +539,74 @@ async function runInit(
   const finalPreset = preset ?? 'minimal'
 
   if (finalTarget === 'package-json') {
-    return runInitInPackageJson(cwd, finalPreset)
+    return runInitInPackageJson(cwd, finalPreset, force)
   }
 
-  return runInitInFile(cwd, finalPreset)
+  return runInitInFile(cwd, finalPreset, force)
 }
 
 async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
   const rl = createInterface({ input: process.stdin, output: process.stdout })
   try {
-    const targetRaw = await askQuestion(rl, 'Write config to file or package.json? [package-json] ')
-    const presetRaw = await askQuestion(rl, 'Use minimal or full preset? [minimal] ')
-    const targetAnswer = targetRaw.trim().toLowerCase()
-    const presetAnswer = presetRaw.trim().toLowerCase()
-    const target = targetAnswer === 'file' ? 'file' : 'package-json'
-    const preset = presetAnswer === 'full' ? 'full' : 'minimal'
+    const target = await askInitTarget(rl)
+    const preset = await askInitPreset(rl)
     return { target, preset }
   } finally {
     rl.close()
   }
+}
+
+async function askInitTarget(rl: ReturnType<typeof createInterface>): Promise<InitTarget> {
+  while (true) {
+    const answer = await askQuestion(
+      rl,
+      'Select config target:\n  1) package-json (recommended)\n  2) file\nChoose [1]: '
+    )
+    const parsed = parseInitTargetChoice(answer)
+    if (parsed) {
+      return parsed
+    }
+    process.stdout.write('Please choose 1 (package-json) or 2 (file).\n')
+  }
+}
+
+async function askInitPreset(rl: ReturnType<typeof createInterface>): Promise<InitPreset> {
+  while (true) {
+    const answer = await askQuestion(rl, 'Select preset:\n  1) minimal (recommended)\n  2) full\nChoose [1]: ')
+    const parsed = parseInitPresetChoice(answer)
+    if (parsed) {
+      return parsed
+    }
+    process.stdout.write('Please choose 1 (minimal) or 2 (full).\n')
+  }
+}
+
+export function parseInitTargetChoice(value: string): InitTarget | undefined {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '') {
+    return 'package-json'
+  }
+  if (normalized === '1' || normalized === 'package-json' || normalized === 'packagejson' || normalized === 'package' || normalized === 'pkg') {
+    return 'package-json'
+  }
+  if (normalized === '2' || normalized === 'file') {
+    return 'file'
+  }
+  return undefined
+}
+
+export function parseInitPresetChoice(value: string): InitPreset | undefined {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '') {
+    return 'minimal'
+  }
+  if (normalized === '1' || normalized === 'minimal' || normalized === 'min') {
+    return 'minimal'
+  }
+  if (normalized === '2' || normalized === 'full') {
+    return 'full'
+  }
+  return undefined
 }
 
 function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
@@ -557,7 +632,7 @@ async function askYesNo(prompt: string, defaultYes: boolean): Promise<boolean> {
   }
 }
 
-async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
+async function runInitInFile(cwd: string, preset: InitPreset, force: boolean): Promise<number> {
   const candidates = [
     '.eslint-config-snapshot.js',
     '.eslint-config-snapshot.cjs',
@@ -570,8 +645,10 @@ async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
   for (const candidate of candidates) {
     try {
       await access(path.join(cwd, candidate))
-      process.stderr.write(`Config already exists: ${candidate}\n`)
-      return 1
+      if (!force) {
+        process.stderr.write(`Config already exists: ${candidate}\n`)
+        return 1
+      }
     } catch {
       // continue
     }
@@ -583,7 +660,7 @@ async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
   return 0
 }
 
-async function runInitInPackageJson(cwd: string, preset: InitPreset): Promise<number> {
+async function runInitInPackageJson(cwd: string, preset: InitPreset, force: boolean): Promise<number> {
   const packageJsonPath = path.join(cwd, 'package.json')
 
   let packageJsonRaw: string
@@ -602,10 +679,10 @@ async function runInitInPackageJson(cwd: string, preset: InitPreset): Promise<nu
     return 1
   }
 
-  if (parsed['eslint-config-snapshot'] !== undefined) {
-    process.stderr.write('Config already exists in package.json: eslint-config-snapshot\n')
-    return 1
-  }
+  if (parsed['eslint-config-snapshot'] !== undefined && !force) {
+      process.stderr.write('Config already exists in package.json: eslint-config-snapshot\n')
+      return 1
+    }
 
   parsed['eslint-config-snapshot'] = preset === 'full' ? getFullPresetObject() : {}
   await writeFile(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
@@ -646,7 +723,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
   if (changes.length === 0) {
     process.stdout.write(color.green('Great news: no snapshot drift detected.\n'))
     process.stdout.write(
-      `Baseline status: ${currentSummary.groups} groups, ${currentSummary.rules} rules (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off).\n`
+      `Baseline status: ${currentSummary.groups} groups, ${currentSummary.rules} rules (severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off).\n`
     )
     return 0
   }
@@ -656,7 +733,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     `Changed groups: ${changes.length} | introduced: ${changeSummary.introduced} | removed: ${changeSummary.removed} | severity: ${changeSummary.severity} | options: ${changeSummary.options} | workspace membership: ${changeSummary.workspace}\n`
   )
   process.stdout.write(
-    `Current rules: ${currentSummary.rules} (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off)\n\n`
+    `Current rules: ${currentSummary.rules} (severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off)\n\n`
   )
 
   for (const change of changes) {
