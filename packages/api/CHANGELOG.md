@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.9.0
+
+### Minor Changes
+
+- Release minor version with robust CLI version resolution and improved runtime log UX.
+
 ## 0.8.0
 
 ### Minor Changes
