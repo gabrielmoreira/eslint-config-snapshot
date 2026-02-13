@@ -232,6 +232,11 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   const storedSnapshots = await loadStoredSnapshots(cwd)
 
   if (storedSnapshots.size === 0) {
+    const summary = summarizeSnapshots(currentSnapshots)
+    process.stdout.write(
+      `Current state: ${summary.groups} groups, ${summary.rules} rules (${summary.error} error, ${summary.warn} warn, ${summary.off} off).\n`
+    )
+
     const canPromptBaseline = defaultInvocation || format === 'summary'
     if (canPromptBaseline && process.stdin.isTTY && process.stdout.isTTY) {
       const shouldCreateBaseline = await askYesNo(

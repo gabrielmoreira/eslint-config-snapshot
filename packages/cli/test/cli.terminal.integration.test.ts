@@ -87,7 +87,7 @@ describe('cli terminal invocation', () => {
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'No baseline snapshot found.\nRun `eslint-config-snapshot --update` to create one.\n'
+      'Current state: 1 groups, 3 rules (2 error, 0 warn, 1 off).\nNo baseline snapshot found.\nRun `eslint-config-snapshot --update` to create one.\n'
     )
   })
 

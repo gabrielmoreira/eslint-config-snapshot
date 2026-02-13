@@ -361,3 +361,22 @@ Result:
 - Documentation set is now consistent with current runtime behavior and naming.
 - Reader navigation is improved through additional cross-links and clearer sectioning.
 - Core specification and user-facing docs now describe the same baseline lifecycle and initialization model.
+
+## 2026-02-13 - Request 018
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve first-run UX so the CLI prints a concise summary of detected rule state before asking whether to create the initial baseline.
+
+Key decisions:
+
+- Added a `Current state` line (groups, total rules, severity counts) in no-baseline check flow before prompt/error handling.
+- Kept the existing interactive baseline question and non-interactive `--update` guidance unchanged.
+- Updated terminal output assertions to reflect the new summary line.
+
+Result:
+
+- First-run output now provides immediate context on what was detected before baseline confirmation.
+- CLI tests remain green after output contract updates.
