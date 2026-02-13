@@ -8,7 +8,7 @@ See also: [`SPEC.md`](SPEC.md), [`TASKS.md`](TASKS.md), [`README.md`](../README.
 
 Requirements:
 
-- Node.js 18+
+- Node.js 20+
 - pnpm
 
 Install:
@@ -73,3 +73,26 @@ Operating model:
 - Codex records request/result history in `docs/AI_CHANGELOG.md`.
 
 Human maintainers remain the final reviewers for architecture and release decisions.
+
+## Release Process (Changesets)
+
+This repository uses Changesets for package versioning and release preparation.
+
+1. Create a changeset:
+   - `pnpm changeset`
+2. Apply versions:
+   - `pnpm release:version`
+3. Commit version and changelog files.
+4. Create and push a release tag:
+   - `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+   - `git push origin vX.Y.Z`
+
+Release trigger options:
+
+- Tag trigger: push `v*` tag (recommended for production releases).
+- Manual trigger: run `Publish to npm` workflow via `workflow_dispatch`.
+
+Trusted Publishing note:
+
+- npm publication is configured to use GitHub Trusted Publishing (OIDC).
+- No long-lived `NPM_TOKEN` is required for the release workflow.

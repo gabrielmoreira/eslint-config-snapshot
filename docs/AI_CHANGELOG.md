@@ -796,3 +796,23 @@ Result:
 
 - Versioning workflow is now standardized for monorepo packages.
 - Reduced risk of mismatch between intended release version and published package versions.
+
+## 2026-02-13 - Request 038
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Prepare a new release version with Changesets, remove old tags, keep only the new release tag, and document release trigger flow in CONTRIBUTING.
+
+Key decisions:
+
+- Deleted previous release tag `v0.8.0` locally and on `origin`.
+- Created a patch changeset for both publishable packages and applied versions to `0.1.1`.
+- Kept release tag aligned with package versions (`v0.1.1`).
+- Updated `docs/CONTRIBUTING.md` with explicit Changesets release steps and trigger options (`v*` tag and manual workflow dispatch).
+
+Result:
+
+- Repository is ready for a clean, version-aligned release tag flow.
+- Documentation now explains exactly how to trigger releases with the current pipeline.
