@@ -6,6 +6,11 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -70,6 +75,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build (required for CLI integration tests)
+        run: pnpm nx run-many -t build
+
       - name: Test API with coverage + JUnit
         run: pnpm vitest run --coverage.enabled --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
         working-directory: packages/api
@@ -79,13 +87,14 @@ jobs:
         working-directory: packages/cli
 
       - name: Publish unit test report
-        if: always()
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
         uses: dorny/test-reporter@v1
         with:
           name: Vitest Results
           path: packages/**/test-results/junit.xml
           reporter: java-junit
-          fail-on-error: true
+          fail-on-error: false
 
       - name: Publish coverage summary
         if: always()

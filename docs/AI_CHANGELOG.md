@@ -1848,3 +1848,26 @@ Result:
 - CI now surfaces richer test and coverage reporting directly in GitHub workflow runs.
 - Coverage and JUnit outputs are retained as downloadable artifacts for debugging/history.
 - Existing local test flow remains unchanged.
+
+## 2026-02-13 - Request 086
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix CI failures introduced by the reports workflow (CLI test failures under coverage mode and report publication permissions).
+
+Key decisions:
+
+- Updated `.github/workflows/ci.yml` reports job to run `pnpm nx run-many -t build` before coverage test runs, ensuring CLI integration tests can resolve built artifacts (`packages/cli/dist` and API package entry points).
+- Added top-level workflow permissions for checks/pull-requests and hardened `dorny/test-reporter` step with:
+  - conditional execution for safe PR contexts,
+  - `continue-on-error: true`,
+  - `fail-on-error: false`.
+- Updated CLI entrypoint shutdown behavior to use `process.exitCode` instead of immediate `process.exit(...)` to avoid stdout truncation risk in instrumented/coverage subprocess environments.
+
+Result:
+
+- Coverage-enabled CLI test execution is stable locally.
+- Reports workflow no longer depends on unavailable dist artifacts.
+- Test report publication is resilient to GitHub token scope limitations in restricted PR contexts.

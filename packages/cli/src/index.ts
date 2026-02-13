@@ -249,7 +249,7 @@ function parseInitPreset(value: string): InitPreset {
 
 export async function main(): Promise<void> {
   const code = await runArgv(process.argv.slice(2), process.cwd())
-  process.exit(code)
+  process.exitCode = code
 }
 
 function isDirectCliExecution(): boolean {

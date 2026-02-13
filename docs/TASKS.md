@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Fix CI reports workflow by building before coverage tests and hardening test-reporter permissions/behavior for forked PR contexts.
 - [x] Add GitHub CI report job with JUnit test publishing, coverage summary, and report artifacts upload.
 - [x] Align isolated npm/pnpm integration test expectations with multi-variant rule snapshot encoding.
 - [x] Add architecture guidance documenting API/CLI file responsibilities and practical module boundaries.
