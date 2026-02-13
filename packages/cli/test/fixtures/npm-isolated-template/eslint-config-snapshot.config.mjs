@@ -10,7 +10,6 @@ export default {
   sampling: {
     maxFilesPerWorkspace: 8,
     includeGlobs: ['**/*.ts'],
-    excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-    hintGlobs: []
+    excludeGlobs: ['**/node_modules/**', '**/dist/**']
   }
 }

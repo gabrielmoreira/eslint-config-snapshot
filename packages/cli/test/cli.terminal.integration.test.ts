@@ -337,7 +337,7 @@ no-debugger: off
       `export default {
   workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a'] },
   grouping: { mode: 'match', allowEmptyGroups: false, groups: [{ name: 'never', match: ['ops/**'] }] },
-  sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'], hintGlobs: [] }
+  sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'] }
 }
 `
     )
@@ -360,7 +360,7 @@ no-debugger: off
           'eslint-config-snapshot': {
             workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a'] },
             grouping: { mode: 'match', groups: [{ name: 'default', match: ['**/*'] }] },
-            sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'], hintGlobs: [] }
+            sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'] }
           }
         },
         null,

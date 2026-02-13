@@ -24,7 +24,7 @@ export type SnapshotConfig = {
     maxFilesPerWorkspace: number
     includeGlobs: string[]
     excludeGlobs: string[]
-    hintGlobs: string[]
+    tokenHints?: string[] | string[][]
   }
 }
 
@@ -37,13 +37,7 @@ export const DEFAULT_CONFIG: SnapshotConfig = {
   sampling: {
     maxFilesPerWorkspace: 10,
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
-    excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-    hintGlobs: [
-      '**/{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{service,controller,route,routes,handler,model,schema,repository,view,views}.{js,jsx,ts,tsx}',
-      '**/{service,controller,route,routes,handler,model,schema,repository,view,views}/**/*.{js,jsx,ts,tsx,cjs,mjs}'
-    ]
+    excludeGlobs: ['**/node_modules/**', '**/dist/**']
   }
 }
 
@@ -138,11 +132,31 @@ export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
     maxFilesPerWorkspace: 10,
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-    hintGlobs: [
-      '**/{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{service,controller,route,routes,handler,model,schema,repository,view,views}.{js,jsx,ts,tsx}',
-      '**/{service,controller,route,routes,handler,model,schema,repository,view,views}/**/*.{js,jsx,ts,tsx,cjs,mjs}'
+    tokenHints: [
+      'chunk',
+      'conf',
+      'config',
+      'container',
+      'controller',
+      'helpers',
+      'mock',
+      'mocks',
+      'presentation',
+      'repository',
+      'route',
+      'routes',
+      'schema',
+      'setup',
+      'spec',
+      'stories',
+      'style',
+      'styles',
+      'test',
+      'type',
+      'types',
+      'utils',
+      'view',
+      'views'
     ]
   }
 }\n`

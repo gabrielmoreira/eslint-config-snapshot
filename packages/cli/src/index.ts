@@ -974,11 +974,31 @@ function getFullPresetObject() {
       maxFilesPerWorkspace: 10,
       includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
       excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-      hintGlobs: [
-        '**/{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-        '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-        '**/*.{service,controller,route,routes,handler,model,schema,repository,view,views}.{js,jsx,ts,tsx}',
-        '**/{service,controller,route,routes,handler,model,schema,repository,view,views}/**/*.{js,jsx,ts,tsx,cjs,mjs}'
+      tokenHints: [
+        'chunk',
+        'conf',
+        'config',
+        'container',
+        'controller',
+        'helpers',
+        'mock',
+        'mocks',
+        'presentation',
+        'repository',
+        'route',
+        'routes',
+        'schema',
+        'setup',
+        'spec',
+        'stories',
+        'style',
+        'styles',
+        'test',
+        'type',
+        'types',
+        'utils',
+        'view',
+        'views'
       ]
     }
   }

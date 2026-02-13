@@ -106,7 +106,7 @@ export default {
     maxFilesPerWorkspace: 8,
     includeGlobs: ['src/**/*.{ts,tsx,js,mjs,cjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**', '**/coverage/**'],
-    hintGlobs: ['src/index.ts', 'src/main.ts']
+    tokenHints: ['controller', 'service', 'repository', 'route', 'view']
   }
 }
 ```
@@ -114,4 +114,4 @@ export default {
 When to use:
 
 - You need explicit sampling scope or stronger exclusions.
-- You want deterministic hints to bias representative files.
+- You want to bias representative file-role diversity through token priorities.

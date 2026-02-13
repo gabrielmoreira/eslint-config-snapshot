@@ -20,8 +20,7 @@ describe('sampleWorkspaceFiles', () => {
     const result = await sampleWorkspaceFiles(tmp, {
       maxFilesPerWorkspace: 8,
       includeGlobs: ['**/*.ts'],
-      excludeGlobs: [],
-      hintGlobs: []
+      excludeGlobs: []
     })
 
     expect(result).toEqual(['src/a.ts', 'src/b.ts'])
@@ -37,8 +36,7 @@ describe('sampleWorkspaceFiles', () => {
     const result = await sampleWorkspaceFiles(tmp, {
       maxFilesPerWorkspace: 8,
       includeGlobs: ['many/**/*.ts'],
-      excludeGlobs: [],
-      hintGlobs: []
+      excludeGlobs: []
     })
 
     expect(result).toEqual([
@@ -53,7 +51,7 @@ describe('sampleWorkspaceFiles', () => {
     ])
   })
 
-  it('prefers token-diverse hinted files before fallback spacing', async () => {
+  it('prefers token-diverse files before fallback spacing', async () => {
     await mkdir(path.join(tmp, 'tokens'), { recursive: true })
     const files = [
       'tokens/auth.service.ts',
@@ -75,14 +73,13 @@ describe('sampleWorkspaceFiles', () => {
     const result = await sampleWorkspaceFiles(tmp, {
       maxFilesPerWorkspace: 6,
       includeGlobs: ['tokens/**/*.ts'],
-      excludeGlobs: [],
-      hintGlobs: ['tokens/**/*.service.ts']
+      excludeGlobs: []
     })
 
     expect(result).toEqual([
       'tokens/auth.controller.ts',
       'tokens/auth.service.ts',
-      'tokens/billing.service.ts',
+      'tokens/billing.controller.ts',
       'tokens/shared.format.ts',
       'tokens/shared.helper.ts',
       'tokens/shared.view.ts'
@@ -99,8 +96,7 @@ describe('sampleWorkspaceFiles', () => {
     const result = await sampleWorkspaceFiles(tmp, {
       maxFilesPerWorkspace: 4,
       includeGlobs: ['region/**/*.ts'],
-      excludeGlobs: [],
-      hintGlobs: []
+      excludeGlobs: []
     })
 
     expect(result).toContain('region/file-01.ts')

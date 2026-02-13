@@ -69,24 +69,24 @@ describe('loadConfig', () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     await writeFile(
       path.join(tmp, '.eslint-config-snapshot.js'),
-      'export default () => ({ grouping: { mode: "standalone" }, sampling: { hintGlobs: ["src/**"] } })\n'
+      'export default () => ({ grouping: { mode: "standalone" }, sampling: { includeGlobs: ["src/**"] } })\n'
     )
 
     const config = await loadConfig(tmp)
     expect(config.grouping.mode).toBe('standalone')
-    expect(config.sampling.hintGlobs).toEqual(['src/**'])
+    expect(config.sampling.includeGlobs).toEqual(['src/**'])
   })
 
   it('executes async function exports', async () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     await writeFile(
       path.join(tmp, '.eslint-config-snapshot.mjs'),
-      'export default async () => ({ sampling: { maxFilesPerWorkspace: 3, hintGlobs: ["src/**"] } })\n'
+      'export default async () => ({ sampling: { maxFilesPerWorkspace: 3, includeGlobs: ["src/**"] } })\n'
     )
 
     const config = await loadConfig(tmp)
     expect(config.sampling.maxFilesPerWorkspace).toBe(3)
-    expect(config.sampling.hintGlobs).toEqual(['src/**'])
+    expect(config.sampling.includeGlobs).toEqual(['src/**'])
   })
 
   it('throws deterministic error when config export is invalid', async () => {

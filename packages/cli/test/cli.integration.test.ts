@@ -211,8 +211,7 @@ no-debugger: off
   sampling: {
     maxFilesPerWorkspace: 8,
     includeGlobs: ['**/*.ts'],
-    excludeGlobs: ['**/node_modules/**'],
-    hintGlobs: []
+    excludeGlobs: ['**/node_modules/**']
   }
 }
 `
@@ -251,8 +250,7 @@ no-debugger: off
   sampling: {
     maxFilesPerWorkspace: 8,
     includeGlobs: ['**/*.ts'],
-    excludeGlobs: ['**/node_modules/**'],
-    hintGlobs: []
+    excludeGlobs: ['**/node_modules/**']
   }
 }
 `

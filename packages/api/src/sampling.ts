@@ -1,6 +1,5 @@
 import createDebug from 'debug'
 import fg from 'fast-glob'
-import picomatch from 'picomatch'
 
 import { normalizePath, sortUnique } from './core.js'
 
@@ -10,7 +9,7 @@ export type SamplingConfig = {
   maxFilesPerWorkspace: number
   includeGlobs: string[]
   excludeGlobs: string[]
-  hintGlobs: string[]
+  tokenHints?: string[] | string[][]
 }
 
 export async function sampleWorkspaceFiles(workspaceAbs: string, config: SamplingConfig): Promise<string[]> {
@@ -34,39 +33,23 @@ export async function sampleWorkspaceFiles(workspaceAbs: string, config: Samplin
     return normalized
   }
 
-  if (config.hintGlobs.length === 0) {
-    const selected = selectDistributed(normalized, config.maxFilesPerWorkspace)
-    debugSampling(
-      'workspace=%s selected=%d mode=distributed elapsedMs=%d files=%o',
-      workspaceAbs,
-      selected.length,
-      Date.now() - startedAt,
-      selected
-    )
-    return selected
-  }
-
-  const hinted = normalized.filter((entry) => config.hintGlobs.some((pattern) => picomatch(pattern, { dot: true })(entry)))
-  const notHinted = normalized.filter((entry) => !hinted.includes(entry))
-
-  const selected = selectDistributed([...hinted, ...notHinted], config.maxFilesPerWorkspace)
+  const selected = selectDistributed(normalized, config.maxFilesPerWorkspace, config.tokenHints)
   debugSampling(
-    'workspace=%s selected=%d hinted=%d nonHinted=%d elapsedMs=%d files=%o',
+    'workspace=%s selected=%d mode=token-distributed elapsedMs=%d files=%o',
     workspaceAbs,
     selected.length,
-    hinted.length,
-    notHinted.length,
     Date.now() - startedAt,
     selected
   )
   return selected
 }
 
-function selectDistributed(files: string[], count: number): string[] {
+function selectDistributed(files: string[], count: number, tokenHints?: string[] | string[][]): string[] {
   if (files.length <= count) {
     return files
   }
 
+  const tokenPriorityMap = createTokenPriorityMap(tokenHints)
   const selected: string[] = []
   const selectedSet = new Set<string>()
 
@@ -75,7 +58,7 @@ function selectDistributed(files: string[], count: number): string[] {
   const tokenToFiles = new Map<string, string[]>()
   const tokenFirstIndex = new Map<string, number>()
   for (const [index, file] of files.entries()) {
-    const token = getPrimaryToken(file)
+    const token = getPrimaryToken(file, tokenPriorityMap)
     if (!token) {
       continue
     }
@@ -86,8 +69,8 @@ function selectDistributed(files: string[], count: number): string[] {
   }
 
   const orderedTokens = [...tokenToFiles.keys()].sort((left, right) => {
-    const leftPriority = TOKEN_GROUP_PRIORITY.get(left) ?? Number.POSITIVE_INFINITY
-    const rightPriority = TOKEN_GROUP_PRIORITY.get(right) ?? Number.POSITIVE_INFINITY
+    const leftPriority = tokenPriorityMap.get(left) ?? Number.POSITIVE_INFINITY
+    const rightPriority = tokenPriorityMap.get(right) ?? Number.POSITIVE_INFINITY
     if (leftPriority !== rightPriority) {
       return leftPriority - rightPriority
     }
@@ -215,7 +198,7 @@ function nextFreeIndex(candidate: number, used: Set<number>, max: number): numbe
   return candidate
 }
 
-function getPrimaryToken(file: string): string | null {
+function getPrimaryToken(file: string, tokenPriorityMap: Map<string, number>): string | null {
   const parts = file.split('/').filter((entry) => entry.length > 0)
   if (parts.length === 0) {
     return null
@@ -236,7 +219,7 @@ function getPrimaryToken(file: string): string | null {
   }
   const allTokens = [...basenameTokens, ...directoryTokens].filter((entry) => entry.length > 1)
 
-  const bestKnownToken = pickBestKnownToken(allTokens)
+  const bestKnownToken = pickBestKnownToken(allTokens, tokenPriorityMap)
   if (bestKnownToken !== null) {
     return bestKnownToken
   }
@@ -257,13 +240,13 @@ function tokenizePathPart(part: string, stripExtension: boolean): string[] {
     .filter((entry) => entry.length > 0)
 }
 
-function pickBestKnownToken(tokens: string[]): string | null {
+function pickBestKnownToken(tokens: string[], tokenPriorityMap: Map<string, number>): string | null {
   let bestToken: string | null = null
   let bestGroupPriority = Number.POSITIVE_INFINITY
 
   for (const token of tokens) {
     const normalizedToken = normalizeToken(token)
-    const groupPriority = TOKEN_GROUP_PRIORITY.get(normalizedToken)
+    const groupPriority = tokenPriorityMap.get(normalizedToken)
     if (groupPriority === undefined) {
       continue
     }
@@ -288,8 +271,8 @@ function normalizeToken(token: string): string {
 
 const GENERIC_TOKENS = new Set(['src', 'index', 'main', 'test', 'spec', 'package', 'packages', 'lib', 'dist'])
 
-const TOKEN_GROUP_PRIORITY = new Map<string, number>([
-  ...toPriorityEntries([
+const DEFAULT_TOKEN_HINT_GROUPS = [
+  [
     'chunk',
     'conf',
     'config',
@@ -314,8 +297,8 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'utils',
     'view',
     'views'
-  ], 1),
-  ...toPriorityEntries([
+  ],
+  [
     'adapter',
     'api',
     'apis',
@@ -374,8 +357,8 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'transform',
     'unit',
     'validator'
-  ], 2),
-  ...toPriorityEntries([
+  ],
+  [
     'base',
     'bundle',
     'common',
@@ -397,8 +380,31 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'stubs',
     'tests',
     'util'
-  ], 3)
-])
+  ]
+] as const
+
+function createTokenPriorityMap(input?: string[] | string[][]): Map<string, number> {
+  const groups = normalizeTokenHintGroups(input)
+  const entries: Array<[string, number]> = []
+  for (const [index, group] of groups.entries()) {
+    entries.push(...toPriorityEntries(group, index + 1))
+  }
+  return new Map<string, number>(entries)
+}
+
+function normalizeTokenHintGroups(input?: string[] | string[][]): string[][] {
+  if (!input || input.length === 0) {
+    return DEFAULT_TOKEN_HINT_GROUPS.map((group) => [...group])
+  }
+
+  if (Array.isArray(input[0])) {
+    const nested = input as string[][]
+    return nested.map((group) => group.filter((token) => token.trim().length > 0))
+  }
+
+  const flat = input as string[]
+  return [flat.filter((token) => token.trim().length > 0)]
+}
 
 function toPriorityEntries(tokens: string[], priority: number): Array<[string, number]> {
   return tokens.map((token) => [normalizeToken(token), priority])

@@ -1548,3 +1548,29 @@ Result:
 
 - Hint matching is now less brittle and better aligned with real-world project naming patterns.
 - API and CLI test suites remain fully passing.
+
+## 2026-02-13 - Request 073
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Remove `hintGlobs` from public sampling config and replace it with token-oriented hints.
+- Allow config-driven token hints as either a flat array (`string[]`) or grouped arrays (`string[][]`).
+- Keep `init --preset full` readable by avoiding a huge generated token block.
+
+Key decisions:
+
+- Removed `sampling.hintGlobs` usage and schema from runtime/config scaffolds.
+- Added `sampling.tokenHints?: string[] | string[][]` in API config typing and sampling runtime.
+- Sampling now uses token-priority maps derived from:
+  - config-provided `tokenHints` when set
+  - built-in default token groups when omitted
+- `init --preset full` now emits only the first-priority token list (compact and practical), not the full internal taxonomy.
+- Updated fixtures/tests/examples to the new config shape.
+
+Result:
+
+- Configuration surface is simpler and more semantic (token-based instead of glob-based hinting).
+- Default behavior remains strong without extra config, and advanced users can still tune token priorities when needed.
+- API and CLI tests remain green after migration.
