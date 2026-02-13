@@ -266,6 +266,32 @@ const GENERIC_TOKENS = new Set(['src', 'index', 'main', 'test', 'spec', 'package
 
 const TOKEN_GROUP_PRIORITY = new Map<string, number>([
   ...toPriorityEntries([
+    'chunk',
+    'conf',
+    'config',
+    'container',
+    'controller',
+    'helpers',
+    'mock',
+    'mocks',
+    'presentation',
+    'repository',
+    'route',
+    'routes',
+    'schema',
+    'setup',
+    'spec',
+    'stories',
+    'style',
+    'styles',
+    'test',
+    'type',
+    'types',
+    'utils',
+    'view',
+    'views'
+  ], 1),
+  ...toPriorityEntries([
     'adapter',
     'api',
     'apis',
@@ -307,9 +333,7 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'plugin',
     'provider',
     'registry',
-    'repository',
     'resolver',
-    'route',
     'router',
     'runtime',
     'serializer',
@@ -325,10 +349,8 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'tracker',
     'transform',
     'unit',
-    'validator',
-    'view',
-    'views'
-  ], 1),
+    'validator'
+  ], 2),
   ...toPriorityEntries([
     'base',
     'bundle',
@@ -347,32 +369,10 @@ const TOKEN_GROUP_PRIORITY = new Map<string, number>([
     'loader',
     'publisher',
     'reducer',
-    'routes',
     'stub',
     'stubs',
     'tests',
     'util'
-  ], 2),
-  ...toPriorityEntries([
-    'chunk',
-    'conf',
-    'config',
-    'container',
-    'controller',
-    'helpers',
-    'mock',
-    'mocks',
-    'presentation',
-    'schema',
-    'setup',
-    'spec',
-    'stories',
-    'style',
-    'styles',
-    'test',
-    'type',
-    'types',
-    'utils'
   ], 3)
 ])
 

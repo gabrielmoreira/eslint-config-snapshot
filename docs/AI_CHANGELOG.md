@@ -1473,3 +1473,25 @@ Result:
 
 - Regional fallback now consistently includes top/middle/bottom coverage when there are 3+ fallback slots.
 - All API sampling tests pass with deterministic output.
+
+## 2026-02-13 - Request 070
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Rebalance token priorities so the app-layer group (`controller/helpers/...`) is primary, and move `view/views`, `repository`, `route/routes` into that top-priority group.
+- Keep the broader architectural token set (`manager/mapper/...`) as second priority.
+
+Key decisions:
+
+- Reordered `TOKEN_GROUP_PRIORITY` groups:
+  - priority 1: app-layer/common-role tokens (including `view/views`, `repository`, `route/routes`)
+  - priority 2: broader architecture tokens (including `manager`, `mapper`, etc.)
+  - priority 3: infrastructure/support tokens
+- Updated deterministic sampling expectation tests affected by the new ordering.
+
+Result:
+
+- Token-diversity selection now favors common app-role files earlier, increasing representativeness for typical project structures.
+- API test suite remains green with updated deterministic outputs.
