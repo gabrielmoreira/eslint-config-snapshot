@@ -6,6 +6,7 @@
 - `@inquirer/prompts`: Rich interactive terminal prompts (checkbox + validated input) for the recommended `init` workflow.
 - `fast-glob`: Deterministic cross-platform globbing for sampling files and loading snapshot files.
 - `picomatch`: Glob matching engine for ordered group assignment with negative patterns (`!`).
+- `debug`: Optional namespaced diagnostics (`DEBUG=eslint-config-snapshot:*`) for sampling, extraction, command timing, and workspace processing details without changing default CLI output.
 - `@types/picomatch`: Type declarations for strict TypeScript typecheck in NodeNext builds.
 - `tsup`: Esbuild-based package builds for fast deterministic JavaScript output.
 - `tsx`: Run the TypeScript CLI directly from source during local development (no stale dist artifacts).

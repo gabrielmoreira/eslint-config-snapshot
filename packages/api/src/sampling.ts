@@ -1,7 +1,10 @@
+import createDebug from 'debug'
 import fg from 'fast-glob'
 import picomatch from 'picomatch'
 
 import { normalizePath, sortUnique } from './core.js'
+
+const debugSampling = createDebug('eslint-config-snapshot:sampling')
 
 export type SamplingConfig = {
   maxFilesPerWorkspace: number
@@ -11,6 +14,7 @@ export type SamplingConfig = {
 }
 
 export async function sampleWorkspaceFiles(workspaceAbs: string, config: SamplingConfig): Promise<string[]> {
+  const startedAt = Date.now()
   const all = await fg(config.includeGlobs, {
     cwd: workspaceAbs,
     ignore: config.excludeGlobs,
@@ -20,22 +24,42 @@ export async function sampleWorkspaceFiles(workspaceAbs: string, config: Samplin
   })
 
   const normalized = sortUnique(all.map((entry) => normalizePath(entry)))
+  debugSampling('workspace=%s candidates=%d', workspaceAbs, normalized.length)
   if (normalized.length === 0) {
     return []
   }
 
   if (normalized.length <= config.maxFilesPerWorkspace) {
+    debugSampling('workspace=%s using all files=%d elapsedMs=%d', workspaceAbs, normalized.length, Date.now() - startedAt)
     return normalized
   }
 
   if (config.hintGlobs.length === 0) {
-    return selectDistributed(normalized, config.maxFilesPerWorkspace)
+    const selected = selectDistributed(normalized, config.maxFilesPerWorkspace)
+    debugSampling(
+      'workspace=%s selected=%d mode=distributed elapsedMs=%d files=%o',
+      workspaceAbs,
+      selected.length,
+      Date.now() - startedAt,
+      selected
+    )
+    return selected
   }
 
   const hinted = normalized.filter((entry) => config.hintGlobs.some((pattern) => picomatch(pattern, { dot: true })(entry)))
   const notHinted = normalized.filter((entry) => !hinted.includes(entry))
 
-  return selectDistributed([...hinted, ...notHinted], config.maxFilesPerWorkspace)
+  const selected = selectDistributed([...hinted, ...notHinted], config.maxFilesPerWorkspace)
+  debugSampling(
+    'workspace=%s selected=%d hinted=%d nonHinted=%d elapsedMs=%d files=%o',
+    workspaceAbs,
+    selected.length,
+    hinted.length,
+    notHinted.length,
+    Date.now() - startedAt,
+    selected
+  )
+  return selected
 }
 
 function selectDistributed(files: string[], count: number): string[] {

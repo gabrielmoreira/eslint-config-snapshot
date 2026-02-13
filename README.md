@@ -143,6 +143,20 @@ If you need a full rule catalog/inspection workflow, use ESLint inspector toolin
   - confirm dependency/config changes happened
   - refresh baseline with `eslint-config-snapshot --update` if changes are intentional
 
+### Debug Logs
+
+Enable detailed diagnostics only when needed:
+
+```bash
+DEBUG=eslint-config-snapshot:* npx @eslint-config-snapshot/cli@latest
+```
+
+This prints:
+
+- sampled file counts and selected file lists
+- extraction mode and executed `eslint --print-config` command details
+- phase timings (workspace resolution, sampling, extraction, diff, total command time)
+
 ## Configuration
 
 Main path: keep config minimal.

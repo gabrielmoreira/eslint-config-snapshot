@@ -1495,3 +1495,33 @@ Result:
 
 - Token-diversity selection now favors common app-role files earlier, increasing representativeness for typical project structures.
 - API test suite remains green with updated deterministic outputs.
+
+## 2026-02-13 - Request 071
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add opt-in debug diagnostics for sampling/extraction/command timing and include top-level emoji accents in key summary lines.
+
+Key decisions:
+
+- Added `debug`-based namespaces:
+  - `eslint-config-snapshot:run`
+  - `eslint-config-snapshot:workspace`
+  - `eslint-config-snapshot:sampling`
+  - `eslint-config-snapshot:extract`
+  - `eslint-config-snapshot:diff`
+  - `eslint-config-snapshot:timing`
+- Kept default output behavior stable and clean; detailed logs are only shown with `DEBUG=eslint-config-snapshot:*`.
+- Added debug traces for:
+  - sampled candidate/selected files
+  - extraction mode and spawned print-config command
+  - per-workspace/group extraction stats
+  - phase and total command timing
+- Added subtle top-level emojis in summary/progress lines to improve readability without overloading output.
+
+Result:
+
+- Users can now inspect exact evaluated files, executed extraction commands, and timings on demand.
+- Normal output remains concise, while top-level messages are slightly more friendly/scanable.

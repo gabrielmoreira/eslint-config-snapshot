@@ -17,6 +17,7 @@ import {
   writeSnapshotFile
 } from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
+import createDebug from 'debug'
 import fg from 'fast-glob'
 import { existsSync, readFileSync } from 'node:fs'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -52,6 +53,10 @@ type RunTimer = {
 
 let activeRunTimer: RunTimer | undefined
 let cachedCliVersion: string | undefined
+const debugRun = createDebug('eslint-config-snapshot:run')
+const debugWorkspace = createDebug('eslint-config-snapshot:workspace')
+const debugDiff = createDebug('eslint-config-snapshot:diff')
+const debugTiming = createDebug('eslint-config-snapshot:timing')
 
 export async function runCli(command: string | undefined, cwd: string, flags: string[] = []): Promise<number> {
   const argv = command ? [command, ...flags] : [...flags]
@@ -61,6 +66,7 @@ export async function runCli(command: string | undefined, cwd: string, flags: st
 async function runArgv(argv: string[], cwd: string): Promise<number> {
   const invocationLabel = resolveInvocationLabel(argv)
   beginRunTimer(invocationLabel)
+  debugRun('start label=%s cwd=%s argv=%o', invocationLabel, cwd, argv)
   let exitCode = 1
 
   try {
@@ -94,6 +100,7 @@ async function runArgv(argv: string[], cwd: string): Promise<number> {
     }
 
     exitCode = actionCode ?? 0
+    debugRun('done label=%s exitCode=%d', invocationLabel, exitCode)
     return exitCode
   } finally {
     endRunTimer(exitCode)
@@ -385,7 +392,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
     const summary = summarizeSnapshots(currentSnapshots)
     const color = createColorizer()
     const eslintVersionsByGroup = shouldShowRunLogs() ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
-    writeSectionTitle('Summary', color)
+    writeSectionTitle('📊 Summary', color)
     process.stdout.write(
       `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
     )
@@ -446,22 +453,48 @@ async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
 }
 
 async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSnapshot>> {
+  const computeStartedAt = Date.now()
+  const configStartedAt = Date.now()
   const config = await loadConfig(cwd)
+  debugTiming('phase=loadConfig elapsedMs=%d', Date.now() - configStartedAt)
+
+  const assignmentStartedAt = Date.now()
   const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
+  debugTiming('phase=resolveWorkspaceAssignments elapsedMs=%d', Date.now() - assignmentStartedAt)
+  debugWorkspace('root=%s groups=%d workspaces=%d', discovery.rootAbs, assignments.length, discovery.workspacesRel.length)
 
   const snapshots = new Map<string, BuiltSnapshot>()
 
   for (const group of assignments) {
+    const groupStartedAt = Date.now()
     const extractedForGroup = []
+    debugWorkspace('group=%s workspaces=%o', group.name, group.workspaces)
 
     for (const workspaceRel of group.workspaces) {
       const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
+      const sampleStartedAt = Date.now()
       const sampled = await sampleWorkspaceFiles(workspaceAbs, config.sampling)
+      debugWorkspace(
+        'group=%s workspace=%s sampled=%d sampleElapsedMs=%d files=%o',
+        group.name,
+        workspaceRel,
+        sampled.length,
+        Date.now() - sampleStartedAt,
+        sampled
+      )
       let extractedCount = 0
       let lastExtractionError: string | undefined
 
       const sampledAbs = sampled.map((sampledRel) => path.resolve(workspaceAbs, sampledRel))
+      const extractStartedAt = Date.now()
       const results = await extractRulesForWorkspaceSamples(workspaceAbs, sampledAbs)
+      debugTiming(
+        'phase=extract group=%s workspace=%s sampled=%d elapsedMs=%d',
+        group.name,
+        workspaceRel,
+        sampledAbs.length,
+        Date.now() - extractStartedAt
+      )
 
       for (const result of results) {
         if (result.rules) {
@@ -485,12 +518,27 @@ async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSn
           `Unable to extract ESLint config for workspace ${workspaceRel}. All sampled files were ignored or produced non-JSON output.${context}`
         )
       }
+
+      debugWorkspace(
+        'group=%s workspace=%s extracted=%d failed=%d',
+        group.name,
+        workspaceRel,
+        extractedCount,
+        results.length - extractedCount
+      )
     }
 
     const aggregated = aggregateRules(extractedForGroup)
     snapshots.set(group.name, buildSnapshot(group.name, group.workspaces, aggregated))
+    debugWorkspace(
+      'group=%s aggregatedRules=%d groupElapsedMs=%d',
+      group.name,
+      aggregated.size,
+      Date.now() - groupStartedAt
+    )
   }
 
+  debugTiming('phase=computeCurrentSnapshots elapsedMs=%d', Date.now() - computeStartedAt)
   return snapshots
 }
 
@@ -544,6 +592,7 @@ async function writeSnapshots(cwd: string, snapshots: Map<string, BuiltSnapshot>
 }
 
 function compareSnapshotMaps(before: Map<string, StoredSnapshot>, after: Map<string, BuiltSnapshot>) {
+  const startedAt = Date.now()
   const ids = [...new Set([...before.keys(), ...after.keys()])].sort()
   const changes: Array<{ groupId: string; diff: SnapshotDiff }> = []
 
@@ -572,6 +621,7 @@ function compareSnapshotMaps(before: Map<string, StoredSnapshot>, after: Map<str
     }
   }
 
+  debugDiff('groupsCompared=%d changedGroups=%d elapsedMs=%d', ids.length, changes.length, Date.now() - startedAt)
   return changes
 }
 
@@ -961,24 +1011,24 @@ function printWhatChanged(
   const changeSummary = summarizeChanges(changes)
 
   if (changes.length === 0) {
-    process.stdout.write(color.green('Great news: no snapshot drift detected.\n'))
-    writeSectionTitle('Summary', color)
+    process.stdout.write(color.green('✅ Great news: no snapshot drift detected.\n'))
+    writeSectionTitle('📊 Summary', color)
     process.stdout.write(
-      `- baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
+      `- 📦 baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- 🎚️ severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
     )
     writeEslintVersionSummary(eslintVersionsByGroup)
     return 0
   }
 
-  process.stdout.write(color.red('Heads up: snapshot drift detected.\n'))
-  writeSectionTitle('Summary', color)
+  process.stdout.write(color.red('⚠️ Heads up: snapshot drift detected.\n'))
+  writeSectionTitle('📊 Summary', color)
   process.stdout.write(
     `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
   )
   writeEslintVersionSummary(eslintVersionsByGroup)
   process.stdout.write('\n')
 
-  writeSectionTitle('Changes', color)
+  writeSectionTitle('🧾 Changes', color)
   for (const change of changes) {
     process.stdout.write(color.bold(`group ${change.groupId}\n`))
     const lines = formatDiff(change.groupId, change.diff).split('\n').slice(1)
@@ -1095,10 +1145,17 @@ function endRunTimer(exitCode: number): void {
 
   const elapsedMs = Math.max(0, Date.now() - activeRunTimer.startedAtMs - activeRunTimer.pausedMs)
   const seconds = (elapsedMs / 1000).toFixed(2)
+  debugTiming(
+    'command=%s exitCode=%d elapsedMs=%d pausedMs=%d',
+    activeRunTimer.label,
+    exitCode,
+    elapsedMs,
+    activeRunTimer.pausedMs
+  )
   if (exitCode === 0) {
-    writeSubtleInfo(`Finished in ${seconds}s\n`)
+    writeSubtleInfo(`⏱️ Finished in ${seconds}s\n`)
   } else {
-    writeSubtleInfo(`Finished with errors in ${seconds}s\n`)
+    writeSubtleInfo(`⏱️ Finished with errors in ${seconds}s\n`)
   }
   activeRunTimer = undefined
 }
@@ -1333,11 +1390,11 @@ function writeEslintVersionSummary(eslintVersionsByGroup: GroupEslintVersions): 
 
   const sortedAllVersions = [...allVersions].sort((a, b) => a.localeCompare(b))
   if (sortedAllVersions.length === 1) {
-    process.stdout.write(`- eslint runtime: ${sortedAllVersions[0]} (all groups)\n`)
+    process.stdout.write(`- 🧩 eslint runtime: ${sortedAllVersions[0]} (all groups)\n`)
     return
   }
 
-  process.stdout.write('- eslint runtime by group:\n')
+  process.stdout.write('- 🧩 eslint runtime by group:\n')
   const sortedEntries = [...eslintVersionsByGroup.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   for (const [groupName, versions] of sortedEntries) {
     process.stdout.write(`  - ${groupName}: ${versions.join(', ')}\n`)

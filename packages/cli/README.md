@@ -59,6 +59,16 @@ Compatibility aliases:
 - If no config is found, built-in defaults are used.
 - Snapshots are stored under `.eslint-config-snapshot/`.
 
+## Debugging
+
+Use `debug` namespaces when you need deep diagnostics:
+
+```bash
+DEBUG=eslint-config-snapshot:* eslint-config-snapshot
+```
+
+This includes sampling details, extracted files, executed print-config command traces, and timing by phase.
+
 ## Related Packages
 
 - API engine: [`@eslint-config-snapshot/api`](https://www.npmjs.com/package/@eslint-config-snapshot/api)

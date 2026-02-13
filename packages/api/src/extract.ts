@@ -1,3 +1,4 @@
+import createDebug from 'debug'
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -5,6 +6,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import { canonicalizeJson, normalizeSeverity } from './core.js'
+
+const debugExtract = createDebug('eslint-config-snapshot:extract')
 
 export type NormalizedRuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
 
@@ -66,12 +69,17 @@ function findPackageRoot(entryAbs: string): string {
 
 export function extractRulesFromPrintConfig(workspaceAbs: string, fileAbs: string): ExtractedWorkspaceRules {
   const eslintBin = resolveEslintBinForWorkspace(workspaceAbs)
+  const commandArgs = [eslintBin, '--print-config', fileAbs]
+  const startedAt = Date.now()
+  debugExtract('spawn: cwd=%s cmd=%s %o', workspaceAbs, process.execPath, commandArgs)
   const proc = spawnSync(process.execPath, [eslintBin, '--print-config', fileAbs], {
     cwd: workspaceAbs,
     encoding: 'utf8'
   })
+  debugExtract('spawn: done status=%s elapsedMs=%d', String(proc.status), Date.now() - startedAt)
 
   if (proc.status !== 0) {
+    debugExtract('spawn: stderr=%s', proc.stderr.trim())
     throw new Error(`Failed to run eslint --print-config for ${fileAbs}`)
   }
 
@@ -112,6 +120,7 @@ export async function extractRulesForWorkspaceSamples(
   workspaceAbs: string,
   fileAbsList: string[]
 ): Promise<WorkspaceExtractionResult[]> {
+  debugExtract('workspace=%s sampleCount=%d', workspaceAbs, fileAbsList.length)
   const evaluate = await createWorkspaceEvaluator(workspaceAbs)
   const results: WorkspaceExtractionResult[] = []
 
@@ -121,9 +130,17 @@ export async function extractRulesForWorkspaceSamples(
       results.push({ fileAbs, rules })
     } catch (error: unknown) {
       const normalizedError = error instanceof Error ? error : new Error(String(error))
+      debugExtract('extract failed: workspace=%s file=%s error=%s', workspaceAbs, fileAbs, normalizedError.message)
       results.push({ fileAbs, error: normalizedError })
     }
   }
+
+  debugExtract(
+    'workspace=%s extracted=%d failed=%d',
+    workspaceAbs,
+    results.filter((entry) => entry.rules !== undefined).length,
+    results.filter((entry) => entry.error !== undefined).length
+  )
 
   return results
 }
@@ -142,6 +159,7 @@ async function createWorkspaceEvaluator(
 
     const ESLintClass = eslintModule.ESLint ?? eslintModule.default?.ESLint
     if (ESLintClass) {
+      debugExtract('workspace=%s evaluator=eslint-api', workspaceAbs)
       const eslint = new ESLintClass({ cwd: workspaceAbs })
       return async (fileAbs: string) => {
         const config = await eslint.calculateConfigForFile(fileAbs)
@@ -156,6 +174,7 @@ async function createWorkspaceEvaluator(
     // fall through to subprocess-based extractor
   }
 
+  debugExtract('workspace=%s evaluator=spawn-print-config', workspaceAbs)
   return (fileAbs: string) => Promise.resolve(extractRulesFromPrintConfig(workspaceAbs, fileAbs))
 }
 
