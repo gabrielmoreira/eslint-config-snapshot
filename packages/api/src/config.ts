@@ -78,11 +78,11 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
     ...maybeConfig,
     grouping: {
       ...DEFAULT_CONFIG.grouping,
-      ...(maybeConfig.grouping ?? {})
+      ...maybeConfig.grouping
     },
     sampling: {
       ...DEFAULT_CONFIG.sampling,
-      ...(maybeConfig.sampling ?? {})
+      ...maybeConfig.sampling
     }
   }
 }
@@ -94,7 +94,7 @@ async function loadUserConfig(rawConfig: unknown): Promise<Partial<SnapshotterCo
   }
 
   if (typeof resolved !== 'object' || Array.isArray(resolved)) {
-    throw new Error('Invalid config export: expected object, function, or async function returning an object')
+    throw new TypeError('Invalid config export: expected object, function, or async function returning an object')
   }
 
   return resolved as Partial<SnapshotterConfig>

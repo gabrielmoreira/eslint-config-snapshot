@@ -20,12 +20,7 @@ export function resolveEslintBinForWorkspace(workspaceAbs: string): string {
       const eslintRoot = findPackageRoot(eslintEntry)
       const packageJsonPath = path.join(eslintRoot, 'package.json')
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { bin?: string | Record<string, string> }
-      const relativeBin =
-        typeof packageJson.bin === 'string'
-          ? packageJson.bin
-          : typeof packageJson.bin?.eslint === 'string'
-            ? packageJson.bin.eslint
-            : 'bin/eslint.js'
+      const relativeBin = resolveBinPath(packageJson.bin)
       const binAbs = path.resolve(eslintRoot, relativeBin)
 
       if (existsSync(binAbs)) {
@@ -37,6 +32,18 @@ export function resolveEslintBinForWorkspace(workspaceAbs: string): string {
 
     throw new Error(`Unable to resolve eslint from workspace: ${workspaceAbs}`)
   }
+}
+
+function resolveBinPath(bin: string | Record<string, string> | undefined): string {
+  if (typeof bin === 'string') {
+    return bin
+  }
+
+  if (typeof bin?.eslint === 'string') {
+    return bin.eslint
+  }
+
+  return 'bin/eslint.js'
 }
 
 function findPackageRoot(entryAbs: string): string {

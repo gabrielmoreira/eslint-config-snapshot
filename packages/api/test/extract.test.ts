@@ -32,7 +32,7 @@ describe('extract', () => {
     await writeFile(fileAbs, 'export {}\n')
 
     const resolved = resolveEslintBinForWorkspace(workspace)
-    expect(resolved.replace(/\\/g, '/').includes('eslint/bin/eslint')).toBe(true)
+    expect(resolved.replaceAll('\\', '/').includes('eslint/bin/eslint')).toBe(true)
 
     const rules = extractRulesFromPrintConfig(workspace, fileAbs)
     expect(Object.fromEntries(rules.entries())).toEqual({
@@ -76,7 +76,7 @@ describe('extract', () => {
     await writeFile(fileAbs, 'export {}\n')
 
     const resolved = resolveEslintBinForWorkspace(exportedWorkspace)
-    expect(resolved.replace(/\\/g, '/').endsWith('/node_modules/eslint/bin/eslint.js')).toBe(true)
+    expect(resolved.replaceAll('\\', '/').endsWith('/node_modules/eslint/bin/eslint.js')).toBe(true)
 
     const rules = extractRulesFromPrintConfig(exportedWorkspace, fileAbs)
     expect(Object.fromEntries(rules.entries())).toEqual({

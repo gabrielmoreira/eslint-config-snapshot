@@ -296,11 +296,9 @@ function formatShortPrint(
       severityCounts[severity] += 1
     }
 
-    lines.push(`group: ${snapshot.groupId}`)
     lines.push(
-      `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`
-    )
-    lines.push(
+      `group: ${snapshot.groupId}`,
+      `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`,
       `rules (${ruleNames.length}): error ${severityCounts.error}, warn ${severityCounts.warn}, off ${severityCounts.off}`
     )
 

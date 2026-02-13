@@ -2,8 +2,8 @@ export type JsonPrimitive = null | boolean | number | string
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
 export function normalizePath(input: string): string {
-  const withSlashes = input.replace(/\\/g, '/')
-  const collapsed = withSlashes.replace(/\/+/g, '/')
+  const withSlashes = input.replaceAll('\\', '/')
+  const collapsed = withSlashes.replaceAll(/\/+/g, '/')
   const withoutTrailing = collapsed.endsWith('/') ? collapsed.slice(0, -1) : collapsed
   return withoutTrailing === '' ? '.' : withoutTrailing
 }
