@@ -692,3 +692,22 @@ Result:
 
 - Runtime expectations are now explicit for users and contributors.
 - Incompatible Node versions fail early instead of failing later during lint/test/build.
+
+## 2026-02-13 - Request 033
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix remaining CI test failures caused by missing fixture ESLint binaries and invalid/non-JSON print-config extraction.
+
+Key decisions:
+
+- Made fixture-based CLI tests fully self-contained by creating mocked `eslint` binaries for both fixture workspaces (`ws-a` and `ws-b`) in test setup.
+- Added mocked `eslint/package.json` files in setup to keep resolver behavior deterministic.
+- Removed hidden dependency on untracked local fixture `node_modules` state.
+
+Result:
+
+- Integration and terminal tests no longer depend on residual local files.
+- CI runners can execute tests deterministically from a clean checkout.

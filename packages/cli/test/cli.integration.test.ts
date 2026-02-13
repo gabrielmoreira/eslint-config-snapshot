@@ -14,10 +14,24 @@ afterAll(async () => {
 beforeEach(async () => {
   await rm(path.join(fixtureRoot, '.eslint-config-snapshot'), { recursive: true, force: true })
   await mkdir(path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
+  await mkdir(path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/bin'), { recursive: true })
 
   await writeFile(
     path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
     "console.log(JSON.stringify({ rules: { 'no-console': 1, eqeqeq: [2, 'always'] } }))\n"
+  )
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/package.json'),
+    JSON.stringify({ name: 'eslint', version: '9.0.0' }, null, 2)
+  )
+
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/bin/eslint.js'),
+    "console.log(JSON.stringify({ rules: { 'no-console': 2, 'no-debugger': 0 } }))\n"
+  )
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/package.json'),
+    JSON.stringify({ name: 'eslint', version: '9.0.0' }, null, 2)
   )
 })
 
