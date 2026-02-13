@@ -128,7 +128,7 @@ async function computeCurrentSnapshots(cwd: string) {
 
 async function loadStoredSnapshots(cwd: string) {
   const dir = path.join(cwd, SNAPSHOT_DIR)
-  const files = await fg('*.json', { cwd: dir, absolute: true, onlyFiles: true, dot: true, suppressErrors: true })
+  const files = await fg('**/*.json', { cwd: dir, absolute: true, onlyFiles: true, dot: true, suppressErrors: true })
   const snapshots = new Map<string, Awaited<ReturnType<typeof readSnapshotFile>>>()
 
   for (const file of files.sort()) {

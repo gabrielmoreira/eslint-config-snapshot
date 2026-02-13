@@ -1,5 +1,6 @@
 import path from 'node:path'
-import { cosmiconfig } from 'cosmiconfig'
+import { pathToFileURL } from 'node:url'
+import { access } from 'node:fs/promises'
 
 export type SnapshotterConfig = {
   workspaceInput: {
@@ -48,29 +49,15 @@ const SPEC_SEARCH_PLACES = [
   'eslint-config-snapshotter.config.mjs'
 ]
 
-const COSMICONFIG_EXTRA_PLACES = [
-  'package.json',
-  '.eslint-config-snapshotterrc',
-  '.eslint-config-snapshotterrc.json',
-  '.eslint-config-snapshotterrc.yaml',
-  '.eslint-config-snapshotterrc.yml',
-  '.eslint-config-snapshotterrc.js',
-  '.eslint-config-snapshotterrc.cjs',
-  '.eslint-config-snapshotterrc.mjs'
-]
-
-const EXPLORER = cosmiconfig('eslint-config-snapshotter', {
-  searchPlaces: [...SPEC_SEARCH_PLACES, ...COSMICONFIG_EXTRA_PLACES]
-})
-
 export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
   const root = path.resolve(cwd ?? process.cwd())
-  const result = await EXPLORER.search(root)
-  if (!result) {
+  const configFile = await resolveConfigFile(root)
+  if (!configFile) {
     return DEFAULT_CONFIG
   }
 
-  const loaded = result.config as unknown
+  const loadedModule = (await import(pathToFileURL(configFile).href)) as { default?: unknown }
+  const loaded = loadedModule.default ?? loadedModule
   const maybeConfig = (typeof loaded === 'function' ? await loaded() : loaded) as Partial<SnapshotterConfig>
 
   return {
@@ -85,6 +72,20 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
       ...(maybeConfig.sampling ?? {})
     }
   }
+}
+
+async function resolveConfigFile(rootAbs: string): Promise<string | null> {
+  for (const fileName of SPEC_SEARCH_PLACES) {
+    const candidate = path.join(rootAbs, fileName)
+    try {
+      await access(candidate)
+      return candidate
+    } catch {
+      // continue in strict order
+    }
+  }
+
+  return null
 }
 
 export function getConfigScaffold(): string {

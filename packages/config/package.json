@@ -11,8 +11,5 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
-  },
-  "dependencies": {
-    "cosmiconfig": "^9.0.0"
   }
 }

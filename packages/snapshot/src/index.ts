@@ -64,6 +64,7 @@ export function buildSnapshot(groupId: string, workspaces: readonly string[], ru
 export async function writeSnapshotFile(snapshotDirAbs: string, snapshot: SnapshotFile): Promise<string> {
   await mkdir(snapshotDirAbs, { recursive: true })
   const filePath = path.join(snapshotDirAbs, `${snapshot.groupId}.json`)
+  await mkdir(path.dirname(filePath), { recursive: true })
   const payload = JSON.stringify(snapshot, null, 2)
   await writeFile(filePath, `${payload}\n`, 'utf8')
   return filePath
