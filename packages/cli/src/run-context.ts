@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
-import { formatCommandDisplayLabel, formatStoredSnapshotSummary } from './output.js'
+import { formatCommandDisplayLabel, formatStoredSnapshotSummary } from './formatters.js'
 import { type GroupEslintVersions, type StoredSnapshot } from './runtime.js'
 import { type TerminalIO } from './terminal.js'
 

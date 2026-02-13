@@ -1,7 +1,7 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
 
-import { countUniqueWorkspaces, summarizeSnapshots } from '../output.js'
-import { writeEslintVersionSummary, writeRunContextHeader } from '../presentation.js'
+import { countUniqueWorkspaces, summarizeSnapshots } from '../formatters.js'
+import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
 import { computeCurrentSnapshots, loadStoredSnapshots, resolveGroupEslintVersions, writeSnapshots } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
 

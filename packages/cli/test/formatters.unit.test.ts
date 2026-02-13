@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatCommandDisplayLabel, formatDiff, summarizeSnapshots } from '../src/output.js'
+import { formatCommandDisplayLabel, formatDiff, summarizeSnapshots } from '../src/formatters.js'
 
 describe('output helpers', () => {
   it('formats friendly command labels', () => {

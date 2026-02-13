@@ -103,4 +103,28 @@ describe('sampleWorkspaceFiles', () => {
     expect(result).toContain('region/file-15.ts')
     expect(result).toContain('region/file-29.ts')
   })
+
+  it('prioritizes code extensions before markdown/json/css when sample cap is tight', async () => {
+    await mkdir(path.join(tmp, 'mixed'), { recursive: true })
+    const files = [
+      'mixed/guide.md',
+      'mixed/settings.json',
+      'mixed/theme.css',
+      'mixed/app.ts',
+      'mixed/view.tsx',
+      'mixed/helper.js'
+    ]
+
+    for (const file of files) {
+      await writeFile(path.join(tmp, file), '')
+    }
+
+    const result = await sampleWorkspaceFiles(tmp, {
+      maxFilesPerWorkspace: 3,
+      includeGlobs: ['mixed/**/*.{ts,tsx,js,md,json,css}'],
+      excludeGlobs: []
+    })
+
+    expect(result).toEqual(['mixed/app.ts', 'mixed/helper.js', 'mixed/view.tsx'])
+  })
 })

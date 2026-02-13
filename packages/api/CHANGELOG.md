@@ -1,5 +1,12 @@
 # @eslint-config-snapshot/api
 
+## 0.12.0
+
+### Minor Changes
+
+- Add json/css to default sampling globs, keep md/mdx, and prioritize code files during sampling selection.
+  Rename CLI presentation module to run-context and keep formatter/runtime boundaries clearer.
+
 ## 0.11.0
 
 ### Minor Changes

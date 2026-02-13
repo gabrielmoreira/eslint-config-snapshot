@@ -25,6 +25,10 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Extend default sampling globs to include `json` and `css` while preserving `md/mdx`.
+- [x] Prioritize code-like files (`ts/tsx/js/jsx/cjs/mjs`) in sampling selection before non-code candidates.
+- [x] Include `md` and `mdx` in default sampling globs and cover it with a dedicated config test.
+- [x] Rename CLI presentation module to `run-context` for clearer responsibility naming.
 - [x] Centralize CLI color behavior in terminal abstraction and keep output-format module color-agnostic.
 - [x] Enforce deterministic rule-variant sorting by canonical JSON lexical order (not insertion order).
 - [x] Introduce semantic `TerminalIO` abstraction for CLI I/O, TTY capability checks, prompts, and paused timing behavior.

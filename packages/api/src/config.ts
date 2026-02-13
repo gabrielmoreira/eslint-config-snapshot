@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG: SnapshotConfig = {
   },
   sampling: {
     maxFilesPerWorkspace: 10,
-    includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
+    includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs,md,mdx,json,css}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**']
   }
 }
@@ -130,7 +130,7 @@ export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
   },
   sampling: {
     maxFilesPerWorkspace: 10,
-    includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
+    includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs,md,mdx,json,css}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
     tokenHints: [
       'chunk',

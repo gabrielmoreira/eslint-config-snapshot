@@ -1736,3 +1736,49 @@ Result:
 - Variant arrays are now insertion-independent and deterministically sorted by stable canonical string representation.
 - CLI color behavior is fully encapsulated in terminal I/O abstraction.
 - Output module now remains focused on pure formatting transformations.
+
+## 2026-02-13 - Request 081
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure Markdown files (`.md`, `.mdx`) are part of default ESLint sampling globs.
+- Reassess CLI naming/structure around formatter/output and presentation responsibilities to avoid unnecessary complexity.
+
+Key decisions:
+
+- Kept Markdown support in built-in defaults and scaffold defaults, and added explicit test coverage to prevent regressions.
+- Renamed CLI `presentation` module to `run-context` to make intent clearer (runtime header/context rendering), while keeping formatters focused on pure text formatting.
+- Preserved current split (`terminal` I/O, `run-context` contextual header/metadata, `formatters` pure formatting) as the minimum separation that keeps responsibilities understandable without over-splitting.
+
+Result:
+
+- Default sampling includes `md/mdx` with test protection.
+- CLI module naming is clearer and less ambiguous than `presentation`/`output`.
+- Behavior remains unchanged; only clarity and maintainability improved.
+
+## 2026-02-13 - Request 082
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Include `json` and `css` in default sampling globs.
+- Keep stronger sampling bias toward code files (`ts/js` families) before documentation or config assets.
+- Reassess whether extra CLI source grouping is needed.
+
+Key decisions:
+
+- Extended default sampling globs and `full` scaffold globs to include `json` and `css`.
+- Kept `md` and `mdx` included.
+- Implemented deterministic code-first sampling fill:
+  - token-diverse selection now runs in two passes (preferred code files first, non-code second),
+  - uniform fill also consumes preferred files first before non-preferred candidates.
+- Added/updated tests to cover the expanded default glob and code-first behavior.
+
+Result:
+
+- Defaults now sample `js/jsx/ts/tsx/cjs/mjs/md/mdx/json/css`.
+- Sampling remains deterministic and now better reflects likely ESLint rule variance from code paths.
+- API quality gates pass for this change set (`test`, `lint`, `typecheck`).

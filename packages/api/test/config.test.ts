@@ -15,6 +15,10 @@ afterEach(async () => {
 })
 
 describe('loadConfig', () => {
+  it('includes markdown files in default sampling globs', () => {
+    expect(DEFAULT_CONFIG.sampling.includeGlobs).toContain('**/*.{js,jsx,ts,tsx,cjs,mjs,md,mdx,json,css}')
+  })
+
   it('returns defaults when no config is found', async () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-config-'))
     const config = await loadConfig(tmp)

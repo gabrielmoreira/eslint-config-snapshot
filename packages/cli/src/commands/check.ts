@@ -1,7 +1,7 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
 
-import { countUniqueWorkspaces, decorateDiffLine, formatDiff, summarizeChanges, summarizeSnapshots } from '../output.js'
-import { writeEslintVersionSummary, writeRunContextHeader } from '../presentation.js'
+import { countUniqueWorkspaces, decorateDiffLine, formatDiff, summarizeChanges, summarizeSnapshots } from '../formatters.js'
+import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
 import {
   type BuiltSnapshot,
   compareSnapshotMaps,

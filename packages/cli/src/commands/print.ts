@@ -1,7 +1,7 @@
 import { findConfigPath, loadConfig } from '@eslint-config-snapshot/api'
 
-import { formatShortConfig, formatShortPrint } from '../output.js'
-import { writeRunContextHeader } from '../presentation.js'
+import { formatShortConfig, formatShortPrint } from '../formatters.js'
+import { writeRunContextHeader } from '../run-context.js'
 import { computeCurrentSnapshots, loadStoredSnapshots, resolveWorkspaceAssignments, type WorkspaceAssignments } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
 

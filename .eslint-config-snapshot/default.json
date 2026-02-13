@@ -70,10 +70,10 @@
     ],
     "@typescript-eslint/no-deprecated": [
       [
-        "warn"
+        "off"
       ],
       [
-        "off"
+        "warn"
       ]
     ],
     "@typescript-eslint/no-duplicate-enum-values": [
@@ -430,12 +430,7 @@
       }
     ],
     "n/hashbang": [
-      [
-        "error"
-      ],
-      [
-        "off"
-      ]
+      "error"
     ],
     "n/no-deprecated-api": [
       "error"
@@ -466,12 +461,7 @@
       "error"
     ],
     "n/no-process-exit": [
-      [
-        "error"
-      ],
-      [
-        "off"
-      ]
+      "error"
     ],
     "n/no-unpublished-bin": [
       "error"
@@ -2298,12 +2288,7 @@
       "always"
     ],
     "unicorn/prefer-top-level-await": [
-      [
-        "error"
-      ],
-      [
-        "off"
-      ]
+      "error"
     ],
     "unicorn/prefer-type-error": [
       "error"

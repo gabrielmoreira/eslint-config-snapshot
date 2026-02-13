@@ -53,46 +53,13 @@ function selectDistributed(files: string[], count: number, tokenHints?: string[]
   const selected: string[] = []
   const selectedSet = new Set<string>()
 
-  // First pass: pick one representative file per discovered token.
-  // This increases the chance of capturing distinct rule contexts per file "kind".
-  const tokenToFiles = new Map<string, string[]>()
-  const tokenFirstIndex = new Map<string, number>()
-  for (const [index, file] of files.entries()) {
-    const token = getPrimaryToken(file, tokenPriorityMap)
-    if (!token) {
-      continue
-    }
-    tokenFirstIndex.set(token, Math.min(tokenFirstIndex.get(token) ?? Number.POSITIVE_INFINITY, index))
-    const current = tokenToFiles.get(token) ?? []
-    current.push(file)
-    tokenToFiles.set(token, current)
-  }
+  const preferred = files.filter((file) => isPreferredForLintSampling(file))
+  const nonPreferred = files.filter((file) => !isPreferredForLintSampling(file))
 
-  const orderedTokens = [...tokenToFiles.keys()].sort((left, right) => {
-    const leftPriority = tokenPriorityMap.get(left) ?? Number.POSITIVE_INFINITY
-    const rightPriority = tokenPriorityMap.get(right) ?? Number.POSITIVE_INFINITY
-    if (leftPriority !== rightPriority) {
-      return leftPriority - rightPriority
-    }
-    const leftIndex = tokenFirstIndex.get(left) ?? Number.POSITIVE_INFINITY
-    const rightIndex = tokenFirstIndex.get(right) ?? Number.POSITIVE_INFINITY
-    if (leftIndex !== rightIndex) {
-      return leftIndex - rightIndex
-    }
-    return left.localeCompare(right)
-  })
-
-  for (const token of orderedTokens) {
-    if (selected.length >= count) {
-      break
-    }
-    const firstFile = tokenToFiles.get(token)?.[0]
-    if (!firstFile || selectedSet.has(firstFile)) {
-      continue
-    }
-    selected.push(firstFile)
-    selectedSet.add(firstFile)
-  }
+  // First pass: pick token-diverse representatives from code files.
+  // Second pass: include non-code only when needed to fill remaining slots.
+  appendTokenRepresentatives(preferred, tokenPriorityMap, selected, selectedSet, count)
+  appendTokenRepresentatives(nonPreferred, tokenPriorityMap, selected, selectedSet, count)
 
   if (selected.length >= count) {
     return sortUnique(selected).slice(0, count)
@@ -100,8 +67,13 @@ function selectDistributed(files: string[], count: number, tokenHints?: string[]
 
   const remaining = files.filter((file) => !selectedSet.has(file))
   const needed = count - selected.length
-  const spaced = pickUniformly(remaining, needed)
-  return sortUnique([...selected, ...spaced]).slice(0, count)
+  const preferredRemaining = remaining.filter((file) => isPreferredForLintSampling(file))
+  const nonPreferredRemaining = remaining.filter((file) => !isPreferredForLintSampling(file))
+
+  const preferredPicked = pickUniformly(preferredRemaining, needed)
+  const afterPreferredNeed = needed - preferredPicked.length
+  const fallbackPicked = afterPreferredNeed > 0 ? pickUniformly(nonPreferredRemaining, afterPreferredNeed) : []
+  return sortUnique([...selected, ...preferredPicked, ...fallbackPicked]).slice(0, count)
 }
 
 function pickUniformly(files: string[], count: number): string[] {
@@ -269,7 +241,20 @@ function normalizeToken(token: string): string {
   return token
 }
 
+function isPreferredForLintSampling(file: string): boolean {
+  return CODE_PREFERRED_EXTENSIONS.has(getExtension(file))
+}
+
+function getExtension(file: string): string {
+  const lastDot = file.lastIndexOf('.')
+  if (lastDot === -1 || lastDot === file.length - 1) {
+    return ''
+  }
+  return file.slice(lastDot + 1).toLowerCase()
+}
+
 const GENERIC_TOKENS = new Set(['src', 'index', 'main', 'test', 'spec', 'package', 'packages', 'lib', 'dist'])
+const CODE_PREFERRED_EXTENSIONS = new Set(['ts', 'tsx', 'js', 'jsx', 'cjs', 'mjs'])
 
 const DEFAULT_TOKEN_HINT_GROUPS = [
   [
@@ -408,4 +393,55 @@ function normalizeTokenHintGroups(input?: string[] | string[][]): string[][] {
 
 function toPriorityEntries(tokens: string[], priority: number): Array<[string, number]> {
   return tokens.map((token) => [normalizeToken(token), priority])
+}
+
+function appendTokenRepresentatives(
+  files: string[],
+  tokenPriorityMap: Map<string, number>,
+  selected: string[],
+  selectedSet: Set<string>,
+  count: number
+): void {
+  if (selected.length >= count || files.length === 0) {
+    return
+  }
+
+  const tokenToFiles = new Map<string, string[]>()
+  const tokenFirstIndex = new Map<string, number>()
+  for (const [index, file] of files.entries()) {
+    const token = getPrimaryToken(file, tokenPriorityMap)
+    if (!token) {
+      continue
+    }
+    tokenFirstIndex.set(token, Math.min(tokenFirstIndex.get(token) ?? Number.POSITIVE_INFINITY, index))
+    const current = tokenToFiles.get(token) ?? []
+    current.push(file)
+    tokenToFiles.set(token, current)
+  }
+
+  const orderedTokens = [...tokenToFiles.keys()].sort((left, right) => {
+    const leftPriority = tokenPriorityMap.get(left) ?? Number.POSITIVE_INFINITY
+    const rightPriority = tokenPriorityMap.get(right) ?? Number.POSITIVE_INFINITY
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority
+    }
+    const leftIndex = tokenFirstIndex.get(left) ?? Number.POSITIVE_INFINITY
+    const rightIndex = tokenFirstIndex.get(right) ?? Number.POSITIVE_INFINITY
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex
+    }
+    return left.localeCompare(right)
+  })
+
+  for (const token of orderedTokens) {
+    if (selected.length >= count) {
+      break
+    }
+    const firstFile = tokenToFiles.get(token)?.[0]
+    if (!firstFile || selectedSet.has(firstFile)) {
+      continue
+    }
+    selected.push(firstFile)
+    selectedSet.add(firstFile)
+  }
 }
