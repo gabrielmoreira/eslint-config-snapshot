@@ -39,8 +39,10 @@ export const DEFAULT_CONFIG: SnapshotConfig = {
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
     hintGlobs: [
+      '**/{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
       '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{service,controller,route,routes,handler,model,schema,repository}.{js,jsx,ts,tsx}'
+      '**/*.{service,controller,route,routes,handler,model,schema,repository,view,views}.{js,jsx,ts,tsx}',
+      '**/{service,controller,route,routes,handler,model,schema,repository,view,views}/**/*.{js,jsx,ts,tsx,cjs,mjs}'
     ]
   }
 }
@@ -137,8 +139,10 @@ export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
     includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
     excludeGlobs: ['**/node_modules/**', '**/dist/**'],
     hintGlobs: [
+      '**/{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
       '**/*.{config,setup}.{js,jsx,ts,tsx,cjs,mjs}',
-      '**/*.{service,controller,route,routes,handler,model,schema,repository}.{js,jsx,ts,tsx}'
+      '**/*.{service,controller,route,routes,handler,model,schema,repository,view,views}.{js,jsx,ts,tsx}',
+      '**/{service,controller,route,routes,handler,model,schema,repository,view,views}/**/*.{js,jsx,ts,tsx,cjs,mjs}'
     ]
   }
 }\n`

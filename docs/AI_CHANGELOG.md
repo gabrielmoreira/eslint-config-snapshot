@@ -1525,3 +1525,26 @@ Result:
 
 - Users can now inspect exact evaluated files, executed extraction commands, and timings on demand.
 - Normal output remains concise, while top-level messages are slightly more friendly/scanable.
+
+## 2026-02-13 - Request 072
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Re-evaluate default sampling hint masks after debug output showed hints were too strict for common filenames like `config.ts`.
+
+Key decisions:
+
+- Expanded default `hintGlobs` to capture both suffix and direct-name variants:
+  - direct names (`**/{config,setup}.{ext}`)
+  - suffix names (`**/*.{config,setup}.{ext}`)
+- Expanded architecture-role hints to include additional common roles (`view/views`) and directory-shaped patterns:
+  - file suffix role hints
+  - role directory hints (`**/{service,controller,...}/**/*.{ext}`)
+- Kept deterministic sampling behavior unchanged.
+
+Result:
+
+- Hint matching is now less brittle and better aligned with real-world project naming patterns.
+- API and CLI test suites remain fully passing.
