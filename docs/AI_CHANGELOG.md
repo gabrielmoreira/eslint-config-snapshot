@@ -816,3 +816,21 @@ Result:
 
 - Repository is ready for a clean, version-aligned release tag flow.
 - Documentation now explains exactly how to trigger releases with the current pipeline.
+
+## 2026-02-13 - Request 039
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Create and push a new release version to test the automated release flow.
+
+Key decisions:
+
+- Generated a new patch release via Changesets for both packages.
+- Applied package versions to `0.1.2` with synchronized changelog updates.
+- Replaced previous `v0.1.2` tag reference with a tag aligned to the new version commit.
+
+Result:
+
+- Repository now has a version-aligned release candidate for automated publish testing.

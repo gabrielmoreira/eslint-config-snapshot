@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.1.2
+
+### Patch Changes
+
+- Test release bump to validate automated publish flow with aligned package versions and tag.
+
 ## 0.1.1
 
 ### Patch Changes
