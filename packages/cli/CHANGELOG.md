@@ -1,5 +1,13 @@
 # @eslint-config-snapshot/cli
 
+## 0.1.3
+
+### Patch Changes
+
+- Release patch version to validate trusted publishing flow with protected release environment.
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

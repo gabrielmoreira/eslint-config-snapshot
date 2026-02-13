@@ -851,3 +851,21 @@ Key decisions:
 Result:
 
 - Publish workflow can now be controlled by GitHub Environment protection rules (tag rules, reviewers, wait timer).
+
+## 2026-02-13 - Request 041
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Create and publish a new release version.
+
+Key decisions:
+
+- Generated a patch changeset for both publishable packages.
+- Applied package version bump from `0.1.2` to `0.1.3`.
+- Released through tag-aligned flow (`v0.1.3`).
+
+Result:
+
+- Repository is prepared for the next automated npm publish run with versions aligned to the new tag.
