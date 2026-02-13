@@ -70,7 +70,9 @@ describe('cli terminal invocation', () => {
 
     const compare = run(['compare'])
     expect(compare.status).toBe(0)
-    expect(compare.stdout).toBe('No snapshot changes detected.\n')
+    expect(compare.stdout).toBe(
+      'No snapshot changes detected.\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
+    )
     expect(compare.stderr).toBe('')
   })
 
@@ -85,7 +87,7 @@ describe('cli terminal invocation', () => {
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'No local snapshots found to compare against.\nRun `eslint-config-snapshot --update` first.\n'
+      'No baseline snapshot found.\nRun `eslint-config-snapshot --update` to create one.\n'
     )
   })
 
@@ -99,7 +101,9 @@ describe('cli terminal invocation', () => {
 
     const compare = run(['compare'])
     expect(compare.status).toBe(1)
-    expect(compare.stdout).toBe('group: default\nseverity changed:\n  - eqeqeq: error -> off\n')
+    expect(compare.stdout).toBe(
+      'group: default\nseverity changed:\n  - eqeqeq: error -> off\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
+    )
     expect(compare.stderr).toBe('')
   })
 
@@ -113,7 +117,9 @@ describe('cli terminal invocation', () => {
 
     const compare = run(['compare'])
     expect(compare.status).toBe(1)
-    expect(compare.stdout).toBe('group: default\noptions changed:\n  - eqeqeq: "always" -> "smart"\n')
+    expect(compare.stdout).toBe(
+      'group: default\noptions changed:\n  - eqeqeq: "always" -> "smart"\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
+    )
     expect(compare.stderr).toBe('')
   })
 
@@ -136,7 +142,7 @@ describe('cli terminal invocation', () => {
 
     const clean = run(['status'])
     expect(clean.status).toBe(0)
-    expect(clean.stdout).toBe('clean\n')
+    expect(clean.stdout).toBe('clean\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n')
     expect(clean.stderr).toBe('')
 
     await writeFile(
@@ -146,7 +152,7 @@ describe('cli terminal invocation', () => {
 
     const changed = run(['status'])
     expect(changed.status).toBe(1)
-    expect(changed.stdout).toBe('changes\n')
+    expect(changed.stdout).toBe('changes\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n')
     expect(changed.stderr).toBe('')
   })
 
@@ -288,16 +294,17 @@ no-debugger: off
     const check = run(['check'])
     expect(check.status).toBe(0)
     expect(check.stdout).toContain('No snapshot drift detected.')
+    expect(check.stdout).toContain('Tip: run `eslint-config-snapshot --update` to refresh the baseline.')
   })
 
-  it('explains missing config when running default command', async () => {
+  it('uses defaults and explains baseline setup when running default command', async () => {
     await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
     await writeFile(path.join(repoRoot, 'package.json'), JSON.stringify({ name: 'fixture-repo', private: true }, null, 2))
 
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
+      'Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\nAutomatic workspace discovery failed while using defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
     )
   })
 })

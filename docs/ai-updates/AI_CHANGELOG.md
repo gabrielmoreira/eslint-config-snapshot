@@ -279,3 +279,36 @@ Result:
 - Default snapshot baseline path is now `.eslint-config-snapshot/default.json`.
 - CLI default UX is improved for first run without adding command sprawl.
 - Integration and terminal tests were updated and continue to pass with the renamed identity.
+
+## 2026-02-13 - Request 015
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Remove the practical need for `init` in normal usage.
+- If no config exists, use minimal defaults automatically and show only a low-noise tip about optional init.
+- If no baseline snapshot exists:
+  - in interactive mode, ask whether current execution should become baseline;
+  - otherwise fail with clear `--update` guidance.
+- Always remind users about `--update` when running check flows without updating.
+- Keep `init` as an advanced customization path and update README accordingly.
+- Improve markdown cross-linking and document a future idea for config suggestion via repository scan.
+
+Key decisions:
+
+- Kept `init` command available, but removed config as a hard requirement for `check` and `update`.
+- Added default check behavior:
+  - uses built-in defaults when no explicit config is present
+  - prints a single optional-init tip
+- Added interactive baseline creation prompt for first run when no snapshot baseline exists.
+- Added persistent baseline refresh hint (`eslint-config-snapshot --update`) in check/status/summary outputs.
+- Added graceful fallback message when automatic workspace discovery fails under default config.
+- Updated README quick start to use baseline/update flow without requiring init.
+
+Result:
+
+- First-run UX is simpler for typical users and still supports advanced explicit config.
+- Baseline lifecycle is clearer through consistent update reminders.
+- Documentation now presents init as optional and links docs with markdown references.
+- Added future TODO in implementation review for optional config suggestion via repository scan.

@@ -47,6 +47,10 @@ This report summarizes implementation alignment, test hardening, and known remai
 
 ## Deprecated API Follow-up
 
-1. The new `deprecate/member-expression` guard is configured for common Node deprecations (`fs.rmdir*`, `url.parse`, legacy `util.is*` helpers).
-2. Current codebase scan did not find direct matches for configured deprecated members.
-3. Future task: expand deprecated checks for dynamic/aliased access patterns that static member matching cannot detect.
+1. Deprecated usage detection is currently driven by type-aware `@typescript-eslint/no-deprecated`.
+2. Current codebase scan did not find blocking deprecated usages under current rule severity policy.
+3. Future task: expand checks for dynamic or non-type-resolved usage patterns that are not visible to typed symbol analysis.
+
+## Future TODOs
+
+1. Add an optional config-suggestion command that scans repository ESLint config locations and proposes a starting `eslint-config-snapshot` configuration.

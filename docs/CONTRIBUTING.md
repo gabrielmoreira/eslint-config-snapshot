@@ -2,6 +2,8 @@
 
 Thanks for contributing to ESLint Config Snapshot.
 
+See also: [`SPEC.md`](SPEC.md), [`TASKS.md`](TASKS.md), [`README.md`](../README.md)
+
 ## Development Setup
 
 Requirements:

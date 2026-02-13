@@ -23,6 +23,7 @@ import { pathToFileURL } from 'node:url'
 
 
 const SNAPSHOT_DIR = '.eslint-config-snapshot'
+const UPDATE_HINT = 'Tip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
 
 type BuiltSnapshot = Awaited<ReturnType<typeof buildSnapshot>>
 type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
@@ -210,38 +211,43 @@ function parseInitPreset(value: string): InitPreset {
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
-    if (defaultInvocation && process.stdin.isTTY && process.stdout.isTTY) {
-      const shouldInit = await askYesNo(
-        'No config initialized for eslint-config-snapshot. Run init now? [Y/n] ',
+    process.stdout.write(
+      'Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n'
+    )
+  }
+
+  let currentSnapshots: Map<string, BuiltSnapshot>
+  try {
+    currentSnapshots = await computeCurrentSnapshots(cwd)
+  } catch (error: unknown) {
+    if (!foundConfig) {
+      process.stdout.write(
+        'Automatic workspace discovery failed while using defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
+      )
+      return 1
+    }
+
+    throw error
+  }
+  const storedSnapshots = await loadStoredSnapshots(cwd)
+
+  if (storedSnapshots.size === 0) {
+    const canPromptBaseline = defaultInvocation || format === 'summary'
+    if (canPromptBaseline && process.stdin.isTTY && process.stdout.isTTY) {
+      const shouldCreateBaseline = await askYesNo(
+        'No baseline snapshot found. Use current rule state as baseline now? [Y/n] ',
         true
       )
-      if (shouldInit) {
-        const initCode = await runInit(cwd)
-        if (initCode !== 0) {
-          return initCode
-        }
-
-        const shouldUpdate = await askYesNo('Create first baseline snapshot now? [Y/n] ', true)
-        if (shouldUpdate) {
-          return executeUpdate(cwd, true)
-        }
-
-        process.stdout.write('Initialization complete. Run `eslint-config-snapshot --update` when ready.\n')
+      if (shouldCreateBaseline) {
+        await writeSnapshots(cwd, currentSnapshots)
+        const summary = summarizeSnapshots(currentSnapshots)
+        process.stdout.write(`Baseline created: ${summary.groups} groups, ${summary.rules} rules.\n`)
+        process.stdout.write(UPDATE_HINT)
         return 0
       }
     }
 
-    process.stdout.write(
-      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
-    )
-    return 1
-  }
-
-  const currentSnapshots = await computeCurrentSnapshots(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd)
-
-  if (storedSnapshots.size === 0) {
-    process.stdout.write('No local snapshots found to compare against.\nRun `eslint-config-snapshot --update` first.\n')
+    process.stdout.write('No baseline snapshot found.\nRun `eslint-config-snapshot --update` to create one.\n')
     return 1
   }
 
@@ -249,23 +255,24 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
   if (format === 'status') {
     if (changes.length === 0) {
-      process.stdout.write('clean\n')
+      process.stdout.write(`clean\n${UPDATE_HINT}`)
       return 0
     }
 
-    process.stdout.write('changes\n')
+    process.stdout.write(`changes\n${UPDATE_HINT}`)
     return 1
   }
 
   if (format === 'diff') {
     if (changes.length === 0) {
-      process.stdout.write('No snapshot changes detected.\n')
+      process.stdout.write(`No snapshot changes detected.\n${UPDATE_HINT}`)
       return 0
     }
 
     for (const change of changes) {
       process.stdout.write(`${formatDiff(change.groupId, change.diff)}\n`)
     }
+    process.stdout.write(UPDATE_HINT)
 
     return 1
   }
@@ -277,12 +284,23 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
     process.stdout.write(
-      'No snapshot config found.\nRun `eslint-config-snapshot init` to create one, then run `eslint-config-snapshot --update`.\n'
+      'Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n'
     )
-    return 1
   }
 
-  const currentSnapshots = await computeCurrentSnapshots(cwd)
+  let currentSnapshots: Map<string, BuiltSnapshot>
+  try {
+    currentSnapshots = await computeCurrentSnapshots(cwd)
+  } catch (error: unknown) {
+    if (!foundConfig) {
+      process.stdout.write(
+        'Automatic workspace discovery failed while using defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
+      )
+      return 1
+    }
+
+    throw error
+  }
   await writeSnapshots(cwd, currentSnapshots)
 
   if (printSummary) {
@@ -623,6 +641,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     process.stdout.write(
       `Current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off).\n`
     )
+    process.stdout.write(UPDATE_HINT)
     return 0
   }
 
@@ -643,6 +662,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     }
     process.stdout.write('\n')
   }
+  process.stdout.write(UPDATE_HINT)
 
   return 1
 }

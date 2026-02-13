@@ -24,36 +24,40 @@ This tool gives you a deterministic baseline and a fast answer to: "what changed
 Use one of:
 
 ```bash
-pnpm dlx @eslint-config-snapshot/cli@latest init
-```
-
-```bash
-npx @eslint-config-snapshot/cli@latest init
-```
-
-Then create your first baseline:
-
-```bash
 pnpm dlx @eslint-config-snapshot/cli@latest --update
 ```
 
-And run drift checks anytime:
+```bash
+npx @eslint-config-snapshot/cli@latest --update
+```
+
+Then run checks anytime:
 
 ```bash
 pnpm dlx @eslint-config-snapshot/cli@latest
+```
+
+The check output always reminds you how to refresh baseline:
+
+```bash
+eslint-config-snapshot --update
 ```
 
 Default command (no subcommand) runs `check` summary output.
 
 ## Setup Flow
 
-1. `init`: bootstrap config
-2. `--update`: write baseline snapshots
-3. `check` (or no command): detect drift
+1. `--update`: write baseline snapshots
+2. `check` (or no command): detect drift
+3. `--update`: refresh baseline after intentional changes
 
-## Init behavior
+## Optional Init (Advanced)
 
-`init` now supports a lightweight setup assistant.
+`init` is optional and only needed if you want explicit custom config.
+
+The default behavior works without a config file.
+
+`init` provides a lightweight setup assistant:
 
 - choose target: `file` or `package-json`
 - choose preset: `minimal` or `full`
@@ -100,10 +104,12 @@ Main path: keep config minimal.
 
 Advanced patterns and recipes are in:
 
-- `docs/EXAMPLES.md`
+- [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
 
 ## Documentation
 
-- `docs/CONTRIBUTING.md`
-- `docs/EXAMPLES.md`
-- `docs/SPEC.md`
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
+- [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
+- [`docs/SPEC.md`](docs/SPEC.md)
+- [`docs/TASKS.md`](docs/TASKS.md)
+- [`docs/ai-updates/AI_CHANGELOG.md`](docs/ai-updates/AI_CHANGELOG.md)

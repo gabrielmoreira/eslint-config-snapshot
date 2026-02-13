@@ -1,5 +1,7 @@
 # Configuration Examples
 
+See also: [`README.md`](../README.md), [`SPEC.md`](SPEC.md)
+
 This project prefers minimal initialization in `package.json`:
 
 ```json

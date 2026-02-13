@@ -61,7 +61,9 @@ describe('cli integration', () => {
     const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli('status', fixtureRoot)
     expect(code).toBe(0)
-    expect(writeSpy).toHaveBeenCalledWith('clean\n')
+    expect(writeSpy).toHaveBeenCalledWith(
+      'clean\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
+    )
   })
 
   it('print emits aggregated rules and exits 0', async () => {
