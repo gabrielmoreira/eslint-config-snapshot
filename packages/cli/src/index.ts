@@ -358,30 +358,50 @@ function compareSnapshotMaps(before: Map<string, StoredSnapshot>, after: Map<str
 function formatDiff(groupId: string, diff: SnapshotDiff): string {
   const lines = [`group: ${groupId}`]
 
-  if (diff.introducedRules.length > 0) {
-    lines.push(`introduced rules: ${diff.introducedRules.join(', ')}`)
-  }
-  if (diff.removedRules.length > 0) {
-    lines.push(`removed rules: ${diff.removedRules.join(', ')}`)
-  }
+  addListSection(lines, 'introduced rules', diff.introducedRules)
+  addListSection(lines, 'removed rules', diff.removedRules)
+
   if (diff.severityChanges.length > 0) {
+    lines.push('severity changed:')
     for (const change of diff.severityChanges) {
-      lines.push(`severity changed: ${change.rule} ${change.before} -> ${change.after}`)
+      lines.push(`  - ${change.rule}: ${change.before} -> ${change.after}`)
     }
-  }
-  if (diff.optionChanges.length > 0) {
-    for (const change of diff.optionChanges) {
-      lines.push(`options changed: ${change.rule} ${JSON.stringify(change.before)} -> ${JSON.stringify(change.after)}`)
-    }
-  }
-  if (diff.workspaceMembershipChanges.added.length > 0) {
-    lines.push(`workspaces added: ${diff.workspaceMembershipChanges.added.join(', ')}`)
-  }
-  if (diff.workspaceMembershipChanges.removed.length > 0) {
-    lines.push(`workspaces removed: ${diff.workspaceMembershipChanges.removed.join(', ')}`)
   }
 
+  const optionChanges = getDisplayOptionChanges(diff)
+  if (optionChanges.length > 0) {
+    lines.push('options changed:')
+    for (const change of optionChanges) {
+      lines.push(`  - ${change.rule}: ${formatValue(change.before)} -> ${formatValue(change.after)}`)
+    }
+  }
+
+  addListSection(lines, 'workspaces added', diff.workspaceMembershipChanges.added)
+  addListSection(lines, 'workspaces removed', diff.workspaceMembershipChanges.removed)
+
   return lines.join('\n')
+}
+
+function addListSection(lines: string[], title: string, values: string[]): void {
+  if (values.length === 0) {
+    return
+  }
+
+  lines.push(`${title}:`)
+  for (const value of values) {
+    lines.push(`  - ${value}`)
+  }
+}
+
+function formatValue(value: unknown): string {
+  const serialized = JSON.stringify(value)
+  return serialized === undefined ? 'undefined' : serialized
+}
+
+function getDisplayOptionChanges(diff: SnapshotDiff): SnapshotDiff['optionChanges'] {
+  const removedRules = new Set(diff.removedRules)
+  const severityChangedRules = new Set(diff.severityChanges.map((change) => change.rule))
+  return diff.optionChanges.filter((change) => !removedRules.has(change.rule) && !severityChangedRules.has(change.rule))
 }
 
 async function runInit(cwd: string): Promise<number> {
@@ -463,7 +483,7 @@ function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }
     introduced += change.diff.introducedRules.length
     removed += change.diff.removedRules.length
     severity += change.diff.severityChanges.length
-    options += change.diff.optionChanges.length
+    options += getDisplayOptionChanges(change.diff).length
     workspace += change.diff.workspaceMembershipChanges.added.length + change.diff.workspaceMembershipChanges.removed.length
   }
   return { introduced, removed, severity, options, workspace }

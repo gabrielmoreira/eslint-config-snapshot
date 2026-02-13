@@ -100,10 +100,36 @@ describe('cli terminal invocation', () => {
 
     const compare = run(['compare'])
     expect(compare.status).toBe(1)
-    expect(compare.stdout).toBe(
-      'group: default\nseverity changed: eqeqeq error -> off\noptions changed: eqeqeq "always" -> undefined\n'
-    )
+    expect(compare.stdout).toBe('group: default\nseverity changed:\n  - eqeqeq: error -> off\n')
     expect(compare.stderr).toBe('')
+  })
+
+  it('compare shows options changed when severity does not change', async () => {
+    expect(run(['snapshot']).status).toBe(0)
+
+    await writeFile(
+      path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
+      "console.log(JSON.stringify({ rules: { 'no-console': 1, eqeqeq: [2, 'smart'] } }))\n"
+    )
+
+    const compare = run(['compare'])
+    expect(compare.status).toBe(1)
+    expect(compare.stdout).toBe('group: default\noptions changed:\n  - eqeqeq: "always" -> "smart"\n')
+    expect(compare.stderr).toBe('')
+  })
+
+  it('compare prints removed rules as nested list', async () => {
+    expect(run(['snapshot']).status).toBe(0)
+
+    await writeFile(
+      path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
+      "console.log(JSON.stringify({ rules: { 'no-console': 1 } }))\n"
+    )
+
+    const compare = run(['compare'])
+    expect(compare.status).toBe(1)
+    expect(compare.stdout).toContain('removed rules:\n  - eqeqeq\n')
+    expect(compare.stdout).not.toContain('options changed:\n  - eqeqeq')
   })
 
   it('status returns clean and changes variants', async () => {

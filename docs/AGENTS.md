@@ -2,86 +2,67 @@
 
 ## Authoritative Documents
 
-This repository contains four mandatory authoritative documents:
+This repository has four mandatory authoritative documents:
 
-SPEC.md  
-SPEC_ENHANCED.md  
-AGENTS.md  
-TASKS.md  
+1. `SPEC.md`
+2. `SPEC_ENHANCED.md`
+3. `AGENTS.md`
+4. `TASKS.md`
 
-These files define the complete contract and implementation plan.
+Read and apply them in this exact order.
 
-The agent MUST read and follow them in this exact order:
+Priority rules:
 
-1. SPEC.md — defines the base technical specification
-2. SPEC_ENHANCED.md — defines approved staged enhancements and explicit deviations
-3. AGENTS.md — defines execution rules and constraints for the agent
-4. TASKS.md — defines the execution plan and required implementation steps
+- Active items in `SPEC_ENHANCED.md` extend `SPEC.md`.
+- `SPEC.md` overrides `AGENTS.md` and `TASKS.md`.
+- `AGENTS.md` overrides `TASKS.md`.
 
-The specification authority is `SPEC.md + SPEC_ENHANCED.md`.
+## Implementation Constraints
 
-If any conflict exists:
+- Use TypeScript for all source code.
+- Use Vitest for tests.
+- Use ESLint for linting.
+- Use pnpm + Nx targets for `build`, `lint`, `typecheck`, `test`.
+- Keep snapshots deterministic and free of volatile metadata.
+- Resolve ESLint per workspace.
+- Ensure cross-platform behavior (Windows, macOS, Linux).
 
-SPEC_ENHANCED.md overrides SPEC.md for explicitly documented enhancements only  
-SPEC.md overrides AGENTS.md and TASKS.md  
-AGENTS.md overrides TASKS.md  
+## Mandatory Workflow
 
-The agent MUST NOT invent behavior not defined in SPEC.md or SPEC_ENHANCED.md.
+Before implementation, read all four authoritative documents.
 
-The agent MUST fully implement SPEC.md and SPEC_ENHANCED.md.
+For every substantial implementation step:
 
-## ESLint Config Snapshotter Agent Instructions
+- run impacted checks (`build`, `lint`, `typecheck`, `test`)
+- keep changes small and deterministic
+- commit locally using Conventional Commits
+- do not push
 
-You are an autonomous coding agent operating inside this repository.
+## Dependency Discipline
 
-Your goal is to implement the tool described in SPEC.md and SPEC_ENHANCED.md as a TypeScript monorepo using pnpm + Nx.
+- Prefer minimal dependencies.
+- Any newly introduced dependency must be documented in `docs/DEPENDENCIES.md` with justification.
 
-Non-negotiables:
-- All code is TypeScript.
-- Tests use Vitest.
-- Lint uses ESLint.
-- Snapshots are JSON, pretty printed (indent 2), compact ESLint-style rule entries.
-- Snapshot files MUST NOT include sampled file paths, hashes, timestamps, versions, env info, or absolute paths.
-- Grouping uses ordered match groups with glob patterns and negative patterns ('!'), first match wins.
-- Workspace input supports 'discover' (default) and 'manual' (skip discovery).
-- ESLint resolution MUST be workspace-scoped: resolve eslint relative to each workspace and run:
-  node <resolved-eslint-bin> --print-config <fileAbs> with cwd=workspaceAbs
-- Must support Node 18+, macOS/Linux/Windows path normalization.
-- Repo uses pnpm + Nx. Use Nx targets for build/test/lint/typecheck.
+## AI Iteration Log (Mandatory)
 
-Definition of Done:
-- Required CLI commands implemented: snapshot, compare, status, print, init.
-- CLI works end-to-end on fixtures.
-- All tests pass via Nx: `pnpm nx run-many -t test`.
-- Lint passes via Nx: `pnpm nx run-many -t lint`.
-- Build passes via Nx: `pnpm nx run-many -t build`.
-- Typecheck passes: `pnpm nx run-many -t typecheck`.
-- Snapshot format exactly matches SPEC.md and SPEC_ENHANCED.md (compact, pretty, deterministic).
+For every user request that results in code/docs/process changes, the agent MUST append an entry to:
 
-Work approach:
-- Work in small steps.
-- After each step, run: build + lint + test for impacted projects.
-- Add integration fixtures with two workspaces using different ESLint versions.
-- Prefer minimal dependencies. Use @manypkg/get-packages for discovery. Use a widely adopted glob library.
-- Do not store volatile data in snapshots.
-- Add docs/DEPENDENCIES.md if any new dependency is introduced, with justification.
-- You MUST create local git commits after each major milestone using Conventional Commits.
-- You MUST NOT push commits.
+- `docs/ai-updates/AI_CHANGELOG.md`
 
-Mandatory reading requirement:
+Each entry must be in English and include:
 
-Before writing any code, the agent MUST read completely:
+- user request summary (agent interpretation)
+- key decisions
+- implementation result
+- relevant follow-up notes or limitations
+- author (committer full name used in this repository)
 
-SPEC.md
-SPEC_ENHANCED.md
-AGENTS.md
-TASKS.md
+This requirement is mandatory and continuous for all future requests.
 
-The agent MUST NOT begin implementation until all four are fully read.
+## Conventional Commits + Hooks
 
-Conventional Commits + Hooks:
-- commit-msg must validate Conventional Commits via commitlint
-- pre-commit must run ESLint on staged files (lint-staged)
-- pre-push must run Nx affected tests (only affected)
+- `commit-msg` validates Conventional Commits via commitlint
+- `pre-commit` runs ESLint on staged files (lint-staged)
+- `pre-push` runs Nx affected tests via Node scripts
 
-Implement hooks in a cross-platform way by calling Node scripts from husky hooks (no bash-only logic).
+Hook logic must remain cross-platform.

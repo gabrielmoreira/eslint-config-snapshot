@@ -55,6 +55,18 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
     const oldOptions = oldEntry.length > 1 ? canonicalizeJson(oldEntry[1]) : undefined
     const newOptions = newEntry.length > 1 ? canonicalizeJson(newEntry[1]) : undefined
 
+    if (oldEntry[0] === 'off' || newEntry[0] === 'off') {
+      // Treat off->off option removal/addition as removed/introduced config intent.
+      if (oldEntry[0] === 'off' && newEntry[0] === 'off') {
+        if (oldOptions !== undefined && newOptions === undefined) {
+          removedRules.push(name)
+        } else if (oldOptions === undefined && newOptions !== undefined) {
+          introducedRules.push(name)
+        }
+      }
+      continue
+    }
+
     if (JSON.stringify(oldOptions) !== JSON.stringify(newOptions)) {
       optionChanges.push({
         rule: name,
@@ -68,8 +80,8 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
   const afterWorkspaces = sortUnique(after.workspaces)
 
   return {
-    introducedRules,
-    removedRules,
+    introducedRules: sortUnique(introducedRules),
+    removedRules: sortUnique(removedRules),
     severityChanges,
     optionChanges,
     workspaceMembershipChanges: {

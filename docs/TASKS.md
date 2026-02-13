@@ -1,56 +1,43 @@
 # TASKS.md
 
-## Execution Authority and Specification Contract
+## Execution Contract
 
-This file (TASKS.md) defines the execution plan.
+`TASKS.md` defines execution order and required deliverables.
 
-The agent MUST follow the specifications defined in SPEC.md and SPEC_ENHANCED.md.
+The implementation contract is defined by:
 
-SPEC.md defines the base specification.
-SPEC_ENHANCED.md defines mandatory staged enhancements and explicit deviations.
+- `SPEC.md`
+- `SPEC_ENHANCED.md` (only when it has active staged items)
+- `AGENTS.md`
 
-AGENTS.md defines execution constraints and operational rules.
+If any conflict exists, follow document priority from `AGENTS.md`.
 
-TASKS.md defines implementation order only.
+## Required Workstream
 
-The agent MUST:
+1. Keep monorepo architecture aligned with `SPEC.md`.
+2. Implement and maintain `@eslint-config-snapshotter/api`.
+3. Implement and maintain `@eslint-config-snapshotter/cli`.
+4. Keep hooks and commit standards operational.
+5. Keep docs aligned with shipped behavior.
 
-- implement all requirements from SPEC.md and SPEC_ENHANCED.md
-- use TASKS.md only as execution order
-- never contradict SPEC.md or SPEC_ENHANCED.md
-- never skip requirements defined in SPEC.md or SPEC_ENHANCED.md
+## Quality Gates
 
-## Execution Plan
+For completed work, ensure:
 
-0) Bootstrap Nx monorepo (pnpm)
-- Setup packages/* workspace layout
-- Setup shared TS config
-- Setup ESLint config
-- Setup Vitest per package
-- Nx targets: build, typecheck, lint, test
-- Each package MUST have project.json defining Nx targets:
-  build, typecheck, lint, test
+- `pnpm nx run-many -t build`
+- `pnpm nx run-many -t lint`
+- `pnpm nx run-many -t typecheck`
+- `pnpm nx run-many -t test`
 
-1) packages/api
-- include internal modules for core/config/workspace/sampling/extract/snapshot/diff
-- export public API surface including discoverWorkspaces, normalizePath, sortUnique, assignGroupsByMatch, resolveEslintBinForWorkspace
+## Mandatory Documentation Updates
 
-2) packages/cli
-- commands: snapshot/compare/status/print/init
-- integration tests with fixtures
-- terminal-invoked command tests with output assertions
+For every user request that changes code, behavior, or project process:
 
-3) Hooks + conventional commits
-- husky + commitlint + lint-staged
-- pre-push uses Nx affected test via Node script
+1. Append an English entry to `docs/ai-updates/AI_CHANGELOG.md`.
+2. Include the committer full name in the changelog entry (`Author` field).
+3. Update affected specification or usage docs if behavior changed.
+4. Keep `SPEC_ENHANCED.md` reserved for staged-only changes.
 
-4) Root configuration
-- nx.json
-- tsconfig.base.json
-- workspace package.json with workspaces field
+## Completion Rule
 
-Implementation completeness requirement:
-
-The agent MUST implement ALL requirements from SPEC.md and SPEC_ENHANCED.md.
-
-Completion is defined by satisfying the active specification contract, not merely finishing TASKS.md.
+Completion means satisfying the active specification contract and updating mandatory documentation, not only finishing code edits.

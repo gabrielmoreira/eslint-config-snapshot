@@ -1,0 +1,126 @@
+# AI_CHANGELOG.md
+
+This file records iterative user requests handled with Codex and their outcomes.
+
+## 2026-02-13 - Request 001
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Validate implementation against spec, apply corrections, simplify where possible, harden tests, broaden isolated workspace scenarios, and improve README.
+
+Result:
+
+- Expanded validation across API and CLI.
+- Improved fixture coverage including isolated pnpm/npm execution.
+- Updated project documentation for current behavior.
+
+## 2026-02-13 - Request 002
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add Cosmiconfig-based configuration discovery, improve positive/negative CLI testing, add terminal-invoked assertions, and maintain an enhancement staging spec.
+
+Result:
+
+- Implemented Cosmiconfig loading with supported config prefixes.
+- Added robust integration and terminal tests for command variants.
+- Introduced and maintained `SPEC_ENHANCED.md` as staging.
+
+## 2026-02-13 - Request 003
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Reduce package fragmentation to two packages and simplify architecture.
+
+Result:
+
+- Consolidated to `@eslint-config-snapshotter/api` and `@eslint-config-snapshotter/cli`.
+- Removed obsolete split package structure.
+
+## 2026-02-13 - Request 004
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve default CLI UX: detect drift without extra command, support update flow from default invocation, and provide clearer summaries.
+
+Result:
+
+- Added default drift check behavior.
+- Added update flow from default mode.
+- Added richer summary output and improved guidance for missing config/snapshots.
+
+## 2026-02-13 - Request 005
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Adopt a modern CLI framework and simplify command model with ecosystem-friendly naming.
+
+Result:
+
+- Migrated CLI parsing/help to `commander`.
+- Established canonical commands: `check`, `update`, `print`, `init`.
+- Kept backward-compatible aliases: `snapshot`, `compare`, `status`, `what-changed`.
+
+## 2026-02-13 - Request 006
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Refine diff presentation: nested output sections and suppression of noisy option changes.
+
+Result:
+
+- Implemented nested list formatting for removed/severity/options sections.
+- Suppressed option noise when rules are removed or severity changes.
+
+## 2026-02-13 - Request 007
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure rules previously shown as option changes are represented as removed when configuration intent is effectively removed.
+
+Result:
+
+- Updated diff classification: `off + options` to `off` is treated as removed config intent.
+- Validated through API and CLI tests.
+
+## 2026-02-13 - Request 008
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Promote staged enhancements into main spec, empty enhancement staging file, simplify README, add contributing guidance, and make AI update log mandatory in process docs.
+
+Result:
+
+- Merged active staged behavior into `docs/SPEC.md`.
+- Reset `docs/SPEC_ENHANCED.md` to empty staging state.
+- Simplified `README.md` and added `docs/CONTRIBUTING.md`.
+- Updated `docs/AGENTS.md` and `docs/TASKS.md` to require changelog entries for every change request.
+
+## 2026-02-13 - Request 009
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Require committer full name in every AI changelog entry to disambiguate parallel or same-number requests.
+
+Result:
+
+- Added `Author` field to all existing entries.
+- Updated process docs to make committer full name mandatory for all future changelog entries.
