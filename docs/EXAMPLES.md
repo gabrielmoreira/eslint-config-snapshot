@@ -14,7 +14,20 @@ You can still use `eslint-config-snapshot.config.mjs` when you prefer a dedicate
 
 Use the examples below when you need explicit behavior.
 
-## 1. Minimal (recommended default)
+## 1. Minimal in package.json (recommended)
+
+```json
+{
+  "eslint-config-snapshot": {}
+}
+```
+
+When to use:
+
+- You want automatic workspace discovery.
+- You want default grouping and sampling behavior.
+
+## 2. Minimal file-based config
 
 ```js
 // eslint-config-snapshot.config.mjs
@@ -23,10 +36,9 @@ export default {}
 
 When to use:
 
-- You want automatic workspace discovery.
-- You want default grouping and sampling behavior.
+- You prefer explicit config files over package.json fields.
 
-## 2. Manual workspace input
+## 3. Manual workspace input
 
 ```js
 // eslint-config-snapshot.config.mjs
@@ -43,7 +55,7 @@ When to use:
 - You only want specific workspaces included.
 - You want deterministic input independent from discovery.
 
-## 3. Grouped workspaces with ordered matching
+## 4. Grouped workspaces with ordered matching
 
 ```js
 // eslint-config-snapshot.config.mjs
@@ -64,7 +76,7 @@ When to use:
 - You want first-match-wins grouping.
 - You need negative patterns (`!`) to exclude subsets.
 
-## 4. Standalone workspace grouping
+## 5. Standalone workspace grouping
 
 ```js
 // eslint-config-snapshot.config.mjs
@@ -79,7 +91,7 @@ When to use:
 
 - You want one snapshot group per workspace.
 
-## 5. Custom sampling policy
+## 6. Custom sampling policy
 
 ```js
 // eslint-config-snapshot.config.mjs

@@ -51,6 +51,15 @@ Default command (no subcommand) runs `check` summary output.
 2. `check` (or no command): detect drift
 3. `--update`: refresh baseline after intentional changes
 
+## First Run Behavior
+
+- No config file/field found:
+  - the CLI uses built-in defaults automatically
+  - it prints a low-noise tip explaining that `init` is optional for customization
+- No baseline snapshot found:
+  - interactive terminal: asks whether current state should become baseline
+  - non-interactive execution: exits with guidance to run `--update`
+
 ## Optional Init (Advanced)
 
 `init` is optional and only needed if you want explicit custom config.
@@ -106,6 +115,14 @@ It does **not** try to enumerate every rule that could exist across every instal
 
 If you need a full rule catalog/inspection workflow, use ESLint inspector tooling directly (for example `eslint --inspect-config` and related inspector UI workflows).
 
+## Troubleshooting
+
+- You run without config and see workspace discovery failure:
+  - create explicit config with `init` and define workspace input manually
+- You see drift but expected none:
+  - confirm dependency/config changes happened
+  - refresh baseline with `eslint-config-snapshot --update` if changes are intentional
+
 ## Configuration
 
 Main path: keep config minimal.
@@ -117,7 +134,10 @@ Advanced patterns and recipes are in:
 ## Documentation
 
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
+- [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md)
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
+- [`docs/IMPLEMENTATION_REVIEW.md`](docs/IMPLEMENTATION_REVIEW.md)
 - [`docs/SPEC.md`](docs/SPEC.md)
+- [`docs/SPEC_ENHANCED.md`](docs/SPEC_ENHANCED.md)
 - [`docs/TASKS.md`](docs/TASKS.md)
 - [`docs/ai-updates/AI_CHANGELOG.md`](docs/ai-updates/AI_CHANGELOG.md)

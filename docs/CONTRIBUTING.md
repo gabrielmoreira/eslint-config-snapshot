@@ -34,6 +34,11 @@ pnpm cli:dev -- check
 pnpm cli:dev -- update
 ```
 
+Zero-config note:
+
+- The CLI can run without explicit config and uses built-in defaults.
+- `init` is optional and mainly for explicit customization.
+
 ## Commit Rules
 
 - Use Conventional Commits.
@@ -48,6 +53,13 @@ When behavior changes:
 2. Keep `docs/SPEC_ENHANCED.md` only for temporary staged items.
 3. Update `README.md` usage sections.
 4. Append a new entry to `docs/ai-updates/AI_CHANGELOG.md`.
+
+Documentation map:
+
+- `README.md`: end-user usage
+- `docs/SPEC.md`: technical source of truth
+- `docs/EXAMPLES.md`: configuration recipes
+- `docs/IMPLEMENTATION_REVIEW.md`: limitations and future TODOs
 
 ## How We Use Codex
 

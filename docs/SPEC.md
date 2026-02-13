@@ -84,6 +84,8 @@ Config exports may be:
 - function returning object
 - async function returning object
 
+If no configuration is found, the CLI must proceed with built-in defaults (zero-config mode).
+
 ---
 
 ## 5. Workspace Input
@@ -171,6 +173,14 @@ Options:
 - `check --format <summary|status|diff>`
 - `print --format <json|short>` and `print --short`
 
+Default-run behavior requirements:
+
+- If no explicit config is found, continue using built-in defaults and show a non-blocking tip about optional `init`.
+- If no baseline snapshot exists:
+  - interactive terminal: ask whether current state should be saved as baseline
+  - non-interactive execution: exit non-zero with `--update` guidance
+- Check outputs should include a reminder that baseline refresh is done via `--update`.
+
 CLI parsing/help generation should be command-metadata driven (for example via `commander`) and avoid duplicated hardcoded help blocks.
 
 ---
@@ -201,3 +211,11 @@ Must work on macOS, Linux, and Windows.
 Path handling must normalize separators and avoid assumptions tied to one shell.
 
 Hooks and automation scripts must use cross-platform Node-based execution.
+
+---
+
+## 12. Scope Boundary
+
+This tool snapshots configured runtime rule state for the current project.
+
+It does not enumerate the complete universe of potentially available rules across all installed plugins.

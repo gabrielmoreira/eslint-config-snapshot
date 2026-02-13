@@ -333,3 +333,31 @@ Result:
 
 - User-facing docs now prevent scope confusion about what drift detection includes today.
 - Future direction is documented for separate full baseline support that could surface newly available rules after upgrades.
+
+## 2026-02-13 - Request 017
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Audit all existing documentation, remove outdated content, fix inaccuracies, and add missing sections where needed.
+
+Key decisions:
+
+- Updated `README.md` to align with current zero-config baseline workflow:
+  - added explicit first-run behavior
+  - added troubleshooting section
+  - expanded documentation links
+- Updated `docs/SPEC.md` to reflect shipped CLI behavior:
+  - zero-config fallback
+  - interactive/non-interactive first-baseline behavior
+  - baseline update reminder policy
+  - explicit scope-boundary section
+- Updated `docs/EXAMPLES.md` to prioritize package.json minimal config and clarify file-based minimal as an alternative.
+- Updated `docs/CONTRIBUTING.md` with zero-config note and a concise documentation map.
+
+Result:
+
+- Documentation set is now consistent with current runtime behavior and naming.
+- Reader navigation is improved through additional cross-links and clearer sectioning.
+- Core specification and user-facing docs now describe the same baseline lifecycle and initialization model.
