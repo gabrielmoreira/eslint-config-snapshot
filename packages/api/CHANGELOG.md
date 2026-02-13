@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.2.0
+
+### Minor Changes
+
+- Add effective config inspection command and recommended grouped init workflow with numeric workspace assignments.
+
 ## 0.1.5
 
 ### Patch Changes

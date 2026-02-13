@@ -965,3 +965,20 @@ Result:
 - Users can now inspect effective evaluated configuration directly via `eslint-config-snapshot config`.
 - `init` now supports a recommended grouped workflow aligned with real workspace structure and simpler setup for multi-group scenarios.
 - CLI integration and terminal tests were expanded and updated for the new command and preset behavior.
+
+## 2026-02-13 - Request 046
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Commit, push, and perform a minor version bump release.
+
+Key decisions:
+
+- Applied Changesets minor bump for both publishable packages to keep versions aligned.
+- Used tag-driven release flow for GitHub publish automation.
+
+Result:
+
+- Packages were versioned to the next minor release and prepared for publish via pushed release tag.
