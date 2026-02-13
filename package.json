@@ -12,7 +12,8 @@
     "build": "pnpm nx run-many -t build",
     "lint": "pnpm nx run-many -t lint",
     "typecheck": "pnpm nx run-many -t typecheck",
-    "test": "pnpm nx run-many -t test"
+    "test": "pnpm nx run-many -t test",
+    "cli:dev": "pnpm exec tsx packages/cli/src/index.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",
@@ -32,6 +33,7 @@
     "nx": "22.5.0",
     "picomatch": "^4.0.3",
     "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.55.0",
     "vitest": "^4.0.8"

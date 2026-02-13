@@ -82,4 +82,11 @@ describe('cli integration', () => {
 
     await rm(tmp, { recursive: true, force: true })
   })
+
+  it('help prints usage and exits 0', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('--help', fixtureRoot)
+    expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Usage:'))
+  })
 })

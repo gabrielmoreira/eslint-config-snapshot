@@ -13,8 +13,28 @@ import { aggregateRules, buildSnapshot, readSnapshotFile, writeSnapshotFile } fr
 import { assignGroupsByMatch, discoverWorkspaces } from '@eslint-config-snapshotter/workspace'
 
 const SNAPSHOT_DIR = '.eslint-config-snapshots'
+const HELP_TEXT = `eslint-config-snapshotter
+
+Usage:
+  eslint-config-snapshotter <command>
+
+Commands:
+  snapshot   Compute and write snapshots to .eslint-config-snapshots/
+  compare    Compare current state against stored snapshots
+  status     Print minimal status (clean/changes)
+  print      Print aggregated rules JSON to stdout
+  init       Create eslint-config-snapshotter.config.mjs
+  help       Show this help
+
+Options:
+  -h, --help Show this help
+`
 
 export async function runCli(command: string, cwd: string): Promise<number> {
+  if (['help', '-h', '--help'].includes(command)) {
+    process.stdout.write(HELP_TEXT)
+    return 0
+  }
 
   if (command === 'init') {
     return runInit(cwd)
