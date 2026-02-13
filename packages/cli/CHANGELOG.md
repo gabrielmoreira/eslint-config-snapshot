@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.3.0
+
+### Minor Changes
+
+- Release minor with inquirer-based init UX and recommended dynamic grouping behavior.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

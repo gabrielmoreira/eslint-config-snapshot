@@ -1081,3 +1081,20 @@ Result:
 
 - Init is now consistently driven by richer Inquirer prompts without numeric typed menu selection.
 - CLI integration and terminal tests were updated and remain green.
+
+## 2026-02-13 - Request 051
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Bump a new minor release and push version updates to git.
+
+Key decisions:
+
+- Used Changesets minor bump for both publishable packages.
+- Kept release aligned with current tag-driven publish workflow.
+
+Result:
+
+- Version files and package changelogs were updated for the next minor release and pushed.
