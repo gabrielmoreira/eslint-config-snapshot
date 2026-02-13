@@ -307,8 +307,9 @@ async function loadStoredSnapshots(cwd: string): Promise<Map<string, StoredSnaps
   const dir = path.join(cwd, SNAPSHOT_DIR)
   const files = await fg('**/*.json', { cwd: dir, absolute: true, onlyFiles: true, dot: true, suppressErrors: true })
   const snapshots = new Map<string, StoredSnapshot>()
+  const sortedFiles = [...files].sort((a, b) => a.localeCompare(b))
 
-  for (const file of files.sort()) {
+  for (const file of sortedFiles) {
     const snapshot = await readSnapshotFile(file)
     snapshots.set(snapshot.groupId, snapshot)
   }

@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
 import unicorn from 'eslint-plugin-unicorn'
@@ -7,12 +8,12 @@ import promise from 'eslint-plugin-promise'
 import n from 'eslint-plugin-n'
 import deprecate from 'eslint-plugin-deprecate'
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: ['**/dist/**', '**/coverage/**', '**/test/fixtures/**', '.nx/**', '**/node_modules/**']
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   promise.configs['flat/recommended'],
   n.configs['flat/recommended'],
   unicorn.configs['recommended'],
@@ -35,15 +36,32 @@ export default tseslint.config(
     }
   },
   {
-    files: ['**/*.ts', '**/*.mts', '**/*.cts'],
+    files: ['eslint.config.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions
+    },
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules
+    }
+  },
+  {
+    files: ['**/src/**/*.ts', '**/src/**/*.mts', '**/src/**/*.cts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true
+      },
       globals: {
         ...globals.node
       }
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
       'n/no-missing-import': 'off',
+      'sonarjs/different-types-comparison': 'off',
+      'sonarjs/no-alphabetical-sort': 'off',
       'sonarjs/cognitive-complexity': 'warn',
       'unicorn/no-array-sort': 'off',
       'unicorn/prevent-abbreviations': 'off',
@@ -52,11 +70,17 @@ export default tseslint.config(
   },
   {
     files: ['**/test/**/*.ts'],
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions
+    },
     rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
       'n/no-extraneous-import': 'off',
       'n/no-unsupported-features/node-builtins': 'off',
       'sonarjs/no-nested-template-literals': 'off',
+      'unicorn/no-null': 'off',
       'unicorn/numeric-separators-style': 'off',
+      'unicorn/prevent-abbreviations': 'off',
       'unicorn/prefer-string-raw': 'off'
     }
   },
@@ -66,6 +90,12 @@ export default tseslint.config(
       'n/hashbang': 'off',
       'n/no-process-exit': 'off',
       'unicorn/prefer-top-level-await': 'off'
+    }
+  },
+  {
+    files: ['packages/api/src/sampling.ts'],
+    rules: {
+      'unicorn/prefer-at': 'off'
     }
   }
 )

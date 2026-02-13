@@ -148,3 +148,27 @@ Result:
 Follow-up notes:
 
 - Dynamic/aliased deprecated API usage is not reliably detectable with the current static member-expression rule; this is tracked as a future task in `docs/IMPLEMENTATION_REVIEW.md`.
+
+## 2026-02-13 - Request 011
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate deprecated use of `tseslint.config`, move linting toward type-checked recommendations where possible, and evaluate/improve file sampling diversity without overengineering.
+
+Key decisions:
+
+- Switched root lint composition to `defineConfig(...)` and moved TypeScript baseline from `recommended` to `recommendedTypeChecked`.
+- Applied typed linting primarily to `**/src/**` files, while disabling type-checked-only rules in `**/test/**` to keep stable and fast test linting.
+- Kept pragmatic overrides for high-noise rules already known in this codebase.
+- Implemented deterministic, lightweight diversified sampling:
+  - token-based first-pass diversity
+  - uniform fallback spacing over remaining sorted files
+
+Result:
+
+- Lint now uses type-checked recommended rules for source files.
+- Sampling strategy is now more representative for large candidate sets while remaining deterministic.
+- Added/updated sampling tests for distribution and hinted diversity behavior.
+- Project checks pass with current policy (`build/lint/typecheck/test`).
