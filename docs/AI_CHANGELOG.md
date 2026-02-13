@@ -1629,3 +1629,25 @@ Key decisions:
 Result:
 
 - Summary output now communicates scope coverage (`N` workspaces scanned), making drift interpretation more transparent.
+
+## 2026-02-13 - Request 077
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Split the large CLI implementation into separate modules with dedicated tests while preserving all current features and behavior.
+
+Key decisions:
+
+- Extracted output formatting logic from `packages/cli/src/index.ts` into `packages/cli/src/output.ts`.
+- Extracted snapshot runtime/orchestration logic from `packages/cli/src/index.ts` into `packages/cli/src/runtime.ts`.
+- Kept command contracts, aliases, and output behavior stable.
+- Added focused unit tests for the new modules to avoid only relying on end-to-end coverage.
+
+Result:
+
+- CLI refactor completed without feature loss.
+- Added `packages/cli/test/output.unit.test.ts` and `packages/cli/test/runtime.unit.test.ts`.
+- Full quality gates pass after refactor:
+  - `pnpm nx run-many -t build lint typecheck test`.

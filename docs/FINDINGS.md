@@ -6,7 +6,6 @@ This file tracks active technical findings only: risks, limitations, and deferre
 
 ## Open Findings
 
-- Test infrastructure warning: isolated tests still emit shell-related `DEP0190` warnings in some environments.
 - CLI output consistency can still be tuned further across `check`, `status`, and alias paths.
 
 ## Resolved Findings
@@ -16,6 +15,7 @@ This file tracks active technical findings only: risks, limitations, and deferre
 - CJS `import.meta` warning in dual-format build output is resolved.
 - Runtime crash on same-severity rule option conflicts was fixed with deterministic aggregation logic.
 - npm provenance release mismatch was fixed by adding proper package repository metadata.
+- Shell-related isolated-test `DEP0190` warnings were removed by avoiding `shell: true` spawns.
 
 ## Deferred Findings
 

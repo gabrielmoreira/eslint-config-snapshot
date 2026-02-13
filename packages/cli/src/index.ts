@@ -1,44 +1,54 @@
 #!/usr/bin/env node
 import {
-  aggregateRules,
-  assignGroupsByMatch,
-  buildSnapshot,
-  diffSnapshots,
   discoverWorkspaces,
-  extractRulesForWorkspaceSamples,
   findConfigPath,
   getConfigScaffold,
-  hasDiff,
   loadConfig,
-  normalizePath,
-  readSnapshotFile,
-  resolveEslintVersionForWorkspace,
-  sampleWorkspaceFiles,
-  writeSnapshotFile
+  normalizePath
 } from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import createDebug from 'debug'
 import fg from 'fast-glob'
 import { existsSync, readFileSync } from 'node:fs'
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { createInterface } from 'node:readline'
+
+import {
+  countUniqueWorkspaces,
+  createColorizer,
+  decorateDiffLine,
+  formatCommandDisplayLabel,
+  formatDiff,
+  formatShortConfig,
+  formatShortPrint,
+  formatStoredSnapshotSummary,
+  summarizeChanges,
+  summarizeSnapshots
+} from './output.js'
+import {
+  type BuiltSnapshot,
+  compareSnapshotMaps,
+  computeCurrentSnapshots,
+  type GroupEslintVersions,
+  loadStoredSnapshots,
+  resolveGroupEslintVersions,
+  resolveWorkspaceAssignments,
+  type SnapshotDiff,
+  type StoredSnapshot,
+  type WorkspaceAssignments,
+  writeSnapshots
+} from './runtime.js'
 
 
 const SNAPSHOT_DIR = '.eslint-config-snapshot'
 const UPDATE_HINT = 'Tip: when you intentionally accept changes, run `eslint-config-snapshot --update` to refresh the baseline.\n'
 
-type BuiltSnapshot = Awaited<ReturnType<typeof buildSnapshot>>
-type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
-type SnapshotDiff = ReturnType<typeof diffSnapshots>
 type CheckFormat = 'summary' | 'status' | 'diff'
 type PrintFormat = 'json' | 'short'
 type InitTarget = 'file' | 'package-json'
 type InitPreset = 'recommended' | 'minimal' | 'full'
-type RuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
-type RuleObject = Record<string, RuleEntry>
-type GroupEslintVersions = Map<string, string[]>
 
 type RootOptions = {
   update?: boolean
@@ -54,8 +64,6 @@ type RunTimer = {
 let activeRunTimer: RunTimer | undefined
 let cachedCliVersion: string | undefined
 const debugRun = createDebug('eslint-config-snapshot:run')
-const debugWorkspace = createDebug('eslint-config-snapshot:workspace')
-const debugDiff = createDebug('eslint-config-snapshot:diff')
 const debugTiming = createDebug('eslint-config-snapshot:timing')
 
 export async function runCli(command: string | undefined, cwd: string, flags: string[] = []): Promise<number> {
@@ -273,7 +281,7 @@ function parseInitPreset(value: string): InitPreset {
 
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd, SNAPSHOT_DIR)
 
   if (format !== 'status') {
     writeRunContextHeader(cwd, defaultInvocation ? 'check' : `check:${format}`, foundConfig?.path, storedSnapshots)
@@ -314,7 +322,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
           true
         )
       if (shouldCreateBaseline) {
-        await writeSnapshots(cwd, currentSnapshots)
+        await writeSnapshots(cwd, SNAPSHOT_DIR, currentSnapshots)
         const summary = summarizeSnapshots(currentSnapshots)
         process.stdout.write(`Great start: baseline created with ${summary.groups} groups and ${summary.rules} rules.\n`)
         writeSubtleInfo(UPDATE_HINT)
@@ -361,7 +369,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
 async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd, SNAPSHOT_DIR)
   writeRunContextHeader(cwd, 'update', foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
     writeSubtleInfo('🔎 Checking current ESLint configuration...\n')
@@ -386,7 +394,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 
     throw error
   }
-  await writeSnapshots(cwd, currentSnapshots)
+  await writeSnapshots(cwd, SNAPSHOT_DIR, currentSnapshots)
 
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
@@ -405,7 +413,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 
 async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
   const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd, SNAPSHOT_DIR)
   writeRunContextHeader(cwd, `print:${format}`, foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
     writeSubtleInfo('🔎 Checking current ESLint configuration...\n')
@@ -426,13 +434,13 @@ async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
 
 async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd, SNAPSHOT_DIR)
   writeRunContextHeader(cwd, `config:${format}`, foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
     writeSubtleInfo('⚙️ Resolving effective runtime configuration...\n')
   }
   const config = await loadConfig(cwd)
-  const resolved = await resolveWorkspaceAssignments(cwd, config)
+  const resolved: WorkspaceAssignments = await resolveWorkspaceAssignments(cwd, config)
   const payload = {
     source: foundConfig?.path ?? 'built-in-defaults',
     workspaceInput: config.workspaceInput,
@@ -453,227 +461,7 @@ async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`)
 }
 
-async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSnapshot>> {
-  const computeStartedAt = Date.now()
-  const configStartedAt = Date.now()
-  const config = await loadConfig(cwd)
-  debugTiming('phase=loadConfig elapsedMs=%d', Date.now() - configStartedAt)
 
-  const assignmentStartedAt = Date.now()
-  const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
-  debugTiming('phase=resolveWorkspaceAssignments elapsedMs=%d', Date.now() - assignmentStartedAt)
-  debugWorkspace('root=%s groups=%d workspaces=%d', discovery.rootAbs, assignments.length, discovery.workspacesRel.length)
-
-  const snapshots = new Map<string, BuiltSnapshot>()
-
-  for (const group of assignments) {
-    const groupStartedAt = Date.now()
-    const extractedForGroup = []
-    debugWorkspace('group=%s workspaces=%o', group.name, group.workspaces)
-
-    for (const workspaceRel of group.workspaces) {
-      const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
-      const sampleStartedAt = Date.now()
-      const sampled = await sampleWorkspaceFiles(workspaceAbs, config.sampling)
-      debugWorkspace(
-        'group=%s workspace=%s sampled=%d sampleElapsedMs=%d files=%o',
-        group.name,
-        workspaceRel,
-        sampled.length,
-        Date.now() - sampleStartedAt,
-        sampled
-      )
-      let extractedCount = 0
-      let lastExtractionError: string | undefined
-
-      const sampledAbs = sampled.map((sampledRel) => path.resolve(workspaceAbs, sampledRel))
-      const extractStartedAt = Date.now()
-      const results = await extractRulesForWorkspaceSamples(workspaceAbs, sampledAbs)
-      debugTiming(
-        'phase=extract group=%s workspace=%s sampled=%d elapsedMs=%d',
-        group.name,
-        workspaceRel,
-        sampledAbs.length,
-        Date.now() - extractStartedAt
-      )
-
-      for (const result of results) {
-        if (result.rules) {
-          extractedForGroup.push(result.rules)
-          extractedCount += 1
-          continue
-        }
-
-        const message = result.error instanceof Error ? result.error.message : String(result.error)
-        if (isRecoverableExtractionError(message)) {
-          lastExtractionError = message
-          continue
-        }
-
-        throw result.error ?? new Error(message)
-      }
-
-      if (extractedCount === 0) {
-        const context = lastExtractionError ? ` Last error: ${lastExtractionError}` : ''
-        throw new Error(
-          `Unable to extract ESLint config for workspace ${workspaceRel}. All sampled files were ignored or produced non-JSON output.${context}`
-        )
-      }
-
-      debugWorkspace(
-        'group=%s workspace=%s extracted=%d failed=%d',
-        group.name,
-        workspaceRel,
-        extractedCount,
-        results.length - extractedCount
-      )
-    }
-
-    const aggregated = aggregateRules(extractedForGroup)
-    snapshots.set(group.name, buildSnapshot(group.name, group.workspaces, aggregated))
-    debugWorkspace(
-      'group=%s aggregatedRules=%d groupElapsedMs=%d',
-      group.name,
-      aggregated.size,
-      Date.now() - groupStartedAt
-    )
-  }
-
-  debugTiming('phase=computeCurrentSnapshots elapsedMs=%d', Date.now() - computeStartedAt)
-  return snapshots
-}
-
-function isRecoverableExtractionError(message: string): boolean {
-  return (
-    message.startsWith('Invalid JSON from eslint --print-config') ||
-    message.startsWith('Empty ESLint print-config output') ||
-    message.includes('File ignored because of a matching ignore pattern') ||
-    message.includes('File ignored by default')
-  )
-}
-
-async function resolveWorkspaceAssignments(cwd: string, config: Awaited<ReturnType<typeof loadConfig>>) {
-  const discovery = await discoverWorkspaces({ cwd, workspaceInput: config.workspaceInput })
-
-  const assignments =
-    config.grouping.mode === 'standalone'
-      ? discovery.workspacesRel.map((workspace) => ({ name: workspace, workspaces: [workspace] }))
-      : assignGroupsByMatch(discovery.workspacesRel, config.grouping.groups ?? [{ name: 'default', match: ['**/*'] }])
-
-  const allowEmptyGroups = config.grouping.allowEmptyGroups ?? false
-  if (!allowEmptyGroups) {
-    const empty = assignments.filter((group) => group.workspaces.length === 0)
-    if (empty.length > 0) {
-      throw new Error(`Empty groups are not allowed: ${empty.map((entry) => entry.name).join(', ')}`)
-    }
-  }
-
-  return { discovery, assignments }
-}
-
-async function loadStoredSnapshots(cwd: string): Promise<Map<string, StoredSnapshot>> {
-  const dir = path.join(cwd, SNAPSHOT_DIR)
-  const files = await fg('**/*.json', { cwd: dir, absolute: true, onlyFiles: true, dot: true, suppressErrors: true })
-  const snapshots = new Map<string, StoredSnapshot>()
-  const sortedFiles = [...files].sort((a, b) => a.localeCompare(b))
-
-  for (const file of sortedFiles) {
-    const snapshot = await readSnapshotFile(file)
-    snapshots.set(snapshot.groupId, snapshot)
-  }
-
-  return snapshots
-}
-
-async function writeSnapshots(cwd: string, snapshots: Map<string, BuiltSnapshot>): Promise<void> {
-  await mkdir(path.join(cwd, SNAPSHOT_DIR), { recursive: true })
-  for (const snapshot of snapshots.values()) {
-    await writeSnapshotFile(path.join(cwd, SNAPSHOT_DIR), snapshot)
-  }
-}
-
-function compareSnapshotMaps(before: Map<string, StoredSnapshot>, after: Map<string, BuiltSnapshot>) {
-  const startedAt = Date.now()
-  const ids = [...new Set([...before.keys(), ...after.keys()])].sort()
-  const changes: Array<{ groupId: string; diff: SnapshotDiff }> = []
-
-  for (const id of ids) {
-    const prev =
-      before.get(id) ??
-      ({
-        formatVersion: 1,
-        groupId: id,
-        workspaces: [],
-        rules: {}
-      } as const)
-
-    const next =
-      after.get(id) ??
-      ({
-        formatVersion: 1,
-        groupId: id,
-        workspaces: [],
-        rules: {}
-      } as const)
-
-    const diff = diffSnapshots(prev, next)
-    if (hasDiff(diff)) {
-      changes.push({ groupId: id, diff })
-    }
-  }
-
-  debugDiff('groupsCompared=%d changedGroups=%d elapsedMs=%d', ids.length, changes.length, Date.now() - startedAt)
-  return changes
-}
-
-function formatDiff(groupId: string, diff: SnapshotDiff): string {
-  const lines = [`group: ${groupId}`]
-
-  addListSection(lines, 'introduced rules', diff.introducedRules)
-  addListSection(lines, 'removed rules', diff.removedRules)
-
-  if (diff.severityChanges.length > 0) {
-    lines.push('severity changed:')
-    for (const change of diff.severityChanges) {
-      lines.push(`  - ${change.rule}: ${change.before} -> ${change.after}`)
-    }
-  }
-
-  const optionChanges = getDisplayOptionChanges(diff)
-  if (optionChanges.length > 0) {
-    lines.push('options changed:')
-    for (const change of optionChanges) {
-      lines.push(`  - ${change.rule}: ${formatValue(change.before)} -> ${formatValue(change.after)}`)
-    }
-  }
-
-  addListSection(lines, 'workspaces added', diff.workspaceMembershipChanges.added)
-  addListSection(lines, 'workspaces removed', diff.workspaceMembershipChanges.removed)
-
-  return lines.join('\n')
-}
-
-function addListSection(lines: string[], title: string, values: string[]): void {
-  if (values.length === 0) {
-    return
-  }
-
-  lines.push(`${title}:`)
-  for (const value of values) {
-    lines.push(`  - ${value}`)
-  }
-}
-
-function formatValue(value: unknown): string {
-  const serialized = JSON.stringify(value)
-  return serialized === undefined ? 'undefined' : serialized
-}
-
-function getDisplayOptionChanges(diff: SnapshotDiff): SnapshotDiff['optionChanges'] {
-  const removedRules = new Set(diff.removedRules)
-  const severityChangedRules = new Set(diff.severityChanges.map((change) => change.rule))
-  return diff.optionChanges.filter((change) => !removedRules.has(change.rule) && !severityChangedRules.has(change.rule))
-}
 
 async function runInit(
   cwd: string,
@@ -1071,61 +859,6 @@ function writeSectionTitle(title: string, color: ReturnType<typeof createColoriz
   process.stdout.write(`${color.bold(title)}\n`)
 }
 
-function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }>) {
-  let introduced = 0
-  let removed = 0
-  let severity = 0
-  let options = 0
-  let workspace = 0
-  for (const change of changes) {
-    introduced += change.diff.introducedRules.length
-    removed += change.diff.removedRules.length
-    severity += change.diff.severityChanges.length
-    options += getDisplayOptionChanges(change.diff).length
-    workspace += change.diff.workspaceMembershipChanges.added.length + change.diff.workspaceMembershipChanges.removed.length
-  }
-  return { introduced, removed, severity, options, workspace }
-}
-
-function summarizeSnapshots(snapshots: Map<string, BuiltSnapshot>) {
-  const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
-  return { groups: snapshots.size, rules, error, warn, off }
-}
-
-function countUniqueWorkspaces(snapshots: Map<string, BuiltSnapshot>): number {
-  const workspaces = new Set<string>()
-  for (const snapshot of snapshots.values()) {
-    for (const workspace of snapshot.workspaces) {
-      workspaces.add(workspace)
-    }
-  }
-  return workspaces.size
-}
-
-function decorateDiffLine(line: string, color: ReturnType<typeof createColorizer>): string {
-  if (line.startsWith('introduced rules:') || line.startsWith('workspaces added:')) {
-    return color.green(`+ ${line}`)
-  }
-  if (line.startsWith('removed rules:') || line.startsWith('workspaces removed:')) {
-    return color.red(`- ${line}`)
-  }
-  if (line.startsWith('severity changed:') || line.startsWith('options changed:')) {
-    return color.yellow(`~ ${line}`)
-  }
-  return line
-}
-
-function createColorizer() {
-  const enabled = process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== 'dumb'
-  const wrap = (code: string, text: string) => (enabled ? `\u001B[${code}m${text}\u001B[0m` : text)
-  return {
-    green: (text: string) => wrap('32', text),
-    yellow: (text: string) => wrap('33', text),
-    red: (text: string) => wrap('31', text),
-    bold: (text: string) => wrap('1', text),
-    dim: (text: string) => wrap('2', text)
-  }
-}
 
 function writeSubtleInfo(text: string): void {
   const color = createColorizer()
@@ -1332,44 +1065,6 @@ function writeRunContextHeader(
   process.stdout.write('\n')
 }
 
-function formatCommandDisplayLabel(commandLabel: string): string {
-  switch (commandLabel) {
-    case 'check':
-    case 'check:summary': {
-      return 'Check drift against baseline (summary)'
-    }
-    case 'check:diff': {
-      return 'Check drift against baseline (detailed diff)'
-    }
-    case 'check:status': {
-      return 'Check drift against baseline (status only)'
-    }
-    case 'update': {
-      return 'Update baseline snapshot'
-    }
-    case 'print:json': {
-      return 'Print aggregated rules (JSON)'
-    }
-    case 'print:short': {
-      return 'Print aggregated rules (short view)'
-    }
-    case 'config:json': {
-      return 'Show effective runtime config (JSON)'
-    }
-    case 'config:short': {
-      return 'Show effective runtime config (short view)'
-    }
-    case 'init': {
-      return 'Initialize local configuration'
-    }
-    case 'help': {
-      return 'Show CLI help'
-    }
-    default: {
-      return commandLabel
-    }
-  }
-}
 
 function formatConfigSource(cwd: string, configPath: string | undefined): string {
   if (!configPath) {
@@ -1384,31 +1079,6 @@ function formatConfigSource(cwd: string, configPath: string | undefined): string
   return rel
 }
 
-function formatStoredSnapshotSummary(storedSnapshots: Map<string, StoredSnapshot>): string {
-  if (storedSnapshots.size === 0) {
-    return 'none'
-  }
-
-  const summary = summarizeStoredSnapshots(storedSnapshots)
-  return `${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off)`
-}
-
-async function resolveGroupEslintVersions(cwd: string): Promise<GroupEslintVersions> {
-  const config = await loadConfig(cwd)
-  const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
-  const result = new Map<string, string[]>()
-
-  for (const group of assignments) {
-    const versions = new Set<string>()
-    for (const workspaceRel of group.workspaces) {
-      const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
-      versions.add(resolveEslintVersionForWorkspace(workspaceAbs))
-    }
-    result.set(group.name, [...versions].sort((a, b) => a.localeCompare(b)))
-  }
-
-  return result
-}
 
 function writeEslintVersionSummary(eslintVersionsByGroup: GroupEslintVersions): void {
   if (!shouldShowRunLogs() || eslintVersionsByGroup.size === 0) {
@@ -1433,85 +1103,4 @@ function writeEslintVersionSummary(eslintVersionsByGroup: GroupEslintVersions): 
   for (const [groupName, versions] of sortedEntries) {
     process.stdout.write(`  - ${groupName}: ${versions.join(', ')}\n`)
   }
-}
-
-function summarizeStoredSnapshots(snapshots: Map<string, StoredSnapshot>) {
-  const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
-  return { groups: snapshots.size, rules, error, warn, off }
-}
-
-function countRuleSeverities(ruleObjects: RuleObject[]) {
-  let rules = 0
-  let error = 0
-  let warn = 0
-  let off = 0
-
-  for (const rulesObject of ruleObjects) {
-    for (const entry of Object.values(rulesObject)) {
-      rules += 1
-      if (entry[0] === 'error') {
-        error += 1
-      } else if (entry[0] === 'warn') {
-        warn += 1
-      } else {
-        off += 1
-      }
-    }
-  }
-
-  return { rules, error, warn, off }
-}
-
-function formatShortPrint(
-  snapshots: Array<{
-    groupId: string
-    workspaces: string[]
-    rules: RuleObject
-  }>
-): string {
-  const lines: string[] = []
-  const sorted = [...snapshots].sort((a, b) => a.groupId.localeCompare(b.groupId))
-
-  for (const snapshot of sorted) {
-    const ruleNames = Object.keys(snapshot.rules).sort()
-    const severityCounts = { error: 0, warn: 0, off: 0 }
-
-    for (const name of ruleNames) {
-      const severity = snapshot.rules[name][0]
-      severityCounts[severity] += 1
-    }
-
-    lines.push(
-      `group: ${snapshot.groupId}`,
-      `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`,
-      `rules (${ruleNames.length}): error ${severityCounts.error}, warn ${severityCounts.warn}, off ${severityCounts.off}`
-    )
-
-    for (const ruleName of ruleNames) {
-      const entry = snapshot.rules[ruleName]
-      const suffix = entry.length > 1 ? ` ${JSON.stringify(entry[1])}` : ''
-      lines.push(`${ruleName}: ${entry[0]}${suffix}`)
-    }
-  }
-
-  return `${lines.join('\n')}\n`
-}
-
-function formatShortConfig(payload: {
-  source: string
-  workspaceInput: unknown
-  workspaces: string[]
-  grouping: { mode: string; allowEmptyGroups: boolean; groups: Array<{ name: string; workspaces: string[] }> }
-  sampling: unknown
-}): string {
-  const lines: string[] = [
-    `source: ${payload.source}`,
-    `workspaces (${payload.workspaces.length}): ${payload.workspaces.join(', ') || '(none)'}`,
-    `grouping mode: ${payload.grouping.mode} (allow empty: ${payload.grouping.allowEmptyGroups})`
-  ]
-  for (const group of payload.grouping.groups) {
-    lines.push(`group ${group.name} (${group.workspaces.length}): ${group.workspaces.join(', ') || '(none)'}`)
-  }
-  lines.push(`workspaceInput: ${JSON.stringify(payload.workspaceInput)}`, `sampling: ${JSON.stringify(payload.sampling)}`)
-  return `${lines.join('\n')}\n`
 }

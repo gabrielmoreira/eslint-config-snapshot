@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Split CLI internals into `output` and `runtime` modules with dedicated unit tests while keeping command behavior stable.
 - [x] Clarify `init` default-group (`*`) meaning in CLI prompts and docs.
 - [x] Migrate init interactive flow to Inquirer select/checkbox prompts.
 - [x] Add effective evaluated config command (`config`).
