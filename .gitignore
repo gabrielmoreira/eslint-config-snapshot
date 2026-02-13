@@ -1,0 +1,93 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+.pnpm-store/
+
+# =========================
+# Build outputs
+# =========================
+dist/
+build/
+out/
+.tmp/
+.temp/
+
+# Nx outputs
+dist/packages/
+dist/apps/
+
+# TypeScript
+*.tsbuildinfo
+
+# =========================
+# Nx cache
+# =========================
+.nx/cache
+.nx/workspace-data
+.nx/tmp
+
+# =========================
+# Test outputs
+# =========================
+coverage/
+coverage-final.json
+vitest.config.ts.timestamp*
+*.lcov
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Husky
+# =========================
+.husky/_
+
+# =========================
+# Package manager artifacts
+# =========================
+.pnp.cjs
+.pnp.loader.mjs
+
+# =========================
+# Cache directories
+# =========================
+.cache/
+.eslintcache
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
