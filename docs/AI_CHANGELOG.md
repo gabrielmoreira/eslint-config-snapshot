@@ -711,3 +711,24 @@ Result:
 
 - Integration and terminal tests no longer depend on residual local files.
 - CI runners can execute tests deterministically from a clean checkout.
+
+## 2026-02-13 - Request 034
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix remaining CI failure in pnpm-isolated test due to `spawnSync .../bin/pnpm ENOENT`.
+
+Key decisions:
+
+- Reworked pnpm test command resolution to try multiple execution candidates:
+  - `node <npm_execpath>` when `npm_execpath` points to pnpm
+  - `pnpm` from PATH
+  - `pnpm.cmd` on Windows
+- Added ENOENT-aware fallback behavior to continue trying other candidates.
+
+Result:
+
+- pnpm-isolated test no longer depends on a fragile hardcoded pnpm path near the Node binary.
+- Linux runner compatibility for pnpm command discovery is improved.

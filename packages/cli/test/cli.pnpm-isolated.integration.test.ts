@@ -10,28 +10,34 @@ const cliDist = path.resolve('dist/index.js')
 
 let fixtureRoot = ''
 
-function pnpmExecPath(): string | undefined {
+type RunResult = {
+  status: number
+  stdout: string
+  stderr: string
+  errorCode?: string
+}
+
+type ExecCandidate = {
+  command: string
+  argsPrefix: string[]
+}
+
+function getPnpmCandidates(): ExecCandidate[] {
+  const candidates: ExecCandidate[] = []
   const execPath = process.env.npm_execpath
-  if (!execPath) {
-    return undefined
+  if (execPath && execPath.toLowerCase().includes('pnpm')) {
+    candidates.push({ command: process.execPath, argsPrefix: [execPath] })
   }
-  return execPath.toLowerCase().includes('pnpm') ? execPath : undefined
-}
 
-function pnpmCmd(): string {
-  const base = path.dirname(process.execPath)
-  return process.platform === 'win32' ? path.join(base, 'pnpm.cmd') : path.join(base, 'pnpm')
-}
-
-function pnpmCommandWithArgs(args: string[]): { command: string; finalArgs: string[] } {
-  const execPath = pnpmExecPath()
-  if (execPath) {
-    return { command: process.execPath, finalArgs: [execPath, ...args] }
+  candidates.push({ command: 'pnpm', argsPrefix: [] })
+  if (process.platform === 'win32') {
+    candidates.push({ command: 'pnpm.cmd', argsPrefix: [] })
   }
-  return { command: pnpmCmd(), finalArgs: args }
+
+  return candidates
 }
 
-function run(command: string, args: string[], cwd: string): { status: number; stdout: string; stderr: string } {
+function run(command: string, args: string[], cwd: string): RunResult {
   const proc = spawnSync(command, args, {
     cwd,
     encoding: 'utf8',
@@ -42,7 +48,8 @@ function run(command: string, args: string[], cwd: string): { status: number; st
   return {
     status: proc.status ?? 1,
     stdout: proc.stdout ?? '',
-    stderr: `${proc.stderr ?? ''}${proc.error ? `\n${String(proc.error)}` : ''}`
+    stderr: `${proc.stderr ?? ''}${proc.error ? `\n${String(proc.error)}` : ''}`,
+    errorCode: proc.error?.code
   }
 }
 
@@ -51,7 +58,7 @@ async function runWithRetry(
   args: string[],
   cwd: string,
   retries = 2
-): Promise<{ status: number; stdout: string; stderr: string }> {
+): Promise<RunResult> {
   let attempt = 0
   let lastResult = run(command, args, cwd)
   while (lastResult.status !== 0 && attempt < retries) {
@@ -59,6 +66,25 @@ async function runWithRetry(
     await delay(1000 * attempt)
     lastResult = run(command, args, cwd)
   }
+  return lastResult
+}
+
+async function runPnpmWithRetry(args: string[], cwd: string, retries = 2): Promise<RunResult> {
+  const candidates = getPnpmCandidates()
+  let lastResult: RunResult = { status: 1, stdout: '', stderr: 'pnpm command not found' }
+
+  for (const candidate of candidates) {
+    const attempt = await runWithRetry(candidate.command, [...candidate.argsPrefix, ...args], cwd, retries)
+    if (attempt.status === 0) {
+      return attempt
+    }
+
+    lastResult = attempt
+    if (attempt.errorCode !== 'ENOENT' && !attempt.stderr.includes('ENOENT')) {
+      return attempt
+    }
+  }
+
   return lastResult
 }
 
@@ -71,13 +97,11 @@ describe('cli pnpm-isolated integration', () => {
     const wsA = path.join(fixtureRoot, 'packages/ws-a')
     const wsB = path.join(fixtureRoot, 'packages/ws-b')
 
-    const installACommand = pnpmCommandWithArgs(['install', '--ignore-workspace', '--no-frozen-lockfile'])
-    const installA = await runWithRetry(installACommand.command, installACommand.finalArgs, wsA)
+    const installA = await runPnpmWithRetry(['install', '--ignore-workspace', '--no-frozen-lockfile'], wsA)
     expect(installA.status, `${installA.stdout}\n${installA.stderr}`).toBe(0)
     await access(path.join(wsA, 'node_modules/eslint/package.json'))
 
-    const installBCommand = pnpmCommandWithArgs(['install', '--ignore-workspace', '--no-frozen-lockfile'])
-    const installB = await runWithRetry(installBCommand.command, installBCommand.finalArgs, wsB)
+    const installB = await runPnpmWithRetry(['install', '--ignore-workspace', '--no-frozen-lockfile'], wsB)
     expect(installB.status, `${installB.stdout}\n${installB.stderr}`).toBe(0)
     await access(path.join(wsB, 'node_modules/eslint/package.json'))
   }, 180000)
