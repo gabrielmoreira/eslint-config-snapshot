@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.4.0
+
+### Minor Changes
+
+- Minor release with improved CLI output consistency and faster workspace extraction using ESLint API fallback strategy.
+
 ## 0.3.2
 
 ### Patch Changes

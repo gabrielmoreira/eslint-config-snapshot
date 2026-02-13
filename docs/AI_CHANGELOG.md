@@ -1244,3 +1244,20 @@ Result:
 - Large repos avoid repeated process startup overhead per sampled file when ESLint API is available, improving runtime significantly.
 - Existing behavior remains compatible through fallback path.
 - Quality gates remain green after the refactor.
+
+## 2026-02-13 - Request 059
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Publish a new minor version.
+
+Key decisions:
+
+- Release both packages as `minor` due to meaningful UX and runtime performance improvements delivered since the previous patch.
+- Keep standard Changesets workflow (version, commit, tag, push).
+
+Result:
+
+- Minor release metadata added and release flow executed.
