@@ -77,7 +77,8 @@ The default behavior works without a config file.
 
 - choose target: `file` or `package-json`
 - choose preset: `recommended`, `minimal`, or `full`
-- in `recommended`, use checkbox selection for workspaces outside default `*`, then assign numeric groups for those exceptions
+- in `recommended`, the default group `*` is a dynamic catch-all (all discovered workspaces)
+- in `recommended`, you only select exception workspaces, then assign static groups for those exceptions
 - if no exceptions are selected, recommended writes an empty config (`{}`) and keeps everything fully dynamic
 
 Recommended for most teams:

@@ -201,7 +201,8 @@ CLI parsing/help generation should be command-metadata driven (for example via `
 - target selection should use interactive select prompts
 - preset selection should use interactive select prompts
 - interactive mode may accept equivalent text aliases
-- recommended preset should support checkbox selection of non-default workspaces and numeric group assignment for those selections
+- recommended preset should clearly explain that default `*` is a dynamic catch-all for discovered workspaces
+- recommended preset should support checkbox selection of exception workspaces and numeric group assignment for those selections
 - recommended preset should keep a runtime-discovered default group (`**/*`) and place numbered static groups before it (first match wins)
 - recommended preset output should avoid writing explicit sampling config unless user chooses `full`
 - when no static overrides are selected in recommended preset, generated config should remain empty (`{}`) to preserve fully dynamic behavior

@@ -389,7 +389,7 @@ no-debugger: off
     expect(result.stdout).toContain('Initialize config (file or package.json)')
     expect(result.stdout).toContain('-f, --force')
     expect(result.stdout).toContain('Runs interactive select prompts for target/preset.')
-    expect(result.stdout).toContain('Recommended preset uses checkbox selection')
+    expect(result.stdout).toContain('Recommended preset keeps a dynamic catch-all default group ("*")')
     expect(result.stdout).toContain('--show-effective')
     expect(result.stdout).toContain('--yes --force --target file --preset full')
     expect(result.stderr).toBe('')

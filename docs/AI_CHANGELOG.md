@@ -1098,3 +1098,23 @@ Key decisions:
 Result:
 
 - Version files and package changelogs were updated for the next minor release and pushed.
+
+## 2026-02-13 - Request 052
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Make `init` wording clearer because users do not understand what "leave default group `*`" means in prompts and docs.
+
+Key decisions:
+
+- Clarified `init` help and interactive recommended-flow console text to explicitly define `*` as a dynamic catch-all group.
+- Reworded recommended preset label and exception-selection prompt for clearer intent.
+- Updated end-user docs (`README.md`, `docs/EXAMPLES.md`) and spec wording (`docs/SPEC.md`) to match the CLI mental model.
+- Updated terminal integration assertion for `init --help` text.
+
+Result:
+
+- `init` now explains the grouping intent directly in plain language.
+- Documentation and CLI output are aligned around the same default-group/catch-all explanation.

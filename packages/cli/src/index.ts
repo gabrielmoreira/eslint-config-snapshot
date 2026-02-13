@@ -164,7 +164,7 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
 Examples:
   $ eslint-config-snapshot init
     Runs interactive select prompts for target/preset.
-    Recommended preset uses checkbox selection for non-default workspaces and group selection.
+    Recommended preset keeps a dynamic catch-all default group ("*") and asks only for static exception groups.
 
   $ eslint-config-snapshot init --yes --target package-json --preset recommended --show-effective
     Non-interactive recommended setup in package.json, with effective preview.
@@ -617,7 +617,7 @@ async function askInitPreset(
   return selectPrompt({
     message: 'Select preset',
     choices: [
-      { name: 'recommended (default group "*" + static overrides)', value: 'recommended' },
+      { name: 'recommended (dynamic catch-all "*" + optional static exceptions)', value: 'recommended' },
       { name: 'minimal', value: 'minimal' },
       { name: 'full', value: 'full' }
     ]
@@ -798,9 +798,12 @@ function trimTrailingSlashes(value: string): string {
 
 async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map<string, number>> {
   const { checkbox, select } = await import('@inquirer/prompts')
-  process.stdout.write('Recommended setup: select only workspaces that should leave default group "*".\n')
+  process.stdout.write(
+    'Recommended setup: default group "*" is a dynamic catch-all for every discovered workspace.\n'
+  )
+  process.stdout.write('Select only workspaces that should move to explicit static groups.\n')
   const overrides = await checkbox<string>({
-    message: 'Workspaces outside default group:',
+    message: 'Choose exception workspaces (leave empty to keep all in default "*"):',
     choices: workspaces.map((workspace) => ({ name: workspace, value: workspace })),
     pageSize: Math.min(12, Math.max(4, workspaces.length))
   })

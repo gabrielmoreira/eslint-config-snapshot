@@ -14,6 +14,12 @@ You can still use `eslint-config-snapshot.config.mjs` when you prefer a dedicate
 
 Use the examples below when you need explicit behavior.
 
+## Recommended Init Mental Model
+
+- Default group `*` is a dynamic catch-all: every discovered workspace stays here unless explicitly overridden.
+- In `init` recommended flow, select only exception workspaces, then assign them to static groups.
+- If you select no exceptions, the generated config remains `{}` (fully dynamic).
+
 ## 1. Minimal in package.json (recommended)
 
 ```json
