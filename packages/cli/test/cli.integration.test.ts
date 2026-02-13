@@ -1,18 +1,19 @@
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { parseInitPresetChoice, parseInitTargetChoice, runCli } from '../src/index.js'
 
-const fixtureRoot = path.resolve('test/fixtures/repo')
-
-afterAll(async () => {
-  await rm(path.join(fixtureRoot, '.eslint-config-snapshot'), { recursive: true, force: true })
-})
+const fixtureTemplateRoot = path.resolve('test/fixtures/repo')
+let tmpDir = ''
+let fixtureRoot = ''
 
 beforeEach(async () => {
-  await rm(path.join(fixtureRoot, '.eslint-config-snapshot'), { recursive: true, force: true })
+  tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshot-cli-integration-'))
+  fixtureRoot = path.join(tmpDir, 'repo')
+  await cp(fixtureTemplateRoot, fixtureRoot, { recursive: true })
+
   await mkdir(path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
   await mkdir(path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/bin'), { recursive: true })
 
@@ -33,6 +34,14 @@ beforeEach(async () => {
     path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/package.json'),
     JSON.stringify({ name: 'eslint', version: '9.0.0' }, null, 2)
   )
+})
+
+afterEach(async () => {
+  if (tmpDir) {
+    await rm(tmpDir, { recursive: true, force: true })
+    tmpDir = ''
+    fixtureRoot = ''
+  }
 })
 
 describe.sequential('cli integration', () => {

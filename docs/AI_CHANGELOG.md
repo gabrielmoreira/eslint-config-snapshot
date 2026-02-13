@@ -1015,3 +1015,23 @@ Result:
 - Recommended init now matches the desired mental model: default `*` group for most projects and lightweight numbered exceptions only where needed.
 - Interactive setup is richer and less error-prone than plain text entry.
 - Tests and docs were updated to reflect the new behavior.
+
+## 2026-02-13 - Request 048
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Stabilize push-time test execution on Windows after introducing richer init behavior.
+
+Key decisions:
+
+- Isolated `cli.integration.test.ts` from shared mutable fixture state:
+  - switched to per-test temporary fixture copy from immutable template
+  - removed direct mutation of shared fixture directory across tests
+- Kept integration suite sequential and retained deterministic mocked ESLint setup.
+
+Result:
+
+- Eliminated cross-file fixture races that caused intermittent pre-push failures (`EBUSY` / `ENOENT`) on Windows.
+- Pre-push test gate now runs reliably with the updated integration setup.
