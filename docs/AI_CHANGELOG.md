@@ -1430,3 +1430,27 @@ Result:
 
 - Sampling now prefers semantically representative files more consistently in larger candidate sets.
 - Updated sampling tests to match the new deterministic token-priority behavior.
+
+## 2026-02-13 - Request 068
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Prioritize representative sampling by selecting one file per discovered token first, then fill remaining slots by uniform region spacing.
+- Treat the token group containing common app-layer kinds (`controller`, `helpers`, etc.) as the highest-priority group.
+
+Key decisions:
+
+- Reworked first-pass selection to explicit token buckets (`token -> files`) and pick one representative file per token.
+- Ordered token selection by:
+  1. token-group priority
+  2. first occurrence in deterministic file order
+  3. lexical tie-breaker
+- Flipped token-group importance so the group with `controller/helpers/...` is now highest priority.
+- Kept uniform spacing fallback only after token diversity is exhausted.
+
+Result:
+
+- Sampling now better captures potential rule-variance contexts across common file roles before region-based completion.
+- Deterministic behavior preserved and verified by existing sampling tests.

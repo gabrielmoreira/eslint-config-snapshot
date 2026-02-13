@@ -46,19 +46,45 @@ function selectDistributed(files: string[], count: number): string[] {
   const selected: string[] = []
   const selectedSet = new Set<string>()
 
-  // First pass: attempt token diversity using simple filename tokenization.
-  const tokenSeen = new Set<string>()
-  for (const file of files) {
+  // First pass: pick one representative file per discovered token.
+  // This increases the chance of capturing distinct rule contexts per file "kind".
+  const tokenToFiles = new Map<string, string[]>()
+  const tokenFirstIndex = new Map<string, number>()
+  for (const [index, file] of files.entries()) {
+    const token = getPrimaryToken(file)
+    if (!token) {
+      continue
+    }
+    tokenFirstIndex.set(token, Math.min(tokenFirstIndex.get(token) ?? Number.POSITIVE_INFINITY, index))
+    const current = tokenToFiles.get(token) ?? []
+    current.push(file)
+    tokenToFiles.set(token, current)
+  }
+
+  const orderedTokens = [...tokenToFiles.keys()].sort((left, right) => {
+    const leftPriority = TOKEN_GROUP_PRIORITY.get(left) ?? Number.POSITIVE_INFINITY
+    const rightPriority = TOKEN_GROUP_PRIORITY.get(right) ?? Number.POSITIVE_INFINITY
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority
+    }
+    const leftIndex = tokenFirstIndex.get(left) ?? Number.POSITIVE_INFINITY
+    const rightIndex = tokenFirstIndex.get(right) ?? Number.POSITIVE_INFINITY
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex
+    }
+    return left.localeCompare(right)
+  })
+
+  for (const token of orderedTokens) {
     if (selected.length >= count) {
       break
     }
-    const token = getPrimaryToken(file)
-    if (!token || tokenSeen.has(token)) {
+    const firstFile = tokenToFiles.get(token)?.[0]
+    if (!firstFile || selectedSet.has(firstFile)) {
       continue
     }
-    tokenSeen.add(token)
-    selected.push(file)
-    selectedSet.add(file)
+    selected.push(firstFile)
+    selectedSet.add(firstFile)
   }
 
   if (selected.length >= count) {
