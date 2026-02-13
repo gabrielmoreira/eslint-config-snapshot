@@ -2,36 +2,39 @@
 
 ## Authoritative Documents
 
-This repository contains three mandatory authoritative documents:
+This repository contains four mandatory authoritative documents:
 
 SPEC.md  
+SPEC_ENHANCED.md  
 AGENTS.md  
 TASKS.md  
 
-These three files define the complete contract and implementation plan.
+These files define the complete contract and implementation plan.
 
 The agent MUST read and follow them in this exact order:
 
-1. SPEC.md — defines the complete technical specification (source of truth)
-2. AGENTS.md — defines execution rules and constraints for the agent
-3. TASKS.md — defines the execution plan and required implementation steps
+1. SPEC.md — defines the base technical specification
+2. SPEC_ENHANCED.md — defines approved staged enhancements and explicit deviations
+3. AGENTS.md — defines execution rules and constraints for the agent
+4. TASKS.md — defines the execution plan and required implementation steps
 
-SPEC.md has absolute priority.
+The specification authority is `SPEC.md + SPEC_ENHANCED.md`.
 
 If any conflict exists:
 
+SPEC_ENHANCED.md overrides SPEC.md for explicitly documented enhancements only  
 SPEC.md overrides AGENTS.md and TASKS.md  
 AGENTS.md overrides TASKS.md  
 
-The agent MUST NOT invent behavior not defined in SPEC.md.
+The agent MUST NOT invent behavior not defined in SPEC.md or SPEC_ENHANCED.md.
 
-The agent MUST fully implement SPEC.md.
+The agent MUST fully implement SPEC.md and SPEC_ENHANCED.md.
 
 ## ESLint Config Snapshotter Agent Instructions
 
 You are an autonomous coding agent operating inside this repository.
 
-Your goal is to implement the tool described in SPEC.md as a TypeScript monorepo using pnpm + Nx.
+Your goal is to implement the tool described in SPEC.md and SPEC_ENHANCED.md as a TypeScript monorepo using pnpm + Nx.
 
 Non-negotiables:
 - All code is TypeScript.
@@ -53,7 +56,7 @@ Definition of Done:
 - Lint passes via Nx: `pnpm nx run-many -t lint`.
 - Build passes via Nx: `pnpm nx run-many -t build`.
 - Typecheck passes: `pnpm nx run-many -t typecheck`.
-- Snapshot format exactly matches SPEC.md (compact, pretty, deterministic).
+- Snapshot format exactly matches SPEC.md and SPEC_ENHANCED.md (compact, pretty, deterministic).
 
 Work approach:
 - Work in small steps.
@@ -70,10 +73,11 @@ Mandatory reading requirement:
 Before writing any code, the agent MUST read completely:
 
 SPEC.md
+SPEC_ENHANCED.md
 AGENTS.md
 TASKS.md
 
-The agent MUST NOT begin implementation until all three are fully read.
+The agent MUST NOT begin implementation until all four are fully read.
 
 Conventional Commits + Hooks:
 - commit-msg must validate Conventional Commits via commitlint

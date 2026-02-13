@@ -73,15 +73,23 @@ Options:
 
 ## Config Loading
 
-Config resolution follows the spec exactly and checks files in this order (first match wins):
+Config loading uses `cosmiconfig` with deterministic ordered `searchPlaces` (first match wins):
 - `.eslint-config-snapshotter.js`
 - `.eslint-config-snapshotter.cjs`
 - `.eslint-config-snapshotter.mjs`
 - `eslint-config-snapshotter.config.js`
 - `eslint-config-snapshotter.config.cjs`
 - `eslint-config-snapshotter.config.mjs`
+- `package.json` (`eslint-config-snapshotter` field)
+- `.eslint-config-snapshotterrc`
+- `.eslint-config-snapshotterrc.json`
+- `.eslint-config-snapshotterrc.yaml`
+- `.eslint-config-snapshotterrc.yml`
+- `.eslint-config-snapshotterrc.js`
+- `.eslint-config-snapshotterrc.cjs`
+- `.eslint-config-snapshotterrc.mjs`
 
-Only these filenames are loaded. Config may export an object, function, or async function.
+Config may export an object, function, or async function.
 
 Default configuration lives in `packages/config/src/index.ts` (`DEFAULT_CONFIG`).
 
@@ -135,6 +143,7 @@ node packages/cli/dist/index.js --help
 - `packages/cli/test/fixtures/npm-isolated-template`: isolated npm-based fixture.
 - `packages/cli/test/cli.pnpm-isolated.integration.test.ts`: isolated pnpm install per workspace.
 - `packages/cli/test/cli.npm-isolated.integration.test.ts` runs commands in isolated subprocesses and installs workspace-local `eslint` via `npm` inside each subproject.
+- `packages/cli/test/cli.terminal.integration.test.ts` runs the built CLI from a real terminal process and compares command outputs to expected values.
 - `packages/cli/test/cli.integration.test.ts` includes ordered grouped matching and standalone grouping behavior.
 
 ## Exit Codes
@@ -159,6 +168,7 @@ node packages/cli/dist/index.js --help
 
 ## Authoritative Docs
 
-- `SPEC.md` (source of truth)
+- `SPEC.md` (base specification)
+- `SPEC_ENHANCED.md` (required staged enhancements/deviations)
 - `AGENTS.md`
 - `TASKS.md`

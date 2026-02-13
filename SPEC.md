@@ -2,17 +2,17 @@
 
 ## Specification Authority
 
-This document (SPEC.md) is the complete and authoritative technical specification.
+This document (SPEC.md) defines the base technical specification.
 
 AGENTS.md defines execution rules for agents.
 
 TASKS.md defines execution order.
 
-SPEC.md is the ultimate source of truth.
+SPEC_ENHANCED.md defines approved staged enhancements and explicit deviations from this base specification.
 
-All implementation MUST strictly follow SPEC.md.
+All implementation MUST follow SPEC.md plus SPEC_ENHANCED.md.
 
-No behavior may contradict this specification.
+No behavior may contradict SPEC.md unless SPEC_ENHANCED.md explicitly overrides that behavior.
 
 ---
 
@@ -623,7 +623,9 @@ resolveEslintBinForWorkspace(workspaceAbs): string
 
 # 19. Configuration File Resolution
 
-Supported config filenames:
+Configuration loading MUST use `cosmiconfig`.
+
+The explorer MUST use deterministic `searchPlaces` in this exact order:
 
 <code>
 .eslint-config-snapshotter.js
@@ -632,11 +634,21 @@ Supported config filenames:
 eslint-config-snapshotter.config.js
 eslint-config-snapshotter.config.cjs
 eslint-config-snapshotter.config.mjs
+package.json
+.eslint-config-snapshotterrc
+.eslint-config-snapshotterrc.json
+.eslint-config-snapshotterrc.yaml
+.eslint-config-snapshotterrc.yml
+.eslint-config-snapshotterrc.js
+.eslint-config-snapshotterrc.cjs
+.eslint-config-snapshotterrc.mjs
 </code>
 
 Resolution order is exactly as listed.
 
 If multiple exist, first match wins.
+
+For `package.json`, config MUST be read from the `eslint-config-snapshotter` field.
 
 Config may export:
 

@@ -1,11 +1,13 @@
 # TASKS.md
+
 ## Execution Authority and Specification Contract
 
 This file (TASKS.md) defines the execution plan.
 
-The agent MUST follow the specification defined in SPEC.md.
+The agent MUST follow the specifications defined in SPEC.md and SPEC_ENHANCED.md.
 
-SPEC.md is the source of truth.
+SPEC.md defines the base specification.
+SPEC_ENHANCED.md defines mandatory staged enhancements and explicit deviations.
 
 AGENTS.md defines execution constraints and operational rules.
 
@@ -13,10 +15,10 @@ TASKS.md defines implementation order only.
 
 The agent MUST:
 
-- implement all requirements from SPEC.md
+- implement all requirements from SPEC.md and SPEC_ENHANCED.md
 - use TASKS.md only as execution order
-- never contradict SPEC.md
-- never skip requirements defined in SPEC.md
+- never contradict SPEC.md or SPEC_ENHANCED.md
+- never skip requirements defined in SPEC.md or SPEC_ENHANCED.md
 
 ## Execution Plan
 
@@ -50,7 +52,8 @@ The agent MUST:
 - introduced/removed, severity changes, option changes, membership changes
 
 7) packages/config
-- load supported config filenames, allow object/function/async function
+- load supported config filenames and additional cosmiconfig search places
+- support object/function/async function config exports
 
 8) packages/api
 - export discoverWorkspaces, normalizePath, sortUnique, assignGroupsByMatch, resolveEslintBinForWorkspace (optional)
@@ -58,6 +61,7 @@ The agent MUST:
 9) packages/cli
 - commands: snapshot/compare/status/print/init
 - integration tests with fixtures
+- terminal-invoked command tests with output assertions
 
 10) Hooks + conventional commits
 - husky + commitlint + lint-staged
@@ -70,6 +74,6 @@ The agent MUST:
 
 Implementation completeness requirement:
 
-The agent MUST implement ALL requirements from SPEC.md.
+The agent MUST implement ALL requirements from SPEC.md and SPEC_ENHANCED.md.
 
-Completion is defined by satisfying SPEC.md, not merely finishing TASKS.md.
+Completion is defined by satisfying the active specification contract, not merely finishing TASKS.md.
