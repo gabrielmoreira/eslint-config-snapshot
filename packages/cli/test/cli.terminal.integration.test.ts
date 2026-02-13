@@ -66,6 +66,7 @@ describe('cli terminal invocation', () => {
     expect(result.stdout).toContain('check [options]')
     expect(result.stdout).toContain('update|snapshot')
     expect(result.stdout).toContain('print [options]')
+    expect(result.stdout).toContain('config [options]')
     expect(result.stdout).toContain('init')
     expect(result.stderr).toBe('')
   })
@@ -232,6 +233,15 @@ no-debugger: off
     expect(existing.stderr).toContain('rerun with --force')
   })
 
+  it('config prints effective evaluated config output', () => {
+    const result = run(['config'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('"workspaceInput"')
+    expect(result.stdout).toContain('"workspaces"')
+    expect(result.stdout).toContain('"groups"')
+    expect(result.stderr).toBe('')
+  })
+
   it('init can write config to package.json', async () => {
     const initRoot = path.join(tmpDir, 'init-package-json-case')
     await rm(initRoot, { recursive: true, force: true })
@@ -248,6 +258,37 @@ no-debugger: off
     const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
     const parsed = JSON.parse(packageJsonRaw) as { 'eslint-config-snapshot'?: Record<string, unknown> }
     expect(parsed['eslint-config-snapshot']).toEqual({})
+  })
+
+  it('init recommended writes grouped workspace config in package.json', async () => {
+    const initRoot = path.join(tmpDir, 'init-recommended-package-json-case')
+    await rm(initRoot, { recursive: true, force: true })
+    await cp(fixtureRoot, initRoot, { recursive: true })
+    repoRoot = initRoot
+
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
+
+    const created = run(['init', '--yes', '--target', 'package-json', '--preset', 'recommended'])
+    expect(created.status).toBe(0)
+    expect(created.stdout).toBe('Created config in package.json under "eslint-config-snapshot"\n')
+    expect(created.stderr).toBe('')
+
+    const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
+    const parsed = JSON.parse(packageJsonRaw) as {
+      'eslint-config-snapshot'?: {
+        workspaceInput?: { mode?: string; workspaces?: string[] }
+        grouping?: { mode?: string; groups?: Array<{ name: string; match: string[] }> }
+      }
+    }
+
+    expect(parsed['eslint-config-snapshot']?.workspaceInput).toEqual({
+      mode: 'manual',
+      workspaces: ['packages/ws-a', 'packages/ws-b']
+    })
+    expect(parsed['eslint-config-snapshot']?.grouping).toEqual({
+      mode: 'match',
+      groups: [{ name: 'group-1', match: ['packages/ws-a', 'packages/ws-b'] }]
+    })
   })
 
   it('init fails early on existing config unless --force is provided', async () => {
@@ -342,7 +383,8 @@ no-debugger: off
     expect(result.stdout).toContain('-f, --force')
     expect(result.stdout).toContain('Runs interactive numbered prompts:')
     expect(result.stdout).toContain('target: 1) package-json, 2) file')
-    expect(result.stdout).toContain('preset: 1) minimal, 2) full')
+    expect(result.stdout).toContain('preset: 1) recommended, 2) minimal, 3) full')
+    expect(result.stdout).toContain('--show-effective')
     expect(result.stdout).toContain('--yes --force --target file --preset full')
     expect(result.stderr).toBe('')
   })

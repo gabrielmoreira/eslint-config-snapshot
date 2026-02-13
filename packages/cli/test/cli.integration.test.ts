@@ -47,10 +47,12 @@ describe('cli integration', () => {
   })
 
   it('parses init interactive preset choices from numeric and aliases', () => {
-    expect(parseInitPresetChoice('')).toBe('minimal')
-    expect(parseInitPresetChoice('1')).toBe('minimal')
+    expect(parseInitPresetChoice('')).toBe('recommended')
+    expect(parseInitPresetChoice('1')).toBe('recommended')
+    expect(parseInitPresetChoice('rec')).toBe('recommended')
+    expect(parseInitPresetChoice('2')).toBe('minimal')
     expect(parseInitPresetChoice('min')).toBe('minimal')
-    expect(parseInitPresetChoice('2')).toBe('full')
+    expect(parseInitPresetChoice('3')).toBe('full')
     expect(parseInitPresetChoice('full')).toBe('full')
     expect(parseInitPresetChoice('invalid')).toBeUndefined()
   })
@@ -126,9 +128,20 @@ no-debugger: off
     expect(code).toBe(0)
 
     const content = await readFile(path.join(tmp, 'eslint-config-snapshot.config.mjs'), 'utf8')
-    expect(content).toContain("workspaceInput: { mode: 'discover' }")
+    expect(content).toContain('"workspaceInput"')
+    expect(content).toContain('"grouping"')
+    expect(content).toContain('"sampling"')
 
     await rm(tmp, { recursive: true, force: true })
+  })
+
+  it('config prints effective evaluated config and exits 0', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('config', fixtureRoot)
+    expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('"workspaceInput"'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('"workspaces"'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('"groups"'))
   })
 
   it('init writes minimal config to package.json when target=package-json', async () => {

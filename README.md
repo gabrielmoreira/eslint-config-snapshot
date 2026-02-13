@@ -76,17 +76,18 @@ The default behavior works without a config file.
 `init` provides a lightweight setup assistant:
 
 - choose target: `file` or `package-json`
-- choose preset: `minimal` or `full`
+- choose preset: `recommended`, `minimal`, or `full`
+- in `recommended`, assign group numbers per workspace (default group `1`)
 
 Recommended for most teams:
 
 - target: `package-json`
-- preset: `minimal`
+- preset: `recommended`
 
 You can also run it non-interactively:
 
 ```bash
-pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --preset minimal
+pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --preset recommended --show-effective
 ```
 
 ## Core Commands
@@ -94,6 +95,7 @@ pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --p
 - `check`
 - `update`
 - `print`
+- `config`
 - `init`
 
 Compatibility aliases:

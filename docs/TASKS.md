@@ -25,9 +25,11 @@ If any conflict exists, follow document priority from `AGENTS.md`.
 ### Active Short-Cycle Tasks
 
 - [ ] Decide and implement final wording for clean/drift/status summaries after latest UX iterations.
-- [ ] Commit pending CLI UX changes and related tests.
+- [x] Commit pending CLI UX changes and related tests.
 - [x] Run full repo quality gates (`build`, `lint`, `typecheck`, `test`) after pending commit.
 - [x] Fix npm provenance publish metadata mismatch by setting package `repository` fields.
+- [x] Add effective evaluated config command (`config`) for runtime-resolved visibility.
+- [x] Add recommended init mode with workspace numeric grouping and effective-preview support.
 
 ### Quick Wins (Practical Near-Term)
 

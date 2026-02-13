@@ -10,6 +10,7 @@ import {
   getConfigScaffold,
   hasDiff,
   loadConfig,
+  normalizePath,
   readSnapshotFile,
   sampleWorkspaceFiles,
   writeSnapshotFile
@@ -30,7 +31,7 @@ type SnapshotDiff = ReturnType<typeof diffSnapshots>
 type CheckFormat = 'summary' | 'status' | 'diff'
 type PrintFormat = 'json' | 'short'
 type InitTarget = 'file' | 'package-json'
-type InitPreset = 'minimal' | 'full'
+type InitPreset = 'recommended' | 'minimal' | 'full'
 
 type RootOptions = {
   update?: boolean
@@ -139,10 +140,22 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
     })
 
   program
+    .command('config')
+    .description('Print effective evaluated config')
+    .option('--format <format>', 'Output format: json|short', parsePrintFormat, 'json')
+    .option('--short', 'Alias for --format short')
+    .action(async (opts: { format: PrintFormat; short?: boolean }) => {
+      const format: PrintFormat = opts.short ? 'short' : opts.format
+      await executeConfig(cwd, format)
+      onActionExit(0)
+    })
+
+  program
     .command('init')
     .description('Initialize config (file or package.json)')
     .option('--target <target>', 'Config target: file|package-json', parseInitTarget)
-    .option('--preset <preset>', 'Config preset: minimal|full', parseInitPreset)
+    .option('--preset <preset>', 'Config preset: recommended|minimal|full', parseInitPreset)
+    .option('--show-effective', 'Print the evaluated config that will be written')
     .option('-f, --force', 'Allow init even when an existing config is detected')
     .option('-y, --yes', 'Skip prompts and use defaults/options')
     .addHelpText(
@@ -152,16 +165,17 @@ Examples:
   $ eslint-config-snapshot init
     Runs interactive numbered prompts:
       target: 1) package-json, 2) file
-      preset: 1) minimal, 2) full
+      preset: 1) recommended, 2) minimal, 3) full
+      recommended preset supports per-workspace group number assignment.
 
-  $ eslint-config-snapshot init --yes --target package-json --preset minimal
-    Non-interactive minimal setup in package.json.
+  $ eslint-config-snapshot init --yes --target package-json --preset recommended --show-effective
+    Non-interactive recommended setup in package.json, with effective preview.
 
   $ eslint-config-snapshot init --yes --force --target file --preset full
     Overwrite-safe bypass when a config is already detected.
 `
     )
-    .action(async (opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean }) => {
+    .action(async (opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean; showEffective?: boolean }) => {
       onActionExit(await runInit(cwd, opts))
     })
 
@@ -217,11 +231,11 @@ function parseInitTarget(value: string): InitTarget {
 
 function parseInitPreset(value: string): InitPreset {
   const normalized = value.trim().toLowerCase()
-  if (normalized === 'minimal' || normalized === 'full') {
+  if (normalized === 'recommended' || normalized === 'minimal' || normalized === 'full') {
     return normalized
   }
 
-  throw new InvalidArgumentError('Expected one of: minimal, full')
+  throw new InvalidArgumentError('Expected one of: recommended, minimal, full')
 }
 
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
@@ -349,22 +363,33 @@ async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`)
 }
 
+async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
+  const foundConfig = await findConfigPath(cwd)
+  const config = await loadConfig(cwd)
+  const resolved = await resolveWorkspaceAssignments(cwd, config)
+  const payload = {
+    source: foundConfig?.path ?? 'built-in-defaults',
+    workspaceInput: config.workspaceInput,
+    workspaces: resolved.discovery.workspacesRel,
+    grouping: {
+      mode: config.grouping.mode,
+      allowEmptyGroups: config.grouping.allowEmptyGroups ?? false,
+      groups: resolved.assignments.map((entry) => ({ name: entry.name, workspaces: entry.workspaces }))
+    },
+    sampling: config.sampling
+  }
+
+  if (format === 'short') {
+    process.stdout.write(formatShortConfig(payload))
+    return
+  }
+
+  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`)
+}
+
 async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSnapshot>> {
   const config = await loadConfig(cwd)
-  const discovery = await discoverWorkspaces({ cwd, workspaceInput: config.workspaceInput })
-
-  const assignments =
-    config.grouping.mode === 'standalone'
-      ? discovery.workspacesRel.map((workspace) => ({ name: workspace, workspaces: [workspace] }))
-      : assignGroupsByMatch(discovery.workspacesRel, config.grouping.groups ?? [{ name: 'default', match: ['**/*'] }])
-
-  const allowEmptyGroups = config.grouping.allowEmptyGroups ?? false
-  if (!allowEmptyGroups) {
-    const empty = assignments.filter((group) => group.workspaces.length === 0)
-    if (empty.length > 0) {
-      throw new Error(`Empty groups are not allowed: ${empty.map((entry) => entry.name).join(', ')}`)
-    }
-  }
+  const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
 
   const snapshots = new Map<string, BuiltSnapshot>()
 
@@ -409,6 +434,25 @@ async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSn
   }
 
   return snapshots
+}
+
+async function resolveWorkspaceAssignments(cwd: string, config: Awaited<ReturnType<typeof loadConfig>>) {
+  const discovery = await discoverWorkspaces({ cwd, workspaceInput: config.workspaceInput })
+
+  const assignments =
+    config.grouping.mode === 'standalone'
+      ? discovery.workspacesRel.map((workspace) => ({ name: workspace, workspaces: [workspace] }))
+      : assignGroupsByMatch(discovery.workspacesRel, config.grouping.groups ?? [{ name: 'default', match: ['**/*'] }])
+
+  const allowEmptyGroups = config.grouping.allowEmptyGroups ?? false
+  if (!allowEmptyGroups) {
+    const empty = assignments.filter((group) => group.workspaces.length === 0)
+    if (empty.length > 0) {
+      throw new Error(`Empty groups are not allowed: ${empty.map((entry) => entry.name).join(', ')}`)
+    }
+  }
+
+  return { discovery, assignments }
 }
 
 async function loadStoredSnapshots(cwd: string): Promise<Map<string, StoredSnapshot>> {
@@ -515,9 +559,10 @@ function getDisplayOptionChanges(diff: SnapshotDiff): SnapshotDiff['optionChange
 
 async function runInit(
   cwd: string,
-  opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean } = {}
+  opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean; showEffective?: boolean } = {}
 ): Promise<number> {
   const force = opts.force ?? false
+  const showEffective = opts.showEffective ?? false
   const existing = await findConfigPath(cwd)
   if (existing && !force) {
     process.stderr.write(
@@ -535,13 +580,18 @@ async function runInit(
   }
 
   const finalTarget = target ?? 'file'
-  const finalPreset = preset ?? 'minimal'
+  const finalPreset = preset ?? 'recommended'
+  const configObject = await resolveInitConfigObject(cwd, finalPreset, Boolean(opts.yes))
 
-  if (finalTarget === 'package-json') {
-    return runInitInPackageJson(cwd, finalPreset, force)
+  if (showEffective) {
+    process.stdout.write(`Effective config preview:\n${JSON.stringify(configObject, null, 2)}\n`)
   }
 
-  return runInitInFile(cwd, finalPreset, force)
+  if (finalTarget === 'package-json') {
+    return runInitInPackageJson(cwd, configObject, force)
+  }
+
+  return runInitInFile(cwd, configObject, force)
 }
 
 async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
@@ -571,12 +621,15 @@ async function askInitTarget(rl: ReturnType<typeof createInterface>): Promise<In
 
 async function askInitPreset(rl: ReturnType<typeof createInterface>): Promise<InitPreset> {
   while (true) {
-    const answer = await askQuestion(rl, 'Select preset:\n  1) minimal (recommended)\n  2) full\nChoose [1]: ')
+    const answer = await askQuestion(
+      rl,
+      'Select preset:\n  1) recommended (group by workspace numbers)\n  2) minimal\n  3) full\nChoose [1]: '
+    )
     const parsed = parseInitPresetChoice(answer)
     if (parsed) {
       return parsed
     }
-    process.stdout.write('Please choose 1 (minimal) or 2 (full).\n')
+    process.stdout.write('Please choose 1 (recommended), 2 (minimal), or 3 (full).\n')
   }
 }
 
@@ -597,12 +650,15 @@ export function parseInitTargetChoice(value: string): InitTarget | undefined {
 export function parseInitPresetChoice(value: string): InitPreset | undefined {
   const normalized = value.trim().toLowerCase()
   if (normalized === '') {
+    return 'recommended'
+  }
+  if (normalized === '1' || normalized === 'recommended' || normalized === 'rec' || normalized === 'grouped') {
+    return 'recommended'
+  }
+  if (normalized === '2' || normalized === 'minimal' || normalized === 'min') {
     return 'minimal'
   }
-  if (normalized === '1' || normalized === 'minimal' || normalized === 'min') {
-    return 'minimal'
-  }
-  if (normalized === '2' || normalized === 'full') {
+  if (normalized === '3' || normalized === 'full') {
     return 'full'
   }
   return undefined
@@ -631,7 +687,7 @@ async function askYesNo(prompt: string, defaultYes: boolean): Promise<boolean> {
   }
 }
 
-async function runInitInFile(cwd: string, preset: InitPreset, force: boolean): Promise<number> {
+async function runInitInFile(cwd: string, configObject: Record<string, unknown>, force: boolean): Promise<number> {
   const candidates = [
     '.eslint-config-snapshot.js',
     '.eslint-config-snapshot.cjs',
@@ -654,12 +710,12 @@ async function runInitInFile(cwd: string, preset: InitPreset, force: boolean): P
   }
 
   const target = path.join(cwd, 'eslint-config-snapshot.config.mjs')
-  await writeFile(target, getConfigScaffold(preset), 'utf8')
+  await writeFile(target, toConfigScaffold(configObject), 'utf8')
   process.stdout.write(`Created ${path.basename(target)}\n`)
   return 0
 }
 
-async function runInitInPackageJson(cwd: string, preset: InitPreset, force: boolean): Promise<number> {
+async function runInitInPackageJson(cwd: string, configObject: Record<string, unknown>, force: boolean): Promise<number> {
   const packageJsonPath = path.join(cwd, 'package.json')
 
   let packageJsonRaw: string
@@ -683,10 +739,137 @@ async function runInitInPackageJson(cwd: string, preset: InitPreset, force: bool
       return 1
     }
 
-  parsed['eslint-config-snapshot'] = preset === 'full' ? getFullPresetObject() : {}
+  parsed['eslint-config-snapshot'] = configObject
   await writeFile(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
   process.stdout.write('Created config in package.json under "eslint-config-snapshot"\n')
   return 0
+}
+
+async function resolveInitConfigObject(
+  cwd: string,
+  preset: InitPreset,
+  nonInteractive: boolean
+): Promise<Record<string, unknown>> {
+  if (preset === 'minimal') {
+    return {}
+  }
+
+  if (preset === 'full') {
+    return getFullPresetObject()
+  }
+
+  return buildRecommendedPresetObject(cwd, nonInteractive)
+}
+
+async function buildRecommendedPresetObject(cwd: string, nonInteractive: boolean): Promise<Record<string, unknown>> {
+  const workspaces = await discoverInitWorkspaces(cwd)
+  const assignments = new Map<string, number>(workspaces.map((workspace) => [workspace, 1]))
+
+  if (!nonInteractive && process.stdin.isTTY && process.stdout.isTTY) {
+    process.stdout.write('Recommended setup: assign a group number for each workspace (default: 1).\n')
+    for (const workspace of workspaces) {
+      const answer = await askGroupNumber(workspace)
+      assignments.set(workspace, answer)
+    }
+  }
+
+  const groupNumbers = [...new Set(assignments.values())].sort((a, b) => a - b)
+  const groups = groupNumbers.map((number) => ({
+    name: `group-${number}`,
+    match: workspaces.filter((workspace) => assignments.get(workspace) === number)
+  }))
+
+  return {
+    workspaceInput: { mode: 'manual', workspaces },
+    grouping: {
+      mode: 'match',
+      groups
+    },
+    sampling: {
+      maxFilesPerWorkspace: 8,
+      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
+      excludeGlobs: ['**/node_modules/**', '**/dist/**'],
+      hintGlobs: []
+    }
+  }
+}
+
+async function discoverInitWorkspaces(cwd: string): Promise<string[]> {
+  const discovered = await discoverWorkspaces({ cwd, workspaceInput: { mode: 'discover' } })
+  if (!(discovered.workspacesRel.length === 1 && discovered.workspacesRel[0] === '.')) {
+    return discovered.workspacesRel
+  }
+
+  const packageJsonPath = path.join(cwd, 'package.json')
+  try {
+    const raw = await readFile(packageJsonPath, 'utf8')
+    const parsed = JSON.parse(raw) as { workspaces?: string[] | { packages?: string[] } }
+    let workspacePatterns: string[] = []
+    if (Array.isArray(parsed.workspaces)) {
+      workspacePatterns = parsed.workspaces
+    } else if (parsed.workspaces && typeof parsed.workspaces === 'object' && Array.isArray(parsed.workspaces.packages)) {
+      workspacePatterns = parsed.workspaces.packages
+    }
+
+    if (workspacePatterns.length === 0) {
+      return discovered.workspacesRel
+    }
+
+    const workspacePackageFiles = await fg(
+      workspacePatterns.map((pattern) => `${trimTrailingSlashes(pattern)}/package.json`),
+      { cwd, onlyFiles: true, dot: true }
+    )
+    const workspaceDirs = [...new Set(workspacePackageFiles.map((entry) => normalizePath(path.dirname(entry))))].sort((a, b) =>
+      a.localeCompare(b)
+    )
+    if (workspaceDirs.length > 0) {
+      return workspaceDirs
+    }
+  } catch {
+    // fallback to discovered output
+  }
+
+  return discovered.workspacesRel
+}
+
+function trimTrailingSlashes(value: string): string {
+  let normalized = value
+  while (normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1)
+  }
+  return normalized
+}
+
+async function askGroupNumber(workspace: string): Promise<number> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    while (true) {
+      const answer = await askQuestion(rl, `Group number for ${workspace} [1]: `)
+      const normalized = answer.trim()
+      if (normalized === '') {
+        return 1
+      }
+
+      if (/^\d+$/.test(normalized)) {
+        const parsed = Number.parseInt(normalized, 10)
+        if (parsed >= 1) {
+          return parsed
+        }
+      }
+
+      process.stdout.write('Please provide a positive integer (1, 2, 3, ...).\n')
+    }
+  } finally {
+    rl.close()
+  }
+}
+
+function toConfigScaffold(configObject: Record<string, unknown>): string {
+  if (Object.keys(configObject).length === 0) {
+    return getConfigScaffold('minimal')
+  }
+
+  return `export default ${JSON.stringify(configObject, null, 2)}\n`
 }
 
 function getFullPresetObject() {
@@ -857,5 +1040,24 @@ function formatShortPrint(
     }
   }
 
+  return `${lines.join('\n')}\n`
+}
+
+function formatShortConfig(payload: {
+  source: string
+  workspaceInput: unknown
+  workspaces: string[]
+  grouping: { mode: string; allowEmptyGroups: boolean; groups: Array<{ name: string; workspaces: string[] }> }
+  sampling: unknown
+}): string {
+  const lines: string[] = [
+    `source: ${payload.source}`,
+    `workspaces (${payload.workspaces.length}): ${payload.workspaces.join(', ') || '(none)'}`,
+    `grouping mode: ${payload.grouping.mode} (allow empty: ${payload.grouping.allowEmptyGroups})`
+  ]
+  for (const group of payload.grouping.groups) {
+    lines.push(`group ${group.name} (${group.workspaces.length}): ${group.workspaces.join(', ') || '(none)'}`)
+  }
+  lines.push(`workspaceInput: ${JSON.stringify(payload.workspaceInput)}`, `sampling: ${JSON.stringify(payload.sampling)}`)
   return `${lines.join('\n')}\n`
 }

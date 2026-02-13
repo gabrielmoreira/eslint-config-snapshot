@@ -933,3 +933,35 @@ Key decisions:
 Result:
 
 - Versions were bumped and release tag was prepared/pushed to trigger automated npm publish.
+
+## 2026-02-13 - Request 045
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add a command to show effective evaluated config (resolved runtime state, not dynamic source).
+- Improve `init` with a recommended mode that supports workspace-to-group numeric assignment (default group 1), and make it the preferred path over minimal.
+
+Key decisions:
+
+- Added new CLI command:
+  - `config` with `--format json|short` and `--short` alias.
+  - Output includes source, resolved workspace input, discovered workspaces, evaluated group assignments, and sampling config.
+- Enhanced `init` presets:
+  - `recommended`, `minimal`, `full`
+  - default preset changed to `recommended`
+  - added `--show-effective` option to preview the evaluated config before writing
+- Implemented recommended preset generation:
+  - deterministic workspace discovery
+  - interactive numeric group assignment per workspace (default `1`)
+  - non-interactive (`--yes`) behavior keeps all workspaces in `group-1`
+- Added monorepo fallback for init discovery when package-manager discovery resolves only `"."`:
+  - reads workspace patterns from root `package.json`
+  - expands patterns to deterministic workspace list
+
+Result:
+
+- Users can now inspect effective evaluated configuration directly via `eslint-config-snapshot config`.
+- `init` now supports a recommended grouped workflow aligned with real workspace structure and simpler setup for multi-group scenarios.
+- CLI integration and terminal tests were expanded and updated for the new command and preset behavior.

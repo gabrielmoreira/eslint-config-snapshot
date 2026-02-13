@@ -35,6 +35,7 @@ eslint-config-snapshot
 - `check`
 - `update`
 - `print`
+- `config`
 - `init`
 
 Compatibility aliases:

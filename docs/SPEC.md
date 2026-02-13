@@ -159,6 +159,7 @@ Canonical commands:
 - `check`
 - `update`
 - `print`
+- `config`
 - `init`
 
 Compatibility aliases:
@@ -173,8 +174,10 @@ Options:
 - `-u, --update` for default invocation update flow
 - `check --format <summary|status|diff>`
 - `print --format <json|short>` and `print --short`
+- `config --format <json|short>` and `config --short`
 - `init --target <file|package-json>`
-- `init --preset <minimal|full>`
+- `init --preset <recommended|minimal|full>`
+- `init --show-effective`
 - `init -f, --force`
 - `init -y, --yes`
 
@@ -196,8 +199,9 @@ CLI parsing/help generation should be command-metadata driven (for example via `
 `init` interactive UX requirements:
 
 - target selection should support numbered choices (`1) package-json`, `2) file`)
-- preset selection should support numbered choices (`1) minimal`, `2) full`)
+- preset selection should support numbered choices (`1) recommended`, `2) minimal`, `3) full`)
 - interactive mode may accept equivalent text aliases
+- recommended preset should support assigning workspace group numbers (default `1`) and generate a deterministic grouped config
 
 ---
 
