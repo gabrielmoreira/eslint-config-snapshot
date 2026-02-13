@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- Release minor version with improved human-readable CLI runtime logs and consistent output spacing.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.8.0
+
 ## 0.7.0
 
 ### Minor Changes
