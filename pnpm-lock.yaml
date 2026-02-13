@@ -29,6 +29,9 @@ importers:
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.13
+      '@types/picomatch':
+        specifier: ^4.0.2
+        version: 4.0.2
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -774,6 +777,9 @@ packages:
 
   '@types/node@24.10.13':
     resolution: {integrity: sha512-oH72nZRfDv9lADUBSo104Aq7gPHpQZc4BTx38r9xf9pg5LfP6EzSyH2n7qFmmxRQXh7YlUXODcYsg6PuTDSxGg==}
+
+  '@types/picomatch@4.0.2':
+    resolution: {integrity: sha512-qHHxQ+P9PysNEGbALT8f8YOSHW0KJu6l2xU8DYY0fu/EmGxXdVnuTLvFUvBgPJMSqXq29SYHveejeAha+4AYgA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -3282,6 +3288,8 @@ snapshots:
   '@types/node@24.10.13':
     dependencies:
       undici-types: 7.16.0
+
+  '@types/picomatch@4.0.2': {}
 
   '@types/unist@3.0.3': {}
 
