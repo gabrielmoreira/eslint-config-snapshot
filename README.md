@@ -159,7 +159,7 @@ This repository uses Changesets so package versions and release tags stay aligne
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
 - [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md)
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
-- [`docs/IMPLEMENTATION_REVIEW.md`](docs/IMPLEMENTATION_REVIEW.md)
+- [`docs/FINDINGS.md`](docs/FINDINGS.md)
 - [`docs/SPEC.md`](docs/SPEC.md)
 - [`docs/SPEC_ENHANCED.md`](docs/SPEC_ENHANCED.md)
 - [`docs/TASKS.md`](docs/TASKS.md)

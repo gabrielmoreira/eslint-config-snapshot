@@ -53,11 +53,11 @@ For every request that changes behavior, UX, or process:
 2. Update task status in `docs/TASKS.md`:
 - mark completed items
 - add new actionable items when discovered
-3. Update `docs/IMPLEMENTATION_REVIEW.md`:
+3. Update `docs/FINDINGS.md`:
 - keep only non-shipped limitations and active follow-ups
 - move shipped items out of pending sections
 
-`docs/IMPLEMENTATION_REVIEW.md` must stay as a live status board, not a historical dump.
+`docs/FINDINGS.md` must stay focused on active technical findings, not historical dumps.
 
 ## Dependency Discipline
 

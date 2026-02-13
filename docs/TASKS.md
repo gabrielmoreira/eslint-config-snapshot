@@ -1,55 +1,35 @@
 # TASKS.md
 
-## Execution Contract
+## Scope
 
-`TASKS.md` defines execution order and required deliverables.
+`TASKS.md` is the actionable execution board.
 
-The implementation contract is defined by:
+Specification authority remains:
 
 - `SPEC.md`
 - `SPEC_ENHANCED.md` (only when it has active staged items)
 - `AGENTS.md`
 
-If any conflict exists, follow document priority from `AGENTS.md`.
+If any conflict exists, follow priority from `docs/AGENTS.md`.
 
-## Delivery Status
+## Active Tasks
 
-### Core Workstream
-
-- [x] Keep monorepo architecture aligned with `SPEC.md`.
-- [x] Implement and maintain `@eslint-config-snapshot/api`.
-- [x] Implement and maintain `@eslint-config-snapshot/cli`.
-- [x] Keep hooks and commit standards operational.
-- [x] Keep docs aligned with shipped behavior.
-
-### Active Short-Cycle Tasks
-
-- [x] Decide and implement final wording for clean/drift/status summaries after latest UX iterations.
-- [x] Commit pending CLI UX changes and related tests.
-- [x] Run full repo quality gates (`build`, `lint`, `typecheck`, `test`) after pending commit.
-- [x] Fix npm provenance publish metadata mismatch by setting package `repository` fields.
-- [x] Add effective evaluated config command (`config`) for runtime-resolved visibility.
-- [x] Add recommended init mode with workspace numeric grouping and effective-preview support.
-
-### Quick Wins (Practical Near-Term)
-
-- [x] Improve `init --help` examples with numbered prompt usage and `--force` guidance.
-- [x] Add package-level npm READMEs with cross-links between CLI and API usage docs.
-- [x] Migrate init interactive flow to Inquirer-based select/checkbox prompts (no numeric typed menus).
-- [x] Replace numbered-init retry coverage with Inquirer select/checkbox flow validation.
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
+- [ ] Resolve CJS `import.meta` build warning in dual-format output.
+- [ ] Revisit isolated test process spawning to reduce shell-related warnings.
 
-### Exploration Backlog (Future Ideas)
+## Backlog (Exploration)
 
 - [ ] Add optional config-suggestion command that scans project structure and proposes starter config.
 - [ ] Add optional full-availability baseline mode that tracks available plugin rules (not only configured runtime state).
 - [ ] Evaluate replacing current prompt logic with a lightweight selection UI library if complexity grows.
 
-### Agent Follow-Up List
+## Recently Completed
 
-- [ ] Resolve CJS `import.meta` build warning in dual-format CLI output.
-- [ ] Revisit isolated test process spawning to avoid dependency on shell behavior warnings.
-- [ ] Keep this list current whenever a limitation is discovered and not solved in the same iteration.
+- [x] Clarify `init` default-group (`*`) meaning in CLI prompts and docs.
+- [x] Migrate init interactive flow to Inquirer select/checkbox prompts.
+- [x] Add effective evaluated config command (`config`).
+- [x] Fix deterministic handling of same-severity rule option conflicts during aggregation.
 
 ## Quality Gates
 
@@ -69,7 +49,7 @@ For every user request that changes code, behavior, or project process:
 3. Update affected specification or usage docs if behavior changed.
 4. Keep `SPEC_ENHANCED.md` reserved for staged-only changes.
 5. Update this task board with completion status changes.
-6. Keep `docs/IMPLEMENTATION_REVIEW.md` focused on current limitations and active follow-ups.
+6. Keep `docs/FINDINGS.md` focused on current limitations and active follow-ups.
 
 ## Completion Rule
 

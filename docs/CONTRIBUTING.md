@@ -59,7 +59,7 @@ Documentation map:
 - `README.md`: end-user usage
 - `docs/SPEC.md`: technical source of truth
 - `docs/EXAMPLES.md`: configuration recipes
-- `docs/IMPLEMENTATION_REVIEW.md`: limitations and future TODOs
+- `docs/FINDINGS.md`: active limitations and technical findings
 
 ## How We Use Codex
 

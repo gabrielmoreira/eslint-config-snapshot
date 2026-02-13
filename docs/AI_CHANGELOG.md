@@ -1157,3 +1157,28 @@ Result:
 
 - CLI no longer crashes on mixed per-file option shapes for the same rule/severity.
 - Snapshot generation remains deterministic and stable.
+
+## 2026-02-13 - Request 055
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Clarify documentation organization with fewer files and review which planning/review content is still useful.
+
+Key decisions:
+
+- Replaced `docs/IMPLEMENTATION_REVIEW.md` with `docs/FINDINGS.md` to make intent explicit.
+- Restructured `docs/TASKS.md` into:
+  - active tasks
+  - exploration backlog
+  - recently completed
+- Removed obsolete task/review items (for example numbered init prompt follow-ups that no longer apply).
+- Updated cross-references in `README.md`, `docs/AGENTS.md`, and `docs/CONTRIBUTING.md`.
+
+Result:
+
+- Documentation now follows a simpler and clearer model:
+  - `TASKS.md` for action items
+  - `FINDINGS.md` for active technical risks/limitations
+- Current pending work is easier to scan and no longer mixed with historical completed context.
