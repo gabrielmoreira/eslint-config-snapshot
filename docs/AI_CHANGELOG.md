@@ -834,3 +834,20 @@ Key decisions:
 Result:
 
 - Repository now has a version-aligned release candidate for automated publish testing.
+
+## 2026-02-13 - Request 040
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Configure GitHub publish workflow to use a protected environment for release gating.
+
+Key decisions:
+
+- Added `environment: release` to the npm publish job.
+- Kept tag trigger (`v*`) and OIDC trusted publishing permissions unchanged.
+
+Result:
+
+- Publish workflow can now be controlled by GitHub Environment protection rules (tag rules, reviewers, wait timer).
