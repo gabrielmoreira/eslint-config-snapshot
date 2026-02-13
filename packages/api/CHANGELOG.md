@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.3.1
+
+### Patch Changes
+
+- Release patch bump after init UX clarity improvements for default catch-all group messaging.
+
 ## 0.3.0
 
 ### Minor Changes

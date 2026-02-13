@@ -1118,3 +1118,20 @@ Result:
 
 - `init` now explains the grouping intent directly in plain language.
 - Documentation and CLI output are aligned around the same default-group/catch-all explanation.
+
+## 2026-02-13 - Request 053
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Bump and push a new release after the latest init UX/doc clarity updates.
+
+Key decisions:
+
+- Chose a patch release for both packages because the change is additive UX/documentation clarification without API/command breaking changes.
+- Kept the established Changesets release flow (version commit + git tag push).
+
+Result:
+
+- Prepared patch release metadata for both publishable packages and proceeded with version/push workflow.
