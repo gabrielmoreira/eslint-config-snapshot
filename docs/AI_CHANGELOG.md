@@ -1782,3 +1782,25 @@ Result:
 - Defaults now sample `js/jsx/ts/tsx/cjs/mjs/md/mdx/json/css`.
 - Sampling remains deterministic and now better reflects likely ESLint rule variance from code paths.
 - API quality gates pass for this change set (`test`, `lint`, `typecheck`).
+
+## 2026-02-13 - Request 083
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add a clear but lightweight explanation of API/CLI source file division.
+- Document what should and should not live in each module area, without rigid over-constraints.
+
+Key decisions:
+
+- Added `docs/ARCHITECTURE.md` as practical guidance (not hard law).
+- Documented package boundaries, per-file intent, and simple do/don't rules for `api` and `cli`.
+- Included a compact end-to-end flow section and evolution guidelines to reduce future architecture drift.
+- Linked the new architecture document from the project README documentation section.
+
+Result:
+
+- Architecture intent is now explicit for contributors.
+- Guidance remains pragmatic and flexible instead of overly prescriptive.
+- Future refactors have a clear baseline for deciding where code should live.

@@ -181,6 +181,7 @@ This repository uses Changesets so package versions and release tags stay aligne
 
 ## Documentation
 
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
 - [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md)
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md)

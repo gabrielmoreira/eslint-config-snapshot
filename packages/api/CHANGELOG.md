@@ -1,5 +1,12 @@
 # @eslint-config-snapshot/api
 
+## 0.12.1
+
+### Patch Changes
+
+- Add architecture guidance for API/CLI module boundaries and responsibilities.
+  Link architecture doc from README.
+
 ## 0.12.0
 
 ### Minor Changes
