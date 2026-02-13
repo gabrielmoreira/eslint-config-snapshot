@@ -1173,10 +1173,49 @@ function writeRunContextHeader(
 
   const color = createColorizer()
   process.stdout.write(color.bold(`✨ eslint-config-snapshot v${readCliVersion()}\n`))
-  process.stdout.write(`🧭 Command: ${commandLabel}\n`)
+  process.stdout.write(`🧭 Action: ${formatCommandDisplayLabel(commandLabel)}\n`)
   process.stdout.write(`📁 Repository: ${cwd}\n`)
   process.stdout.write(`⚙️ Config source: ${formatConfigSource(cwd, configPath)}\n`)
   process.stdout.write(`🗂️ Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n\n`)
+}
+
+function formatCommandDisplayLabel(commandLabel: string): string {
+  switch (commandLabel) {
+    case 'check':
+    case 'check:summary': {
+      return 'Check drift against baseline (summary)'
+    }
+    case 'check:diff': {
+      return 'Check drift against baseline (detailed diff)'
+    }
+    case 'check:status': {
+      return 'Check drift against baseline (status only)'
+    }
+    case 'update': {
+      return 'Update baseline snapshot'
+    }
+    case 'print:json': {
+      return 'Print aggregated rules (JSON)'
+    }
+    case 'print:short': {
+      return 'Print aggregated rules (short view)'
+    }
+    case 'config:json': {
+      return 'Show effective runtime config (JSON)'
+    }
+    case 'config:short': {
+      return 'Show effective runtime config (short view)'
+    }
+    case 'init': {
+      return 'Initialize local configuration'
+    }
+    case 'help': {
+      return 'Show CLI help'
+    }
+    default: {
+      return commandLabel
+    }
+  }
 }
 
 function formatConfigSource(cwd: string, configPath: string | undefined): string {
