@@ -59,7 +59,7 @@ For completed work, ensure:
 
 For every user request that changes code, behavior, or project process:
 
-1. Append an English entry to `docs/ai-updates/AI_CHANGELOG.md`.
+1. Append an English entry to `docs/AI_CHANGELOG.md`.
 2. Include the committer full name in the changelog entry (`Author` field).
 3. Update affected specification or usage docs if behavior changed.
 4. Keep `SPEC_ENHANCED.md` reserved for staged-only changes.

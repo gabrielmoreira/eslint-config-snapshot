@@ -49,7 +49,7 @@ For every substantial implementation step:
 
 For every request that changes behavior, UX, or process:
 
-1. Append an entry to `docs/ai-updates/AI_CHANGELOG.md`.
+1. Append an entry to `docs/AI_CHANGELOG.md`.
 2. Update task status in `docs/TASKS.md`:
 - mark completed items
 - add new actionable items when discovered
@@ -68,7 +68,7 @@ For every request that changes behavior, UX, or process:
 
 For every user request that results in code/docs/process changes, the agent MUST append an entry to:
 
-- `docs/ai-updates/AI_CHANGELOG.md`
+- `docs/AI_CHANGELOG.md`
 
 Each entry must be in English and include:
 

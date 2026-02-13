@@ -52,7 +52,7 @@ When behavior changes:
 1. Update `docs/SPEC.md` if specification changed.
 2. Keep `docs/SPEC_ENHANCED.md` only for temporary staged items.
 3. Update `README.md` usage sections.
-4. Append a new entry to `docs/ai-updates/AI_CHANGELOG.md`.
+4. Append a new entry to `docs/AI_CHANGELOG.md`.
 
 Documentation map:
 
@@ -70,6 +70,6 @@ Operating model:
 - Codex reads `docs/SPEC.md`, `docs/SPEC_ENHANCED.md`, `docs/AGENTS.md`, and `docs/TASKS.md`.
 - Codex implements requested changes directly in the workspace.
 - Codex runs validations and reports outcomes.
-- Codex records request/result history in `docs/ai-updates/AI_CHANGELOG.md`.
+- Codex records request/result history in `docs/AI_CHANGELOG.md`.
 
 Human maintainers remain the final reviewers for architecture and release decisions.

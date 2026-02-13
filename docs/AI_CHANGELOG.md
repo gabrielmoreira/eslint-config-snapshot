@@ -593,3 +593,22 @@ Result:
 
 - `SPEC.md` now matches runtime and tested CLI behavior more closely.
 - The specification is clearer about current guardrails and UX contracts.
+
+## 2026-02-13 - Request 028
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Move AI changelog to the `docs` root, remove the old folder, and update all references.
+
+Key decisions:
+
+- Moved `docs/ai-updates/AI_CHANGELOG.md` to `docs/AI_CHANGELOG.md`.
+- Removed the old `docs/ai-updates` directory.
+- Updated every known reference path in project docs and README.
+
+Result:
+
+- AI changelog now lives at a simpler canonical location: `docs/AI_CHANGELOG.md`.
+- Documentation links and process instructions are consistent with the new path.

@@ -140,4 +140,4 @@ Advanced patterns and recipes are in:
 - [`docs/SPEC.md`](docs/SPEC.md)
 - [`docs/SPEC_ENHANCED.md`](docs/SPEC_ENHANCED.md)
 - [`docs/TASKS.md`](docs/TASKS.md)
-- [`docs/ai-updates/AI_CHANGELOG.md`](docs/ai-updates/AI_CHANGELOG.md)
+- [`docs/AI_CHANGELOG.md`](docs/AI_CHANGELOG.md)

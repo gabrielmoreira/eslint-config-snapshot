@@ -42,4 +42,4 @@ This file is a live implementation status board.
 - [ ] Ensure each unresolved issue listed here has either:
 - a concrete next action in `docs/TASKS.md`, or
 - a rationale for deferring.
-- [ ] Avoid duplicating historical notes already captured in `docs/ai-updates/AI_CHANGELOG.md`.
+- [ ] Avoid duplicating historical notes already captured in `docs/AI_CHANGELOG.md`.
