@@ -211,9 +211,7 @@ function parseInitPreset(value: string): InitPreset {
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
-    process.stdout.write(
-      'Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n'
-    )
+    writeSubtleInfo('Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n')
   }
 
   let currentSnapshots: Map<string, BuiltSnapshot>
@@ -260,7 +258,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
   if (format === 'status') {
     if (changes.length === 0) {
-      process.stdout.write(`clean\n${UPDATE_HINT}`)
+      process.stdout.write('clean\n')
       return 0
     }
 
@@ -270,7 +268,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
   if (format === 'diff') {
     if (changes.length === 0) {
-      process.stdout.write(`No snapshot changes detected.\n${UPDATE_HINT}`)
+      process.stdout.write('No snapshot changes detected.\n')
       return 0
     }
 
@@ -288,9 +286,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
-    process.stdout.write(
-      'Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n'
-    )
+    writeSubtleInfo('Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n')
   }
 
   let currentSnapshots: Map<string, BuiltSnapshot>
@@ -646,7 +642,6 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     process.stdout.write(
       `Current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off).\n`
     )
-    process.stdout.write(UPDATE_HINT)
     return 0
   }
 
@@ -728,8 +723,14 @@ function createColorizer() {
     green: (text: string) => wrap('32', text),
     yellow: (text: string) => wrap('33', text),
     red: (text: string) => wrap('31', text),
-    bold: (text: string) => wrap('1', text)
+    bold: (text: string) => wrap('1', text),
+    dim: (text: string) => wrap('2', text)
   }
+}
+
+function writeSubtleInfo(text: string): void {
+  const color = createColorizer()
+  process.stdout.write(color.dim(text))
 }
 
 function formatShortPrint(

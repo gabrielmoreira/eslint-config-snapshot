@@ -70,9 +70,7 @@ describe('cli terminal invocation', () => {
 
     const compare = run(['compare'])
     expect(compare.status).toBe(0)
-    expect(compare.stdout).toBe(
-      'No snapshot changes detected.\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
-    )
+    expect(compare.stdout).toBe('No snapshot changes detected.\n')
     expect(compare.stderr).toBe('')
   })
 
@@ -142,7 +140,7 @@ describe('cli terminal invocation', () => {
 
     const clean = run(['status'])
     expect(clean.status).toBe(0)
-    expect(clean.stdout).toBe('clean\nTip: run `eslint-config-snapshot --update` to refresh the baseline.\n')
+    expect(clean.stdout).toBe('clean\n')
     expect(clean.stderr).toBe('')
 
     await writeFile(
@@ -294,7 +292,6 @@ no-debugger: off
     const check = run(['check'])
     expect(check.status).toBe(0)
     expect(check.stdout).toContain('No snapshot drift detected.')
-    expect(check.stdout).toContain('Tip: run `eslint-config-snapshot --update` to refresh the baseline.')
   })
 
   it('uses defaults and explains baseline setup when running default command', async () => {
