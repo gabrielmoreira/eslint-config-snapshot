@@ -15,7 +15,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 ## Active Tasks
 
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
-- [ ] Revisit isolated test process spawning to reduce shell-related warnings.
+- [ ] Add coverage threshold enforcement for both packages in CI.
 
 ## Backlog (Exploration)
 
@@ -32,6 +32,10 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 - [x] Improve default `check` summary output with clearer section headers and aligned counters.
 - [x] Add output glossary to README for summary counter interpretation.
 - [x] Optimize workspace extraction flow to avoid repeated ESLint process startup per sampled file when ESLint API is available.
+- [x] Add CI matrix for Node 20.x, 22.x, and latest with CLI smoke step.
+- [x] Remove `shell: true` spawn usage in isolated integration tests to eliminate `DEP0190` warnings.
+- [x] Add Renovate configuration for dependency update automation.
+- [x] Add command timing logs with interactive prompt wait-time excluded.
 
 ## Quality Gates
 

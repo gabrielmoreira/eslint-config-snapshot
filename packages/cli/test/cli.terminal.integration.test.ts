@@ -14,7 +14,7 @@ function run(args: string[]): { status: number; stdout: string; stderr: string }
   const proc = spawnSync(process.execPath, [cliDist, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
-    env: { ...process.env }
+    env: { ...process.env, ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS: '1' }
   })
 
   return {

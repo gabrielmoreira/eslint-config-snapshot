@@ -8,8 +8,11 @@ import { buildRecommendedConfigFromAssignments, runCli } from '../src/index.js'
 const fixtureTemplateRoot = path.resolve('test/fixtures/repo')
 let tmpDir = ''
 let fixtureRoot = ''
+let previousNoProgress = ''
 
 beforeEach(async () => {
+  previousNoProgress = process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS ?? ''
+  process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS = '1'
   tmpDir = await mkdtemp(path.join(os.tmpdir(), 'snapshot-cli-integration-'))
   fixtureRoot = path.join(tmpDir, 'repo')
   await cp(fixtureTemplateRoot, fixtureRoot, { recursive: true })
@@ -37,6 +40,11 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
+  if (previousNoProgress === '') {
+    delete process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS
+  } else {
+    process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS = previousNoProgress
+  }
   if (tmpDir) {
     await rm(tmpDir, { recursive: true, force: true })
     tmpDir = ''

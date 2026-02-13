@@ -17,6 +17,7 @@ import {
 } from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import fg from 'fast-glob'
+import { existsSync, readFileSync } from 'node:fs'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createInterface } from 'node:readline'
@@ -32,10 +33,22 @@ type CheckFormat = 'summary' | 'status' | 'diff'
 type PrintFormat = 'json' | 'short'
 type InitTarget = 'file' | 'package-json'
 type InitPreset = 'recommended' | 'minimal' | 'full'
+type RuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
+type RuleObject = Record<string, RuleEntry>
 
 type RootOptions = {
   update?: boolean
 }
+
+type RunTimer = {
+  label: string
+  startedAtMs: number
+  pausedMs: number
+  pauseStartedAtMs: number | undefined
+}
+
+let activeRunTimer: RunTimer | undefined
+let cachedCliVersion: string | undefined
 
 export async function runCli(command: string | undefined, cwd: string, flags: string[] = []): Promise<number> {
   const argv = command ? [command, ...flags] : [...flags]
@@ -43,33 +56,45 @@ export async function runCli(command: string | undefined, cwd: string, flags: st
 }
 
 async function runArgv(argv: string[], cwd: string): Promise<number> {
-  const hasCommandToken = argv.some((token) => !token.startsWith('-'))
-  if (!hasCommandToken) {
-    return runDefaultInvocation(argv, cwd)
-  }
-
-  let actionCode: number | undefined
-
-  const program = createProgram(cwd, (code) => {
-    actionCode = code
-  })
+  const invocationLabel = resolveInvocationLabel(argv)
+  beginRunTimer(invocationLabel)
+  let exitCode = 1
 
   try {
-    await program.parseAsync(argv, { from: 'user' })
-  } catch (error: unknown) {
-    if (error instanceof CommanderError) {
-      if (error.code === 'commander.helpDisplayed') {
-        return 0
-      }
-      return error.exitCode
+    const hasCommandToken = argv.some((token) => !token.startsWith('-'))
+    if (!hasCommandToken) {
+      exitCode = await runDefaultInvocation(argv, cwd)
+      return exitCode
     }
 
-    const message = error instanceof Error ? error.message : String(error)
-    process.stderr.write(`${message}\n`)
-    return 1
-  }
+    let actionCode: number | undefined
 
-  return actionCode ?? 0
+    const program = createProgram(cwd, (code) => {
+      actionCode = code
+    })
+
+    try {
+      await program.parseAsync(argv, { from: 'user' })
+    } catch (error: unknown) {
+      if (error instanceof CommanderError) {
+        if (error.code === 'commander.helpDisplayed') {
+          exitCode = 0
+          return exitCode
+        }
+        exitCode = error.exitCode
+        return exitCode
+      }
+
+      const message = error instanceof Error ? error.message : String(error)
+      process.stderr.write(`${message}\n`)
+      return 1
+    }
+
+    exitCode = actionCode ?? 0
+    return exitCode
+  } finally {
+    endRunTimer(exitCode)
+  }
 }
 
 async function runDefaultInvocation(argv: string[], cwd: string): Promise<number> {
@@ -238,6 +263,15 @@ function parseInitPreset(value: string): InitPreset {
 
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd)
+
+  if (format !== 'status') {
+    writeRunContextHeader(cwd, defaultInvocation ? 'check' : `check:${format}`, foundConfig?.path, storedSnapshots)
+    if (shouldShowRunLogs()) {
+      writeSubtleInfo('Analyzing current ESLint configuration...\n')
+    }
+  }
+
   if (!foundConfig) {
     writeSubtleInfo(
       'Tip: no explicit config found. Using safe built-in defaults. Run `eslint-config-snapshot init` to customize when needed.\n'
@@ -257,8 +291,6 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
     throw error
   }
-  const storedSnapshots = await loadStoredSnapshots(cwd)
-
   if (storedSnapshots.size === 0) {
     const summary = summarizeSnapshots(currentSnapshots)
     process.stdout.write(
@@ -317,6 +349,12 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
 async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd)
+  writeRunContextHeader(cwd, 'update', foundConfig?.path, storedSnapshots)
+  if (shouldShowRunLogs()) {
+    writeSubtleInfo('Analyzing current ESLint configuration...\n')
+  }
+
   if (!foundConfig) {
     writeSubtleInfo(
       'Tip: no explicit config found. Using safe built-in defaults. Run `eslint-config-snapshot init` to customize when needed.\n'
@@ -351,6 +389,12 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 }
 
 async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
+  const foundConfig = await findConfigPath(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd)
+  writeRunContextHeader(cwd, `print:${format}`, foundConfig?.path, storedSnapshots)
+  if (shouldShowRunLogs()) {
+    writeSubtleInfo('Analyzing current ESLint configuration...\n')
+  }
   const currentSnapshots = await computeCurrentSnapshots(cwd)
 
   if (format === 'short') {
@@ -367,6 +411,11 @@ async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
 
 async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   const foundConfig = await findConfigPath(cwd)
+  const storedSnapshots = await loadStoredSnapshots(cwd)
+  writeRunContextHeader(cwd, `config:${format}`, foundConfig?.path, storedSnapshots)
+  if (shouldShowRunLogs()) {
+    writeSubtleInfo('Resolving effective runtime configuration...\n')
+  }
   const config = await loadConfig(cwd)
   const resolved = await resolveWorkspaceAssignments(cwd, config)
   const payload = {
@@ -607,8 +656,8 @@ async function runInit(
 
 async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
   const { select } = await import('@inquirer/prompts')
-  const target = await askInitTarget(select)
-  const preset = await askInitPreset(select)
+  const target = await runPromptWithPausedTimer(() => askInitTarget(select))
+  const preset = await runPromptWithPausedTimer(() => askInitPreset(select))
   return { target, preset }
 }
 
@@ -638,8 +687,10 @@ async function askInitPreset(
 }
 
 function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
+  pauseRunTimer()
   return new Promise((resolve) => {
     rl.question(prompt, (answer) => {
+      resumeRunTimer()
       resolve(answer)
     })
   })
@@ -815,11 +866,13 @@ async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map
     'Recommended setup: default group "*" is a dynamic catch-all for every discovered workspace.\n'
   )
   process.stdout.write('Select only workspaces that should move to explicit static groups.\n')
-  const overrides = await checkbox<string>({
-    message: 'Choose exception workspaces (leave empty to keep all in default "*"):',
-    choices: workspaces.map((workspace) => ({ name: workspace, value: workspace })),
-    pageSize: Math.min(12, Math.max(4, workspaces.length))
-  })
+  const overrides = await runPromptWithPausedTimer(() =>
+    checkbox<string>({
+      message: 'Choose exception workspaces (leave empty to keep all in default "*"):',
+      choices: workspaces.map((workspace) => ({ name: workspace, value: workspace })),
+      pageSize: Math.min(12, Math.max(4, workspaces.length))
+    })
+  )
 
   const assignments = new Map<string, number>()
   let nextGroup = 1
@@ -829,13 +882,15 @@ async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map
       nextGroup += 1
     }
 
-    const selected = await select<number | 'new'>({
-      message: `Select group for ${workspace}`,
-      choices: [
-        ...usedGroups.map((group) => ({ name: `group-${group}`, value: group })),
-        { name: `create new group (group-${nextGroup})`, value: 'new' }
-      ]
-    })
+    const selected = await runPromptWithPausedTimer(() =>
+      select<number | 'new'>({
+        message: `Select group for ${workspace}`,
+        choices: [
+          ...usedGroups.map((group) => ({ name: `group-${group}`, value: group })),
+          { name: `create new group (group-${nextGroup})`, value: 'new' }
+        ]
+      })
+    )
     const groupNumber = selected === 'new' ? nextGroup : selected
     assignments.set(workspace, groupNumber)
   }
@@ -942,22 +997,7 @@ function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }
 }
 
 function summarizeSnapshots(snapshots: Map<string, BuiltSnapshot>) {
-  let rules = 0
-  let error = 0
-  let warn = 0
-  let off = 0
-  for (const snapshot of snapshots.values()) {
-    for (const entry of Object.values(snapshot.rules)) {
-      rules += 1
-      if (entry[0] === 'error') {
-        error += 1
-      } else if (entry[0] === 'warn') {
-        warn += 1
-      } else {
-        off += 1
-      }
-    }
-  }
+  const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
   return { groups: snapshots.size, rules, error, warn, off }
 }
 
@@ -991,11 +1031,192 @@ function writeSubtleInfo(text: string): void {
   process.stdout.write(color.dim(text))
 }
 
+function resolveInvocationLabel(argv: string[]): string {
+  const commandToken = argv.find((entry) => !entry.startsWith('-'))
+  if (commandToken) {
+    return commandToken
+  }
+  if (argv.includes('-u') || argv.includes('--update')) {
+    return 'update'
+  }
+  if (argv.includes('-h') || argv.includes('--help')) {
+    return 'help'
+  }
+  return 'check'
+}
+
+function shouldShowRunLogs(): boolean {
+  if (process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS === '1') {
+    return false
+  }
+  return process.stdout.isTTY === true
+}
+
+function beginRunTimer(label: string): void {
+  if (!shouldShowRunLogs()) {
+    activeRunTimer = undefined
+    return
+  }
+
+  activeRunTimer = {
+    label,
+    startedAtMs: Date.now(),
+    pausedMs: 0,
+    pauseStartedAtMs: undefined
+  }
+}
+
+function endRunTimer(exitCode: number): void {
+  if (!activeRunTimer || !shouldShowRunLogs()) {
+    return
+  }
+
+  if (activeRunTimer.pauseStartedAtMs !== undefined) {
+    activeRunTimer.pausedMs += Date.now() - activeRunTimer.pauseStartedAtMs
+    activeRunTimer.pauseStartedAtMs = undefined
+  }
+
+  const elapsedMs = Math.max(0, Date.now() - activeRunTimer.startedAtMs - activeRunTimer.pausedMs)
+  const color = createColorizer()
+  const status = exitCode === 0 ? color.green('done') : color.red('failed')
+  const seconds = (elapsedMs / 1000).toFixed(2)
+  writeSubtleInfo(`Run ${status} in ${seconds}s\n`)
+  activeRunTimer = undefined
+}
+
+function pauseRunTimer(): void {
+  if (!activeRunTimer || activeRunTimer.pauseStartedAtMs !== undefined) {
+    return
+  }
+  activeRunTimer.pauseStartedAtMs = Date.now()
+}
+
+function resumeRunTimer(): void {
+  if (!activeRunTimer || activeRunTimer.pauseStartedAtMs === undefined) {
+    return
+  }
+
+  activeRunTimer.pausedMs += Date.now() - activeRunTimer.pauseStartedAtMs
+  activeRunTimer.pauseStartedAtMs = undefined
+}
+
+async function runPromptWithPausedTimer<T>(prompt: () => Promise<T>): Promise<T> {
+  pauseRunTimer()
+  try {
+    return await prompt()
+  } finally {
+    resumeRunTimer()
+  }
+}
+
+function readCliVersion(): string {
+  if (cachedCliVersion !== undefined) {
+    return cachedCliVersion
+  }
+
+  const scriptPath = process.argv[1]
+  if (!scriptPath) {
+    cachedCliVersion = 'unknown'
+    return cachedCliVersion
+  }
+
+  let current = path.resolve(path.dirname(scriptPath))
+  while (true) {
+    const packageJsonPath = path.join(current, 'package.json')
+    if (existsSync(packageJsonPath)) {
+      try {
+        const raw = readFileSync(packageJsonPath, 'utf8')
+        const parsed = JSON.parse(raw) as { version?: string }
+        cachedCliVersion = parsed.version ?? 'unknown'
+        return cachedCliVersion
+      } catch {
+        break
+      }
+    }
+
+    const parent = path.dirname(current)
+    if (parent === current) {
+      break
+    }
+    current = parent
+  }
+
+  cachedCliVersion = 'unknown'
+  return cachedCliVersion
+}
+
+function writeRunContextHeader(
+  cwd: string,
+  commandLabel: string,
+  configPath: string | undefined,
+  storedSnapshots: Map<string, StoredSnapshot>
+): void {
+  if (!shouldShowRunLogs()) {
+    return
+  }
+
+  const color = createColorizer()
+  process.stdout.write(color.bold(`eslint-config-snapshot v${readCliVersion()}\n`))
+  process.stdout.write(`Command: ${commandLabel}\n`)
+  process.stdout.write(`Repository: ${cwd}\n`)
+  process.stdout.write(`Config: ${formatConfigSource(cwd, configPath)}\n`)
+  process.stdout.write(`Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n\n`)
+}
+
+function formatConfigSource(cwd: string, configPath: string | undefined): string {
+  if (!configPath) {
+    return 'built-in defaults'
+  }
+
+  const rel = normalizePath(path.relative(cwd, configPath))
+  if (path.basename(configPath) === 'package.json') {
+    return `${rel} (eslint-config-snapshot field)`
+  }
+
+  return rel
+}
+
+function formatStoredSnapshotSummary(storedSnapshots: Map<string, StoredSnapshot>): string {
+  if (storedSnapshots.size === 0) {
+    return 'none'
+  }
+
+  const summary = summarizeStoredSnapshots(storedSnapshots)
+  return `${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off)`
+}
+
+function summarizeStoredSnapshots(snapshots: Map<string, StoredSnapshot>) {
+  const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
+  return { groups: snapshots.size, rules, error, warn, off }
+}
+
+function countRuleSeverities(ruleObjects: RuleObject[]) {
+  let rules = 0
+  let error = 0
+  let warn = 0
+  let off = 0
+
+  for (const rulesObject of ruleObjects) {
+    for (const entry of Object.values(rulesObject)) {
+      rules += 1
+      if (entry[0] === 'error') {
+        error += 1
+      } else if (entry[0] === 'warn') {
+        warn += 1
+      } else {
+        off += 1
+      }
+    }
+  }
+
+  return { rules, error, warn, off }
+}
+
 function formatShortPrint(
   snapshots: Array<{
     groupId: string
     workspaces: string[]
-    rules: Record<string, [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]>
+    rules: RuleObject
   }>
 ): string {
   const lines: string[] = []

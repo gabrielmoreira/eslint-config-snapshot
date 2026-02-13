@@ -1261,3 +1261,30 @@ Key decisions:
 Result:
 
 - Minor release metadata added and release flow executed.
+
+## 2026-02-13 - Request 060
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve CI hygiene and developer UX with better runtime logs, dependency automation, and warning cleanup.
+
+Key decisions:
+
+- Updated CI matrix to run on `20.x`, `22.x`, and `latest`, with fail-fast enabled and a CLI smoke step.
+- Added Renovate config (`renovate.json`) with grouped update strategy.
+- Removed `shell: true` from isolated integration test process execution to avoid `DEP0190` warnings.
+- Added runtime command context logs (TTY-only):
+  - tool name and version
+  - command label
+  - repository path
+  - detected config source
+  - existing baseline summary
+- Added command duration logging with interactive wait-time excluded via timer pause/resume around prompt flows.
+
+Result:
+
+- CI coverage across supported/current Node versions is stronger.
+- Dependency maintenance workflow is automated and configurable.
+- Interactive CLI runs provide clearer progress context and elapsed-time visibility without counting user prompt wait time.

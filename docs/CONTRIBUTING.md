@@ -96,3 +96,8 @@ Trusted Publishing note:
 
 - npm publication is configured to use GitHub Trusted Publishing (OIDC).
 - No long-lived `NPM_TOKEN` is required for the release workflow.
+
+## Dependency Updates
+
+- Renovate is configured in `renovate.json`.
+- Adjust scheduling, grouping, or automerge policy in that file as maintenance needs evolve.
