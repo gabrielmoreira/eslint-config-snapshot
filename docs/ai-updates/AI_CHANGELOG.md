@@ -312,3 +312,24 @@ Result:
 - Baseline lifecycle is clearer through consistent update reminders.
 - Documentation now presents init as optional and links docs with markdown references.
 - Added future TODO in implementation review for optional config suggestion via repository scan.
+
+## 2026-02-13 - Request 016
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Clarify in README that current scope snapshots only the effective configured runtime, not the full universe of possible plugin rules.
+- Recommend ESLint inspector tooling for complete rule exploration.
+- Track a future enhancement for full plugin-rule inventory and separate baseline comparison.
+
+Key decisions:
+
+- Added explicit scope boundary section in README.
+- Documented that full plugin rule discovery is out of current scope and pointed users to ESLint inspector workflows.
+- Expanded implementation TODOs with a concrete "full availability baseline" proposal.
+
+Result:
+
+- User-facing docs now prevent scope confusion about what drift detection includes today.
+- Future direction is documented for separate full baseline support that could surface newly available rules after upgrades.

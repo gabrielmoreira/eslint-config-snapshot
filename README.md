@@ -98,6 +98,14 @@ Snapshots are deterministic JSON and only store stable rule state:
 
 No timestamps, hashes, absolute paths, sampled files, or env noise.
 
+## Scope Boundary
+
+`eslint-config-snapshot` captures the effective rule runtime for your current project configuration.
+
+It does **not** try to enumerate every rule that could exist across every installed ESLint plugin.
+
+If you need a full rule catalog/inspection workflow, use ESLint inspector tooling directly (for example `eslint --inspect-config` and related inspector UI workflows).
+
 ## Configuration
 
 Main path: keep config minimal.

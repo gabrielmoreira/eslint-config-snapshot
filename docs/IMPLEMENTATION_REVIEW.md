@@ -54,3 +54,8 @@ This report summarizes implementation alignment, test hardening, and known remai
 ## Future TODOs
 
 1. Add an optional config-suggestion command that scans repository ESLint config locations and proposes a starting `eslint-config-snapshot` configuration.
+2. Add an optional "full availability baseline" mode:
+- detect installed ESLint plugins (for example `eslint-plugin-*` dependencies)
+- enumerate available rules from plugin exports
+- persist a separate full baseline snapshot
+- compare full baseline across upgrades to highlight newly available rules that are not yet configured
