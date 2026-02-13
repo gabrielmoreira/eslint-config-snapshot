@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -30,25 +30,17 @@ describe('loadConfig', () => {
     expect(config.sampling.maxFilesPerWorkspace).toBe(3)
   })
 
-  it('loads from package.json via cosmiconfig', async () => {
+  it('ignores non-spec config locations', async () => {
     tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    await mkdir(path.join(tmp, '.config'), { recursive: true })
     await writeFile(
       path.join(tmp, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'fixture',
-          private: true,
-          'eslint-config-snapshotter': {
-            sampling: { maxFilesPerWorkspace: 5 }
-          }
-        },
-        null,
-        2
-      )
+      JSON.stringify({ name: 'fixture', private: true, 'eslint-config-snapshotter': { sampling: { maxFilesPerWorkspace: 5 } } }, null, 2)
     )
+    await writeFile(path.join(tmp, '.eslint-config-snapshotterrc.json'), JSON.stringify({ sampling: { maxFilesPerWorkspace: 4 } }))
 
     const config = await loadConfig(tmp)
-    expect(config.sampling.maxFilesPerWorkspace).toBe(5)
+    expect(config).toEqual(DEFAULT_CONFIG)
   })
 
   it('executes async function config exports', async () => {

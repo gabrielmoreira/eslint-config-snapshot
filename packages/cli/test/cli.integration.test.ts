@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -88,5 +88,84 @@ describe('cli integration', () => {
     const code = await runCli('--help', fixtureRoot)
     expect(code).toBe(0)
     expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Usage:'))
+  })
+
+  it('supports ordered multi-group matching with first match wins', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-cli-grouped-'))
+    await cp(fixtureRoot, tmp, { recursive: true })
+
+    await writeFile(
+      path.join(tmp, 'eslint-config-snapshotter.config.mjs'),
+      `export default {
+  workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a', 'packages/ws-b'] },
+  grouping: {
+    mode: 'match',
+    groups: [
+      { name: 'modern', match: ['packages/**', '!packages/ws-b'] },
+      { name: 'legacy', match: ['packages/ws-b'] }
+    ]
+  },
+  sampling: {
+    maxFilesPerWorkspace: 8,
+    includeGlobs: ['**/*.ts'],
+    excludeGlobs: ['**/node_modules/**'],
+    hintGlobs: []
+  }
+}
+`
+    )
+
+    const code = await runCli('snapshot', tmp)
+    expect(code).toBe(0)
+
+    const modern = JSON.parse(await readFile(path.join(tmp, '.eslint-config-snapshots/modern.json'), 'utf8'))
+    const legacy = JSON.parse(await readFile(path.join(tmp, '.eslint-config-snapshots/legacy.json'), 'utf8'))
+
+    expect(modern.workspaces).toEqual(['packages/ws-a'])
+    expect(modern.rules).toEqual({
+      eqeqeq: ['error', 'always'],
+      'no-console': ['warn']
+    })
+
+    expect(legacy.workspaces).toEqual(['packages/ws-b'])
+    expect(legacy.rules).toEqual({
+      'no-console': ['error'],
+      'no-debugger': ['off']
+    })
+
+    await rm(tmp, { recursive: true, force: true })
+  })
+
+  it('supports standalone mode with workspace path group ids', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-cli-standalone-'))
+    await cp(fixtureRoot, tmp, { recursive: true })
+
+    await writeFile(
+      path.join(tmp, 'eslint-config-snapshotter.config.mjs'),
+      `export default {
+  workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a', 'packages/ws-b'] },
+  grouping: { mode: 'standalone' },
+  sampling: {
+    maxFilesPerWorkspace: 8,
+    includeGlobs: ['**/*.ts'],
+    excludeGlobs: ['**/node_modules/**'],
+    hintGlobs: []
+  }
+}
+`
+    )
+
+    const snapshotCode = await runCli('snapshot', tmp)
+    expect(snapshotCode).toBe(0)
+
+    const wsAPath = path.join(tmp, '.eslint-config-snapshots/packages/ws-a.json')
+    const wsBPath = path.join(tmp, '.eslint-config-snapshots/packages/ws-b.json')
+    expect(JSON.parse(await readFile(wsAPath, 'utf8')).groupId).toBe('packages/ws-a')
+    expect(JSON.parse(await readFile(wsBPath, 'utf8')).groupId).toBe('packages/ws-b')
+
+    const compareCode = await runCli('compare', tmp)
+    expect(compareCode).toBe(0)
+
+    await rm(tmp, { recursive: true, force: true })
   })
 })
