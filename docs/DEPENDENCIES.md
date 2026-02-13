@@ -3,6 +3,7 @@
 - `@manypkg/get-packages`: Required by SPEC.md for workspace discovery in `discover` mode.
 - `cosmiconfig`: Required by SPEC.md for configuration discovery and search.
 - `commander`: Required by SPEC.md for modern CLI parsing, command metadata, and automatic help generation.
+- `@inquirer/prompts`: Rich interactive terminal prompts (checkbox + validated input) for the recommended `init` workflow.
 - `fast-glob`: Deterministic cross-platform globbing for sampling files and loading snapshot files.
 - `picomatch`: Glob matching engine for ordered group assignment with negative patterns (`!`).
 - `@types/picomatch`: Type declarations for strict TypeScript typecheck in NodeNext builds.

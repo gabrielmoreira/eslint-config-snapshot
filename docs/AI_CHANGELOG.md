@@ -982,3 +982,36 @@ Key decisions:
 Result:
 
 - Packages were versioned to the next minor release and prepared for publish via pushed release tag.
+
+## 2026-02-13 - Request 047
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Refine recommended init UX:
+  - avoid emitting explicit sampling in recommended output
+  - provide richer terminal selection UX (checkbox style)
+  - keep default runtime-discovered `*` group and assign numeric static groups only for explicit outliers
+
+Key decisions:
+
+- Reworked `recommended` preset generation:
+  - `workspaceInput` now stays `discover`
+  - `grouping.groups` now uses ordered first-match:
+    - numbered static groups for selected outliers
+    - trailing `default` group with `**/*`
+  - no explicit `sampling` block is written in recommended config
+- Introduced rich prompt UX with `@inquirer/prompts`:
+  - checkbox to select workspaces outside default group
+  - validated numeric input for each selected workspace group number
+- Kept non-interactive `--yes` deterministic:
+  - no outliers selected
+  - generated recommended config keeps only default group
+- Added fallback workspace pattern expansion from `package.json#workspaces` for init discovery when package-tool discovery returns only `"."`.
+
+Result:
+
+- Recommended init now matches the desired mental model: default `*` group for most projects and lightweight numbered exceptions only where needed.
+- Interactive setup is richer and less error-prone than plain text entry.
+- Tests and docs were updated to reflect the new behavior.

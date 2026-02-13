@@ -166,7 +166,7 @@ Examples:
     Runs interactive numbered prompts:
       target: 1) package-json, 2) file
       preset: 1) recommended, 2) minimal, 3) full
-      recommended preset supports per-workspace group number assignment.
+      recommended preset uses checkbox selection for non-default workspaces and numeric group assignment.
 
   $ eslint-config-snapshot init --yes --target package-json --preset recommended --show-effective
     Non-interactive recommended setup in package.json, with effective preview.
@@ -623,7 +623,7 @@ async function askInitPreset(rl: ReturnType<typeof createInterface>): Promise<In
   while (true) {
     const answer = await askQuestion(
       rl,
-      'Select preset:\n  1) recommended (group by workspace numbers)\n  2) minimal\n  3) full\nChoose [1]: '
+      'Select preset:\n  1) recommended (default group "*" + numbered overrides)\n  2) minimal\n  3) full\nChoose [1]: '
     )
     const parsed = parseInitPresetChoice(answer)
     if (parsed) {
@@ -763,33 +763,20 @@ async function resolveInitConfigObject(
 
 async function buildRecommendedPresetObject(cwd: string, nonInteractive: boolean): Promise<Record<string, unknown>> {
   const workspaces = await discoverInitWorkspaces(cwd)
-  const assignments = new Map<string, number>(workspaces.map((workspace) => [workspace, 1]))
-
-  if (!nonInteractive && process.stdin.isTTY && process.stdout.isTTY) {
-    process.stdout.write('Recommended setup: assign a group number for each workspace (default: 1).\n')
-    for (const workspace of workspaces) {
-      const answer = await askGroupNumber(workspace)
-      assignments.set(workspace, answer)
-    }
-  }
-
+  const useInteractiveGrouping = !nonInteractive && process.stdin.isTTY && process.stdout.isTTY
+  const assignments = useInteractiveGrouping ? await askRecommendedGroupAssignments(workspaces) : new Map<string, number>()
   const groupNumbers = [...new Set(assignments.values())].sort((a, b) => a - b)
-  const groups = groupNumbers.map((number) => ({
-    name: `group-${number}`,
-    match: workspaces.filter((workspace) => assignments.get(workspace) === number)
-  }))
+
+  const explicitGroups = groupNumbers.map((number) => {
+    const matched = workspaces.filter((workspace) => assignments.get(workspace) === number)
+    return { name: `group-${number}`, match: matched }
+  })
 
   return {
-    workspaceInput: { mode: 'manual', workspaces },
+    workspaceInput: { mode: 'discover' },
     grouping: {
       mode: 'match',
-      groups
-    },
-    sampling: {
-      maxFilesPerWorkspace: 8,
-      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
-      excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-      hintGlobs: []
+      groups: [...explicitGroups, { name: 'default', match: ['**/*'] }]
     }
   }
 }
@@ -840,28 +827,32 @@ function trimTrailingSlashes(value: string): string {
   return normalized
 }
 
-async function askGroupNumber(workspace: string): Promise<number> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout })
-  try {
-    while (true) {
-      const answer = await askQuestion(rl, `Group number for ${workspace} [1]: `)
-      const normalized = answer.trim()
-      if (normalized === '') {
-        return 1
-      }
+async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map<string, number>> {
+  const { checkbox, input } = await import('@inquirer/prompts')
+  process.stdout.write('Recommended setup: select only workspaces that should leave default group "*".\n')
+  const overrides = await checkbox<string>({
+    message: 'Workspaces outside default group:',
+    choices: workspaces.map((workspace) => ({ name: workspace, value: workspace })),
+    pageSize: Math.min(12, Math.max(4, workspaces.length))
+  })
 
-      if (/^\d+$/.test(normalized)) {
-        const parsed = Number.parseInt(normalized, 10)
-        if (parsed >= 1) {
-          return parsed
+  const assignments = new Map<string, number>()
+  for (const workspace of overrides) {
+    const raw = await input({
+      message: `Group number for ${workspace} [1]:`,
+      default: '1',
+      validate: (value) => {
+        const parsed = Number.parseInt(value, 10)
+        if (Number.isInteger(parsed) && parsed >= 1) {
+          return true
         }
+        return 'Use a positive integer (1, 2, 3, ...).'
       }
-
-      process.stdout.write('Please provide a positive integer (1, 2, 3, ...).\n')
-    }
-  } finally {
-    rl.close()
+    })
+    assignments.set(workspace, Number.parseInt(raw, 10))
   }
+
+  return assignments
 }
 
 function toConfigScaffold(configObject: Record<string, unknown>): string {

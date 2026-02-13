@@ -30,6 +30,14 @@ Check drift:
 eslint-config-snapshot
 ```
 
+Recommended setup flow:
+
+```bash
+eslint-config-snapshot init
+```
+
+In `recommended` preset, keep default `*` group and only select outlier workspaces via checkbox, assigning numeric groups to those exceptions.
+
 ## Commands
 
 - `check`

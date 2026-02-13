@@ -77,7 +77,7 @@ The default behavior works without a config file.
 
 - choose target: `file` or `package-json`
 - choose preset: `recommended`, `minimal`, or `full`
-- in `recommended`, assign group numbers per workspace (default group `1`)
+- in `recommended`, use checkbox selection for workspaces outside default `*`, then assign numeric groups for those exceptions
 
 Recommended for most teams:
 

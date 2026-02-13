@@ -201,7 +201,9 @@ CLI parsing/help generation should be command-metadata driven (for example via `
 - target selection should support numbered choices (`1) package-json`, `2) file`)
 - preset selection should support numbered choices (`1) recommended`, `2) minimal`, `3) full`)
 - interactive mode may accept equivalent text aliases
-- recommended preset should support assigning workspace group numbers (default `1`) and generate a deterministic grouped config
+- recommended preset should support checkbox selection of non-default workspaces and numeric group assignment for those selections
+- recommended preset should keep a runtime-discovered default group (`**/*`) and place numbered static groups before it (first match wins)
+- recommended preset output should avoid writing explicit sampling config unless user chooses `full`
 
 ---
 

@@ -278,17 +278,34 @@ no-debugger: off
       'eslint-config-snapshot'?: {
         workspaceInput?: { mode?: string; workspaces?: string[] }
         grouping?: { mode?: string; groups?: Array<{ name: string; match: string[] }> }
+        sampling?: unknown
       }
     }
 
     expect(parsed['eslint-config-snapshot']?.workspaceInput).toEqual({
-      mode: 'manual',
-      workspaces: ['packages/ws-a', 'packages/ws-b']
+      mode: 'discover'
     })
     expect(parsed['eslint-config-snapshot']?.grouping).toEqual({
       mode: 'match',
-      groups: [{ name: 'group-1', match: ['packages/ws-a', 'packages/ws-b'] }]
+      groups: [{ name: 'default', match: ['**/*'] }]
     })
+    expect(parsed['eslint-config-snapshot']?.sampling).toBeUndefined()
+  })
+
+  it('init recommended --show-effective prints preview without explicit sampling block', async () => {
+    const initRoot = path.join(tmpDir, 'init-recommended-preview-case')
+    await rm(initRoot, { recursive: true, force: true })
+    await cp(fixtureRoot, initRoot, { recursive: true })
+    repoRoot = initRoot
+
+    await rm(path.join(repoRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
+
+    const result = run(['init', '--yes', '--target', 'package-json', '--preset', 'recommended', '--show-effective'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('Effective config preview:')
+    expect(result.stdout).toContain('"workspaceInput"')
+    expect(result.stdout).toContain('"grouping"')
+    expect(result.stdout).not.toContain('"sampling"')
   })
 
   it('init fails early on existing config unless --force is provided', async () => {
