@@ -1200,3 +1200,23 @@ Key decisions:
 Result:
 
 - `TASKS.md` and `FINDINGS.md` now match implemented reality and avoid stale unresolved items.
+
+## 2026-02-13 - Request 057
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve CLI output consistency and visual quality with better headers, aligned counters, and clearer summary flow inspired by modern tooling UX.
+
+Key decisions:
+
+- Implemented a first-pass output system in summary mode (`check` default path) with explicit section titles and aligned bullet-style counters.
+- Kept machine-oriented command outputs (`status`, `print --format json`) stable to avoid breaking script usage.
+- Preserved existing drift detail formatting while improving top-level summary readability.
+
+Result:
+
+- Clean summary now prints a structured `Summary` section instead of a dense single line.
+- Drift summary now prints a structured `Summary` section before grouped diff details.
+- Existing CLI integration/terminal tests remain green after the output refinement.

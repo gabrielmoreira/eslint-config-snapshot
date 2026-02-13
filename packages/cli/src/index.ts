@@ -880,20 +880,20 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
 
   if (changes.length === 0) {
     process.stdout.write(color.green('Great news: no snapshot drift detected.\n'))
+    writeSectionTitle('Summary', color)
     process.stdout.write(
-      `Baseline status: ${currentSummary.groups} groups, ${currentSummary.rules} rules (severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off).\n`
+      `- baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
     )
     return 0
   }
 
   process.stdout.write(color.red('Heads up: snapshot drift detected.\n'))
+  writeSectionTitle('Summary', color)
   process.stdout.write(
-    `Changed groups: ${changes.length} | introduced: ${changeSummary.introduced} | removed: ${changeSummary.removed} | severity: ${changeSummary.severity} | options: ${changeSummary.options} | workspace membership: ${changeSummary.workspace}\n`
-  )
-  process.stdout.write(
-    `Current rules: ${currentSummary.rules} (severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off)\n\n`
+    `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n\n`
   )
 
+  writeSectionTitle('Changes', color)
   for (const change of changes) {
     process.stdout.write(color.bold(`group ${change.groupId}\n`))
     const lines = formatDiff(change.groupId, change.diff).split('\n').slice(1)
@@ -906,6 +906,10 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
   writeSubtleInfo(UPDATE_HINT)
 
   return 1
+}
+
+function writeSectionTitle(title: string, color: ReturnType<typeof createColorizer>): void {
+  process.stdout.write(`${color.bold(title)}\n`)
 }
 
 function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }>) {

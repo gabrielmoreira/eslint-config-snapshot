@@ -29,6 +29,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 - [x] Migrate init interactive flow to Inquirer select/checkbox prompts.
 - [x] Add effective evaluated config command (`config`).
 - [x] Fix deterministic handling of same-severity rule option conflicts during aggregation.
+- [x] Improve default `check` summary output with clearer section headers and aligned counters.
 
 ## Quality Gates
 
