@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { runCli } from '../src/index.js'
+import { parseInitPresetChoice, parseInitTargetChoice, runCli } from '../src/index.js'
 
 const fixtureRoot = path.resolve('test/fixtures/repo')
 
@@ -21,6 +21,25 @@ beforeEach(async () => {
 })
 
 describe('cli integration', () => {
+  it('parses init interactive target choices from numeric and aliases', () => {
+    expect(parseInitTargetChoice('')).toBe('package-json')
+    expect(parseInitTargetChoice('1')).toBe('package-json')
+    expect(parseInitTargetChoice('package')).toBe('package-json')
+    expect(parseInitTargetChoice('pkg')).toBe('package-json')
+    expect(parseInitTargetChoice('2')).toBe('file')
+    expect(parseInitTargetChoice('file')).toBe('file')
+    expect(parseInitTargetChoice('invalid')).toBeUndefined()
+  })
+
+  it('parses init interactive preset choices from numeric and aliases', () => {
+    expect(parseInitPresetChoice('')).toBe('minimal')
+    expect(parseInitPresetChoice('1')).toBe('minimal')
+    expect(parseInitPresetChoice('min')).toBe('minimal')
+    expect(parseInitPresetChoice('2')).toBe('full')
+    expect(parseInitPresetChoice('full')).toBe('full')
+    expect(parseInitPresetChoice('invalid')).toBeUndefined()
+  })
+
   it('snapshot writes deterministic snapshot files', async () => {
     const code = await runCli('snapshot', fixtureRoot)
     expect(code).toBe(0)

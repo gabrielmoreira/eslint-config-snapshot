@@ -7,7 +7,6 @@
   "workspaces": [
     "packages/*"
   ],
-  "eslint-config-snapshot": {},
   "scripts": {
     "prepare": "husky",
     "build": "pnpm nx run-many -t build",

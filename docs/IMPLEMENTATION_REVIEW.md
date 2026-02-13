@@ -2,60 +2,44 @@
 
 ## Scope
 
-This report summarizes implementation alignment, test hardening, and known remaining limitations.
+This file is a live implementation status board.
 
-## Current Alignment Highlights
+## Current Feature Status
 
-1. Configuration discovery uses `cosmiconfig` with deterministic ordered `searchPlaces`.
-2. Snapshot loading supports nested group IDs by scanning `**/*.json`.
-3. Snapshot writing creates parent directories for group IDs that include path separators.
-4. ESLint resolution remains workspace-scoped.
-5. Workspace package architecture is consolidated to two packages (`api`, `cli`) with internal API modules.
+### Shipped
 
-## Test Coverage Improvements
+- [x] Config discovery via `cosmiconfig` with supported prefixes and package.json field.
+- [x] Two-package architecture (`@eslint-config-snapshot/api`, `@eslint-config-snapshot/cli`).
+- [x] Workspace-scoped ESLint resolution and extraction.
+- [x] Deterministic snapshot format and stable ordering.
+- [x] Grouping modes (`match`, `standalone`) with ordered matching and negative patterns.
+- [x] Terminal-invoked CLI integration tests and isolated package-manager coverage (pnpm and npm).
+- [x] Default command behavior with baseline creation flow and `--update` baseline refresh.
 
-1. Added positive and negative config-loading tests:
-- deterministic precedence
-- `package.json` field loading
-- `.eslint-config-snapshotrc.json` loading
-- sync function and async function exports
-- invalid export type rejection
+### In Progress
 
-2. Added rule aggregation edge-case tests:
-- highest-severity option selection
-- same-severity option conflict rejection
+- [ ] Ongoing UX tuning for summary wording and low-noise guidance output.
 
-3. Added extract negative tests:
-- unresolved ESLint in workspace
-- invalid JSON from `--print-config`
-- non-zero `--print-config` process exit
+### Remaining Practical Work
 
-4. Added terminal-invoked CLI tests with exact output assertions:
-- `help`, unknown command
-- `snapshot`, `compare` clean/changed
-- `status` clean/changed
-- `print`
-- `init` success/error
-- runtime error surfacing
-- `package.json` cosmiconfig loading path
+- [ ] Resolve CJS build warning around `import.meta` in dual-format output.
+- [ ] Add explicit invalid-input retry coverage for interactive numbered `init` prompts.
+- [ ] Review and reduce shell-related warnings in isolated process tests when feasible.
 
-## Remaining Limitations
+## Fast Follow Opportunities
 
-1. CLI build still emits a CJS warning for `import.meta` in dual-format output.
-2. Windows command execution in isolated tests may require `shell: true` for `.cmd` launchers.
-3. Nx `run-many` may emit listener warnings in large local runs.
+- [ ] Add concise command examples to README for `check`, `--update`, and `init --force`.
+- [ ] Add one short "output glossary" section describing summary counters.
 
-## Deprecated API Follow-up
+## Exploration Ideas
 
-1. Deprecated usage detection is currently driven by type-aware `@typescript-eslint/no-deprecated`.
-2. Current codebase scan did not find blocking deprecated usages under current rule severity policy.
-3. Future task: expand checks for dynamic or non-type-resolved usage patterns that are not visible to typed symbol analysis.
+- [ ] Optional repository scan command for generating suggested config from detected workspace/layout patterns.
+- [ ] Optional full-availability baseline mode for installed plugin rule inventory drift.
 
-## Future TODOs
+## Agent Tasklist
 
-1. Add an optional config-suggestion command that scans repository ESLint config locations and proposes a starting `eslint-config-snapshot` configuration.
-2. Add an optional "full availability baseline" mode:
-- detect installed ESLint plugins (for example `eslint-plugin-*` dependencies)
-- enumerate available rules from plugin exports
-- persist a separate full baseline snapshot
-- compare full baseline across upgrades to highlight newly available rules that are not yet configured
+- [ ] Keep this board updated by removing shipped items from pending sections.
+- [ ] Ensure each unresolved issue listed here has either:
+- a concrete next action in `docs/TASKS.md`, or
+- a rationale for deferring.
+- [ ] Avoid duplicating historical notes already captured in `docs/ai-updates/AI_CHANGELOG.md`.

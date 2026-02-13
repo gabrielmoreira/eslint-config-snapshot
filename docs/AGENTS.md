@@ -38,6 +38,27 @@ For every substantial implementation step:
 - commit locally using Conventional Commits
 - do not push
 
+## Collaboration Rhythm
+
+- Keep changes in small milestones that can be validated independently.
+- Keep user-facing CLI output intentional, readable, and psychologically appropriate to the scenario.
+- Prefer one clear path over multiple redundant command patterns.
+- When behavior changes, update docs in the same iteration.
+
+## Documentation Maintenance Rules
+
+For every request that changes behavior, UX, or process:
+
+1. Append an entry to `docs/ai-updates/AI_CHANGELOG.md`.
+2. Update task status in `docs/TASKS.md`:
+- mark completed items
+- add new actionable items when discovered
+3. Update `docs/IMPLEMENTATION_REVIEW.md`:
+- keep only non-shipped limitations and active follow-ups
+- move shipped items out of pending sections
+
+`docs/IMPLEMENTATION_REVIEW.md` must stay as a live status board, not a historical dump.
+
 ## Dependency Discipline
 
 - Prefer minimal dependencies.
