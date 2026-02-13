@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- Release minor version after improving runtime command header messaging and UX consistency.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.7.0
+
 ## 0.6.0
 
 ### Minor Changes
