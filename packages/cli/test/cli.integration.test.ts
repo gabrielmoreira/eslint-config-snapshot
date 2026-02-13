@@ -35,7 +35,7 @@ beforeEach(async () => {
   )
 })
 
-describe('cli integration', () => {
+describe.sequential('cli integration', () => {
   it('parses init interactive target choices from numeric and aliases', () => {
     expect(parseInitTargetChoice('')).toBe('package-json')
     expect(parseInitTargetChoice('1')).toBe('package-json')
