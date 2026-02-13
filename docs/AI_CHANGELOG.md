@@ -1574,3 +1574,20 @@ Result:
 - Configuration surface is simpler and more semantic (token-based instead of glob-based hinting).
 - Default behavior remains strong without extra config, and advanced users can still tune token priorities when needed.
 - API and CLI tests remain green after migration.
+
+## 2026-02-13 - Request 074
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Clarify naming semantics for `tokenHints` so users immediately understand what the field means.
+
+Key decisions:
+
+- Kept the concise field name `tokenHints` (no rename to longer alternatives).
+- Added explicit documentation text describing it as path/name-derived tokens used for representative sampling priority.
+
+Result:
+
+- Config readability improved without changing API surface.

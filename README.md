@@ -165,6 +165,8 @@ Advanced patterns and recipes are in:
 
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md)
 
+`sampling.tokenHints` means path/name-derived tokens used to prioritize representative sample files before regional fallback selection.
+
 ## Release Versioning (Changesets)
 
 This repository uses Changesets so package versions and release tags stay aligned.

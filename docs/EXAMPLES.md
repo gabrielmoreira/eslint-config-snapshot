@@ -115,3 +115,5 @@ When to use:
 
 - You need explicit sampling scope or stronger exclusions.
 - You want to bias representative file-role diversity through token priorities.
+
+Note: `tokenHints` are naming/path tokens (not globs). They influence candidate priority; final sampling remains deterministic with regional fallback.
