@@ -32,6 +32,7 @@ If any conflict exists, follow document priority from `AGENTS.md`.
 ### Quick Wins (Practical Near-Term)
 
 - [x] Improve `init --help` examples with numbered prompt usage and `--force` guidance.
+- [x] Add package-level npm READMEs with cross-links between CLI and API usage docs.
 - [ ] Add one terminal integration case for invalid numbered init input followed by valid retry.
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
 

@@ -892,3 +892,44 @@ Result:
 
 - Package manifests now include repository metadata required for npm provenance verification.
 - Next tag-triggered publish run can validate repository identity against GitHub OIDC provenance.
+
+## 2026-02-13 - Request 043
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure npm package pages show useful README content for both published packages.
+- Add cross-references between CLI and API package documentation.
+
+Key decisions:
+
+- Added package-specific README files instead of duplicating the root README:
+  - `packages/cli/README.md` focused on command-line usage.
+  - `packages/api/README.md` focused on programmatic usage.
+- Added cross-links in both READMEs:
+  - CLI README links to API package.
+  - API README links to CLI package.
+- Added link from both package READMEs back to the root project README.
+
+Result:
+
+- npm pages for `@eslint-config-snapshot/cli` and `@eslint-config-snapshot/api` now have targeted documentation.
+- Users can navigate clearly between CLI and API docs based on their use case.
+
+## 2026-02-13 - Request 044
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Bump patch version and publish the new release.
+
+Key decisions:
+
+- Used Changesets patch bump flow for both publishable packages to keep version alignment.
+- Triggered publication through the existing tag-based GitHub workflow (Trusted Publishing).
+
+Result:
+
+- Versions were bumped and release tag was prepared/pushed to trigger automated npm publish.

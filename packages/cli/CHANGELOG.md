@@ -1,5 +1,13 @@
 # @eslint-config-snapshot/cli
 
+## 0.1.5
+
+### Patch Changes
+
+- Add package-level README files for npm pages with cross-links between CLI and API docs.
+- Updated dependencies
+  - @eslint-config-snapshot/api@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes
