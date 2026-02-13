@@ -1350,3 +1350,22 @@ Key decisions:
 Result:
 
 - Runtime header now reads more naturally and is easier to scan for end users.
+
+## 2026-02-13 - Request 064
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Refine CLI log UX for a more human tone with less visual noise, clearer wording, and consistent section spacing.
+
+Key decisions:
+
+- Replaced terse technical phrasing with clearer human text for first-baseline prompts and analysis summary lines.
+- Standardized runtime header layout and spacing between implicit output blocks.
+- Reduced emoji usage to meaningful signal points and aligned icon usage for related lines.
+- Updated terminal integration assertion to match new first-run wording.
+
+Result:
+
+- Interactive CLI output is now easier to read, less robotic, and visually consistent across runs.

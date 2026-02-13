@@ -293,18 +293,18 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
     throw error
   }
-  if (storedSnapshots.size === 0) {
-    const summary = summarizeSnapshots(currentSnapshots)
-    process.stdout.write(
-      `Current rule state: ${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off).\n`
-    )
-
-    const canPromptBaseline = defaultInvocation || format === 'summary'
-    if (canPromptBaseline && process.stdin.isTTY && process.stdout.isTTY) {
-      const shouldCreateBaseline = await askYesNo(
-        'No baseline yet. Use current rule state as your baseline now? [Y/n] ',
-        true
+    if (storedSnapshots.size === 0) {
+      const summary = summarizeSnapshots(currentSnapshots)
+      process.stdout.write(
+        `Rules found in this analysis: ${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off).\n`
       )
+
+      const canPromptBaseline = defaultInvocation || format === 'summary'
+      if (canPromptBaseline && process.stdin.isTTY && process.stdout.isTTY) {
+        const shouldCreateBaseline = await askYesNo(
+          'No baseline yet. Do you want to save this analyzed rule state as your baseline now? [Y/n] ',
+          true
+        )
       if (shouldCreateBaseline) {
         await writeSnapshots(cwd, currentSnapshots)
         const summary = summarizeSnapshots(currentSnapshots)
@@ -420,7 +420,7 @@ async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   const storedSnapshots = await loadStoredSnapshots(cwd)
   writeRunContextHeader(cwd, `config:${format}`, foundConfig?.path, storedSnapshots)
   if (shouldShowRunLogs()) {
-    writeSubtleInfo('🔎 Resolving effective runtime configuration...\n')
+    writeSubtleInfo('⚙️ Resolving effective runtime configuration...\n')
   }
   const config = await loadConfig(cwd)
   const resolved = await resolveWorkspaceAssignments(cwd, config)
@@ -969,7 +969,7 @@ function printWhatChanged(
   process.stdout.write(color.red('Heads up: snapshot drift detected.\n'))
   writeSectionTitle('Summary', color)
   process.stdout.write(
-    `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n\n`
+    `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
   )
   writeEslintVersionSummary(eslintVersionsByGroup)
   process.stdout.write('\n')
@@ -1090,12 +1090,11 @@ function endRunTimer(exitCode: number): void {
   }
 
   const elapsedMs = Math.max(0, Date.now() - activeRunTimer.startedAtMs - activeRunTimer.pausedMs)
-  const color = createColorizer()
   const seconds = (elapsedMs / 1000).toFixed(2)
   if (exitCode === 0) {
-    writeSubtleInfo(`${color.green('✅')} Finished in ${seconds}s\n`)
+    writeSubtleInfo(`Finished in ${seconds}s\n`)
   } else {
-    writeSubtleInfo(`${color.red('❌')} Finished in ${seconds}s\n`)
+    writeSubtleInfo(`Finished with errors in ${seconds}s\n`)
   }
   activeRunTimer = undefined
 }
@@ -1172,11 +1171,11 @@ function writeRunContextHeader(
   }
 
   const color = createColorizer()
-  process.stdout.write(color.bold(`✨ eslint-config-snapshot v${readCliVersion()}\n`))
-  process.stdout.write(`🧭 Action: ${formatCommandDisplayLabel(commandLabel)}\n`)
+  process.stdout.write(color.bold(`eslint-config-snapshot v${readCliVersion()} • ${formatCommandDisplayLabel(commandLabel)}\n`))
   process.stdout.write(`📁 Repository: ${cwd}\n`)
+  process.stdout.write(`📁 Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n`)
   process.stdout.write(`⚙️ Config source: ${formatConfigSource(cwd, configPath)}\n`)
-  process.stdout.write(`🗂️ Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n\n`)
+  process.stdout.write('\n')
 }
 
 function formatCommandDisplayLabel(commandLabel: string): string {

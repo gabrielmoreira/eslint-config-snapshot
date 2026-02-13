@@ -101,7 +101,7 @@ describe('cli terminal invocation', () => {
     const result = run([])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe(
-      'Current rule state: 1 groups, 3 rules (severity mix: 2 errors, 0 warnings, 1 off).\nYou are almost set: no baseline snapshot found yet.\nRun `eslint-config-snapshot --update` to create your first baseline.\n'
+      'Rules found in this analysis: 1 groups, 3 rules (severity mix: 2 errors, 0 warnings, 1 off).\nYou are almost set: no baseline snapshot found yet.\nRun `eslint-config-snapshot --update` to create your first baseline.\n'
     )
   })
 
