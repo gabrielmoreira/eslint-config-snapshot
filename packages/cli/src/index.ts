@@ -20,6 +20,7 @@ import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import fg from 'fast-glob'
 import { existsSync, readFileSync } from 'node:fs'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { createInterface } from 'node:readline'
 
@@ -1129,23 +1130,51 @@ function readCliVersion(): string {
     return cachedCliVersion
   }
 
+  const envPackageName = process.env.npm_package_name
+  const envPackageVersion = process.env.npm_package_version
+  if (isCliPackageName(envPackageName) && typeof envPackageVersion === 'string' && envPackageVersion.length > 0) {
+    cachedCliVersion = envPackageVersion
+    return cachedCliVersion
+  }
+
   const scriptPath = process.argv[1]
   if (!scriptPath) {
     cachedCliVersion = 'unknown'
     return cachedCliVersion
   }
 
+  try {
+    const req = createRequire(path.resolve(scriptPath))
+    const resolvedCliEntry = req.resolve('@eslint-config-snapshot/cli')
+    const resolvedVersion = readVersionFromResolvedEntry(resolvedCliEntry)
+    if (resolvedVersion !== undefined) {
+      cachedCliVersion = resolvedVersion
+      return cachedCliVersion
+    }
+  } catch {
+    // continue to path-walk fallback
+  }
+
   let current = path.resolve(path.dirname(scriptPath))
+  let fallbackVersion: string | undefined
   while (true) {
     const packageJsonPath = path.join(current, 'package.json')
     if (existsSync(packageJsonPath)) {
       try {
         const raw = readFileSync(packageJsonPath, 'utf8')
-        const parsed = JSON.parse(raw) as { version?: string }
-        cachedCliVersion = parsed.version ?? 'unknown'
-        return cachedCliVersion
+        const parsed = JSON.parse(raw) as { name?: string; version?: string }
+        if (typeof parsed.version === 'string' && parsed.version.length > 0) {
+          if (isCliPackageName(parsed.name)) {
+            cachedCliVersion = parsed.version
+            return cachedCliVersion
+          }
+
+          if (fallbackVersion === undefined) {
+            fallbackVersion = parsed.version
+          }
+        }
       } catch {
-        break
+        // continue walking up
       }
     }
 
@@ -1156,8 +1185,39 @@ function readCliVersion(): string {
     current = parent
   }
 
-  cachedCliVersion = 'unknown'
+  cachedCliVersion = fallbackVersion ?? 'unknown'
   return cachedCliVersion
+}
+
+function isCliPackageName(value: string | undefined): boolean {
+  return value === '@eslint-config-snapshot/cli' || value === 'eslint-config-snapshot'
+}
+
+function readVersionFromResolvedEntry(entryAbs: string): string | undefined {
+  let current = path.resolve(path.dirname(entryAbs))
+
+  while (true) {
+    const packageJsonPath = path.join(current, 'package.json')
+    if (existsSync(packageJsonPath)) {
+      try {
+        const raw = readFileSync(packageJsonPath, 'utf8')
+        const parsed = JSON.parse(raw) as { name?: string; version?: string }
+        if (isCliPackageName(parsed.name) && typeof parsed.version === 'string' && parsed.version.length > 0) {
+          return parsed.version
+        }
+      } catch {
+        // continue walking up
+      }
+    }
+
+    const parent = path.dirname(current)
+    if (parent === current) {
+      break
+    }
+    current = parent
+  }
+
+  return undefined
 }
 
 function writeRunContextHeader(

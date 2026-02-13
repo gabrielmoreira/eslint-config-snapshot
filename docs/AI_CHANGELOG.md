@@ -1369,3 +1369,23 @@ Key decisions:
 Result:
 
 - Interactive CLI output is now easier to read, less robotic, and visually consistent across runs.
+
+## 2026-02-13 - Request 065
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve CLI version detection robustness and prioritize package resolution over path heuristics.
+
+Key decisions:
+
+- Updated version resolution order to:
+  1. npm environment package metadata when matching the CLI package
+  2. `createRequire(...).resolve('@eslint-config-snapshot/cli')` and package-root lookup
+  3. path-walk fallback from current entrypoint
+- Kept deterministic `unknown` as last-resort fallback.
+
+Result:
+
+- CLI version display is now resilient across `npx`, workspace, and direct binary execution scenarios.
