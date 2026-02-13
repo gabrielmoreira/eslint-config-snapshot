@@ -83,4 +83,44 @@ describe('extract', () => {
       'no-alert': ['error']
     })
   })
+
+  it('throws when eslint cannot be resolved from workspace', () => {
+    const missingWorkspace = `${workspace}-missing`
+    expect(() => resolveEslintBinForWorkspace(missingWorkspace)).toThrow(
+      `Unable to resolve eslint from workspace: ${missingWorkspace}`
+    )
+  })
+
+  it('throws when eslint print-config returns invalid JSON', async () => {
+    const invalidWorkspace = `${workspace}-invalid-json`
+    await mkdir(path.join(invalidWorkspace, 'node_modules/eslint/bin'), { recursive: true })
+    await mkdir(path.join(invalidWorkspace, 'src'), { recursive: true })
+    await writeFile(path.join(invalidWorkspace, 'node_modules/eslint/package.json'), JSON.stringify({ name: 'eslint', version: '0.0.0' }, null, 2))
+    await writeFile(path.join(invalidWorkspace, 'node_modules/eslint/bin/eslint.js'), "console.log('not json')\n")
+
+    const fileAbs = path.join(invalidWorkspace, 'src/index.ts')
+    await writeFile(fileAbs, 'export {}\n')
+
+    expect(() => extractRulesFromPrintConfig(invalidWorkspace, fileAbs)).toThrow(
+      `Invalid JSON from eslint --print-config for ${fileAbs}`
+    )
+  })
+
+  it('throws when eslint print-config exits non-zero', async () => {
+    const failingWorkspace = `${workspace}-failing`
+    await mkdir(path.join(failingWorkspace, 'node_modules/eslint/bin'), { recursive: true })
+    await mkdir(path.join(failingWorkspace, 'src'), { recursive: true })
+    await writeFile(path.join(failingWorkspace, 'node_modules/eslint/package.json'), JSON.stringify({ name: 'eslint', version: '0.0.0' }, null, 2))
+    await writeFile(
+      path.join(failingWorkspace, 'node_modules/eslint/bin/eslint.js'),
+      "process.stderr.write('failure'); process.exit(2)\n"
+    )
+
+    const fileAbs = path.join(failingWorkspace, 'src/index.ts')
+    await writeFile(fileAbs, 'export {}\n')
+
+    expect(() => extractRulesFromPrintConfig(failingWorkspace, fileAbs)).toThrow(
+      `Failed to run eslint --print-config for ${fileAbs}`
+    )
+  })
 })

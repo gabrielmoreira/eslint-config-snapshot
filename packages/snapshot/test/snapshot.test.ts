@@ -42,4 +42,24 @@ describe('snapshot', () => {
       'no-console': ['error']
     })
   })
+
+  it('uses options from highest severity when severities differ', () => {
+    const result = aggregateRules([
+      new Map([['no-unused-vars', ['warn', { args: 'none' }] as const]]),
+      new Map([['no-unused-vars', ['error', { argsIgnorePattern: '^_' }] as const]])
+    ])
+
+    expect(Object.fromEntries(result.entries())).toEqual({
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+    })
+  })
+
+  it('throws on conflicting options at same severity', () => {
+    expect(() =>
+      aggregateRules([
+        new Map([['no-restricted-imports', ['error', { paths: ['a'] }] as const]]),
+        new Map([['no-restricted-imports', ['error', { paths: ['b'] }] as const]])
+      ])
+    ).toThrow('Conflicting rule options for no-restricted-imports at severity error')
+  })
 })
