@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 
 import { canonicalizeJson, normalizeSeverity } from '@eslint-config-snapshotter/core'
 
@@ -14,7 +15,43 @@ export function resolveEslintBinForWorkspace(workspaceAbs: string): string {
   try {
     return req.resolve('eslint/bin/eslint.js')
   } catch {
+    try {
+      const eslintEntry = req.resolve('eslint')
+      const eslintRoot = findPackageRoot(eslintEntry)
+      const packageJsonPath = path.join(eslintRoot, 'package.json')
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { bin?: string | Record<string, string> }
+      const relativeBin =
+        typeof packageJson.bin === 'string'
+          ? packageJson.bin
+          : typeof packageJson.bin?.eslint === 'string'
+            ? packageJson.bin.eslint
+            : 'bin/eslint.js'
+      const binAbs = path.resolve(eslintRoot, relativeBin)
+
+      if (existsSync(binAbs)) {
+        return binAbs
+      }
+    } catch {
+      // ignore fallback errors and throw deterministic workspace-scoped message below
+    }
+
     throw new Error(`Unable to resolve eslint from workspace: ${workspaceAbs}`)
+  }
+}
+
+function findPackageRoot(entryAbs: string): string {
+  let current = path.dirname(entryAbs)
+  while (true) {
+    const packageJsonPath = path.join(current, 'package.json')
+    if (existsSync(packageJsonPath)) {
+      return current
+    }
+
+    const parent = path.dirname(current)
+    if (parent === current) {
+      throw new Error('Package root not found')
+    }
+    current = parent
   }
 }
 

@@ -10,6 +10,7 @@ const workspace = path.join(os.tmpdir(), `snapshotter-extract-${Date.now()}`)
 
 afterAll(async () => {
   await rm(workspace, { recursive: true, force: true })
+  await rm(`${workspace}-exports`, { recursive: true, force: true })
 })
 
 describe('extract', () => {
@@ -37,6 +38,49 @@ describe('extract', () => {
     expect(Object.fromEntries(rules.entries())).toEqual({
       'no-console': ['warn'],
       eqeqeq: ['error', 'always']
+    })
+  })
+
+  it('falls back to eslint package entry when bin subpath is not directly resolvable', async () => {
+    const exportedWorkspace = `${workspace}-exports`
+    await mkdir(path.join(exportedWorkspace, 'node_modules/eslint/bin'), { recursive: true })
+    await mkdir(path.join(exportedWorkspace, 'src'), { recursive: true })
+
+    await writeFile(
+      path.join(exportedWorkspace, 'node_modules/eslint/package.json'),
+      JSON.stringify(
+        {
+          name: 'eslint',
+          version: '0.0.0',
+          type: 'commonjs',
+          main: './index.js',
+          exports: {
+            '.': './index.js'
+          },
+          bin: {
+            eslint: './bin/eslint.js'
+          }
+        },
+        null,
+        2
+      )
+    )
+
+    await writeFile(path.join(exportedWorkspace, 'node_modules/eslint/index.js'), 'module.exports = {}')
+    await writeFile(
+      path.join(exportedWorkspace, 'node_modules/eslint/bin/eslint.js'),
+      "console.log(JSON.stringify({ rules: { 'no-alert': 2 } }))"
+    )
+
+    const fileAbs = path.join(exportedWorkspace, 'src/index.ts')
+    await writeFile(fileAbs, 'export {}\n')
+
+    const resolved = resolveEslintBinForWorkspace(exportedWorkspace)
+    expect(resolved.replace(/\\/g, '/').endsWith('/node_modules/eslint/bin/eslint.js')).toBe(true)
+
+    const rules = extractRulesFromPrintConfig(exportedWorkspace, fileAbs)
+    expect(Object.fromEntries(rules.entries())).toEqual({
+      'no-alert': ['error']
     })
   })
 })
