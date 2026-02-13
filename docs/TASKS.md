@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Align isolated npm/pnpm integration test expectations with multi-variant rule snapshot encoding.
 - [x] Add architecture guidance documenting API/CLI file responsibilities and practical module boundaries.
 - [x] Extend default sampling globs to include `json` and `css` while preserving `md/mdx`.
 - [x] Prioritize code-like files (`ts/tsx/js/jsx/cjs/mjs`) in sampling selection before non-code candidates.

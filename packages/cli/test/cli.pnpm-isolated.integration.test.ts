@@ -141,7 +141,7 @@ describe('cli pnpm-isolated integration', () => {
       workspaces: ['packages/ws-a', 'packages/ws-b'],
       rules: {
         eqeqeq: ['error', 'always'],
-        'no-console': ['error'],
+        'no-console': [['error'], ['warn']],
         'no-debugger': ['off']
       }
     })

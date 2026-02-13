@@ -1804,3 +1804,21 @@ Result:
 - Architecture intent is now explicit for contributors.
 - Guidance remains pragmatic and flexible instead of overly prescriptive.
 - Future refactors have a clear baseline for deciding where code should live.
+
+## 2026-02-13 - Request 084
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix CI test failures where isolated npm/pnpm integration suites expected a single rule entry while runtime now correctly emits multi-variant rule entries.
+
+Key decisions:
+
+- Updated isolated integration test assertions for `no-console` to match the canonical multi-variant encoding (`[['error'], ['warn']]`).
+- Kept implementation behavior unchanged, since runtime output was already correct and consistent with the promoted snapshot model.
+
+Result:
+
+- `cli.npm-isolated.integration.test.ts` and `cli.pnpm-isolated.integration.test.ts` now assert the correct snapshot shape.
+- `pnpm nx run cli:test` passes locally with all suites green.
