@@ -1,6 +1,5 @@
-import { access } from 'node:fs/promises'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { cosmiconfig } from 'cosmiconfig'
 
 export type SnapshotterConfig = {
   workspaceInput: {
@@ -40,7 +39,7 @@ export const DEFAULT_CONFIG: SnapshotterConfig = {
   }
 }
 
-const SUPPORTED_FILES = [
+const SPEC_SEARCH_PLACES = [
   '.eslint-config-snapshotter.js',
   '.eslint-config-snapshotter.cjs',
   '.eslint-config-snapshotter.mjs',
@@ -49,17 +48,30 @@ const SUPPORTED_FILES = [
   'eslint-config-snapshotter.config.mjs'
 ]
 
+const COSMICONFIG_EXTRA_PLACES = [
+  'package.json',
+  '.eslint-config-snapshotterrc',
+  '.eslint-config-snapshotterrc.json',
+  '.eslint-config-snapshotterrc.yaml',
+  '.eslint-config-snapshotterrc.yml',
+  '.eslint-config-snapshotterrc.js',
+  '.eslint-config-snapshotterrc.cjs',
+  '.eslint-config-snapshotterrc.mjs'
+]
+
+const EXPLORER = cosmiconfig('eslint-config-snapshotter', {
+  searchPlaces: [...SPEC_SEARCH_PLACES, ...COSMICONFIG_EXTRA_PLACES]
+})
+
 export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
   const root = path.resolve(cwd ?? process.cwd())
-  const file = await resolveConfigFile(root)
-
-  if (!file) {
+  const result = await EXPLORER.search(root)
+  if (!result) {
     return DEFAULT_CONFIG
   }
 
-  const mod = await import(pathToFileURL(file).href)
-  const exported = 'default' in mod ? mod.default : mod
-  const maybeConfig = typeof exported === 'function' ? await exported() : exported
+  const loaded = result.config as unknown
+  const maybeConfig = (typeof loaded === 'function' ? await loaded() : loaded) as Partial<SnapshotterConfig>
 
   return {
     ...DEFAULT_CONFIG,
@@ -73,20 +85,6 @@ export async function loadConfig(cwd?: string): Promise<SnapshotterConfig> {
       ...(maybeConfig.sampling ?? {})
     }
   }
-}
-
-async function resolveConfigFile(root: string): Promise<string | null> {
-  for (const candidate of SUPPORTED_FILES) {
-    const abs = path.join(root, candidate)
-    try {
-      await access(abs)
-      return abs
-    } catch {
-      // continue
-    }
-  }
-
-  return null
 }
 
 export function getConfigScaffold(): string {

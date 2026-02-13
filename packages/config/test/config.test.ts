@@ -29,4 +29,36 @@ describe('loadConfig', () => {
     const config = await loadConfig(tmp)
     expect(config.sampling.maxFilesPerWorkspace).toBe(3)
   })
+
+  it('loads from package.json via cosmiconfig', async () => {
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    await writeFile(
+      path.join(tmp, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'fixture',
+          private: true,
+          'eslint-config-snapshotter': {
+            sampling: { maxFilesPerWorkspace: 5 }
+          }
+        },
+        null,
+        2
+      )
+    )
+
+    const config = await loadConfig(tmp)
+    expect(config.sampling.maxFilesPerWorkspace).toBe(5)
+  })
+
+  it('executes async function config exports', async () => {
+    tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-config-'))
+    await writeFile(
+      path.join(tmp, '.eslint-config-snapshotter.mjs'),
+      "export default async () => ({ grouping: { mode: 'standalone' } })\n"
+    )
+
+    const config = await loadConfig(tmp)
+    expect(config.grouping.mode).toBe('standalone')
+  })
 })
