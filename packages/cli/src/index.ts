@@ -23,7 +23,7 @@ import { pathToFileURL } from 'node:url'
 
 
 const SNAPSHOT_DIR = '.eslint-config-snapshot'
-const UPDATE_HINT = 'Tip: run `eslint-config-snapshot --update` to refresh the baseline.\n'
+const UPDATE_HINT = 'Tip: when you intentionally accept changes, run `eslint-config-snapshot --update` to refresh the baseline.\n'
 
 type BuiltSnapshot = Awaited<ReturnType<typeof buildSnapshot>>
 type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
@@ -211,7 +211,9 @@ function parseInitPreset(value: string): InitPreset {
 async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation = false): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
-    writeSubtleInfo('Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n')
+    writeSubtleInfo(
+      'Tip: no explicit config found. Using safe built-in defaults. Run `eslint-config-snapshot init` to customize when needed.\n'
+    )
   }
 
   let currentSnapshots: Map<string, BuiltSnapshot>
@@ -220,7 +222,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   } catch (error: unknown) {
     if (!foundConfig) {
       process.stdout.write(
-        'Automatic workspace discovery failed while using defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
+        'Automatic workspace discovery could not complete with defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
       )
       return 1
     }
@@ -232,25 +234,26 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
   if (storedSnapshots.size === 0) {
     const summary = summarizeSnapshots(currentSnapshots)
     process.stdout.write(
-      `Current state: ${summary.groups} groups, ${summary.rules} rules (${summary.error} error, ${summary.warn} warn, ${summary.off} off).\n`
+      `Current rule state: ${summary.groups} groups, ${summary.rules} rules (${summary.error} error, ${summary.warn} warn, ${summary.off} off).\n`
     )
 
     const canPromptBaseline = defaultInvocation || format === 'summary'
     if (canPromptBaseline && process.stdin.isTTY && process.stdout.isTTY) {
       const shouldCreateBaseline = await askYesNo(
-        'No baseline snapshot found. Use current rule state as baseline now? [Y/n] ',
+        'No baseline yet. Use current rule state as your baseline now? [Y/n] ',
         true
       )
       if (shouldCreateBaseline) {
         await writeSnapshots(cwd, currentSnapshots)
         const summary = summarizeSnapshots(currentSnapshots)
-        process.stdout.write(`Baseline created: ${summary.groups} groups, ${summary.rules} rules.\n`)
+        process.stdout.write(`Great start: baseline created with ${summary.groups} groups and ${summary.rules} rules.\n`)
         writeSubtleInfo(UPDATE_HINT)
         return 0
       }
     }
 
-    process.stdout.write('No baseline snapshot found.\nRun `eslint-config-snapshot --update` to create one.\n')
+    process.stdout.write('You are almost set: no baseline snapshot found yet.\n')
+    process.stdout.write('Run `eslint-config-snapshot --update` to create your first baseline.\n')
     return 1
   }
 
@@ -269,7 +272,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 
   if (format === 'diff') {
     if (changes.length === 0) {
-      process.stdout.write('No snapshot changes detected.\n')
+      process.stdout.write('Great news: no snapshot changes detected.\n')
       return 0
     }
 
@@ -287,7 +290,9 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
 async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
-    writeSubtleInfo('Tip: no explicit config found. Using built-in defaults. Run `eslint-config-snapshot init` to customize.\n')
+    writeSubtleInfo(
+      'Tip: no explicit config found. Using safe built-in defaults. Run `eslint-config-snapshot init` to customize when needed.\n'
+    )
   }
 
   let currentSnapshots: Map<string, BuiltSnapshot>
@@ -296,7 +301,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   } catch (error: unknown) {
     if (!foundConfig) {
       process.stdout.write(
-        'Automatic workspace discovery failed while using defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
+        'Automatic workspace discovery could not complete with defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
       )
       return 1
     }
@@ -307,7 +312,7 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
 
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
-    process.stdout.write(`Snapshots updated: ${summary.groups} groups, ${summary.rules} rules.\n`)
+    process.stdout.write(`Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\n`)
   }
 
   return 0
@@ -639,14 +644,14 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
   const changeSummary = summarizeChanges(changes)
 
   if (changes.length === 0) {
-    process.stdout.write(color.green('No snapshot drift detected.\n'))
+    process.stdout.write(color.green('Great news: no snapshot drift detected.\n'))
     process.stdout.write(
-      `Current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off).\n`
+      `Baseline status: ${currentSummary.groups} groups, ${currentSummary.rules} rules (${currentSummary.error} error, ${currentSummary.warn} warn, ${currentSummary.off} off).\n`
     )
     return 0
   }
 
-  process.stdout.write(color.red('Snapshot drift detected.\n'))
+  process.stdout.write(color.red('Heads up: snapshot drift detected.\n'))
   process.stdout.write(
     `Changed groups: ${changes.length} | introduced: ${changeSummary.introduced} | removed: ${changeSummary.removed} | severity: ${changeSummary.severity} | options: ${changeSummary.options} | workspace membership: ${changeSummary.workspace}\n`
   )

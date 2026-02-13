@@ -403,3 +403,27 @@ Result:
 - Tip styling is now consistent and low-noise.
 - Update reminder appears only in high-signal moments.
 - CLI output assertions were updated and tests pass.
+
+## 2026-02-13 - Request 020
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Make the clean drift message more psychologically positive and keep console wording supportive for developers.
+
+Key decisions:
+
+- Reframed clean compare output from neutral to positive:
+  - `Great news: no snapshot changes detected.`
+- Improved first-baseline copy to be encouraging while keeping actionable guidance:
+  - `Current rule state: ...`
+  - `You are almost set: no baseline snapshot found yet.`
+  - prompt changed to `No baseline yet. Use current rule state as your baseline now? [Y/n]`
+- Kept machine-friendly `status` command output unchanged (`clean` / `changes`) to preserve script compatibility.
+
+Result:
+
+- Console messaging is more positive in the primary human-facing flows.
+- Behavioral semantics and exit codes remain unchanged.
+- CLI terminal tests were updated to reflect the revised wording.
