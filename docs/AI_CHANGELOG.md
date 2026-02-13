@@ -1333,3 +1333,20 @@ Key decisions:
 Result:
 
 - Interactive CLI sessions now feel lighter and more human while maintaining deterministic command output behavior for tests and automation.
+
+## 2026-02-13 - Request 063
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Replace raw command labels in the runtime header with friendlier action phrases.
+
+Key decisions:
+
+- Added a command-to-display-label mapper for known actions (`check`, `update`, `print`, `config`, `init`, `help`).
+- Kept a fallback to the raw command label for unknown/future commands.
+
+Result:
+
+- Runtime header now reads more naturally and is easier to scan for end users.
