@@ -1,6 +1,7 @@
 # Dependencies
 
 - `@manypkg/get-packages`: Required by SPEC.md for workspace discovery in `discover` mode.
+- `cosmiconfig`: Required by SPEC_ENHANCED.md for staged configuration discovery with ordered search places.
 - `fast-glob`: Deterministic cross-platform globbing for sampling files and loading snapshot files.
 - `picomatch`: Glob matching engine for ordered group assignment with negative patterns (`!`).
 - `@types/picomatch`: Type declarations for strict TypeScript typecheck in NodeNext builds.
