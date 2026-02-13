@@ -30,7 +30,8 @@
     "release:version": "changeset version && node scripts/sync-root-version.mjs",
     "release:publish": "changeset publish",
     "release:run": "node scripts/run-publish-workflow.mjs",
-    "release:run:watch": "node scripts/run-publish-workflow.mjs --watch"
+    "release:run:watch": "node scripts/run-publish-workflow.mjs --watch",
+    "release:run:watch:ci": "node scripts/run-publish-workflow.mjs --watch-latest"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",

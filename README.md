@@ -177,11 +177,17 @@ This repository uses Changesets so package versions and release tags stay aligne
    - `pnpm release:version`
 3. Commit version changes.
 4. Push to `main`.
-5. Run the release workflow from CLI (requires `gh` auth):
-   - `pnpm release:run`
-   - optional watch mode: `pnpm release:run:watch`
-   - optional ref override: `pnpm release:run -- --ref main`
-6. The workflow publishes via Changesets and creates/pushes `vX.Y.Z` automatically.
+5. CI checks npm/local version drift and automatically dispatches `publish-npm.yml` when publishing is needed.
+6. The publish workflow publishes via Changesets and creates/pushes `vX.Y.Z` automatically.
+
+Manual publish dispatch (optional, requires `gh` auth):
+
+- `pnpm release:run`
+- optional watch mode: `pnpm release:run:watch`
+- non-interactive watch mode (CI-friendly): `pnpm release:run:watch:ci`
+- optional ref override: `pnpm release:run -- --ref main`
+- optional custom run label: `pnpm release:run -- --label v0.14.1`
+- default run label is inferred from root `package.json` version (for example `v0.14.1`)
 
 ## Documentation
 

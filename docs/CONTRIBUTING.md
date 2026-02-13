@@ -85,11 +85,17 @@ This repository uses Changesets for package versioning and release preparation.
    - This also syncs the root `package.json` version to match package release version.
 3. Commit version and changelog files.
 4. Push changes to `main`.
-5. Trigger publish workflow from CLI (requires GitHub CLI):
-   - `pnpm release:run`
-   - optional live watch: `pnpm release:run:watch`
-   - optional ref override: `pnpm release:run -- --ref main`
-6. The workflow publishes with Changesets and creates/pushes `vX.Y.Z` automatically.
+5. CI validates quality gates and dispatches `publish-npm.yml` automatically only when npm/local versions drift.
+6. The publish workflow publishes with Changesets and creates/pushes `vX.Y.Z` automatically.
+
+Manual dispatch remains available (requires GitHub CLI):
+
+- `pnpm release:run`
+- optional live watch: `pnpm release:run:watch`
+- non-interactive watch: `pnpm release:run:watch:ci`
+- optional ref override: `pnpm release:run -- --ref main`
+- optional custom run label: `pnpm release:run -- --label v0.14.1`
+- default run label is inferred from root `package.json` version
 
 GitHub CLI setup (once):
 

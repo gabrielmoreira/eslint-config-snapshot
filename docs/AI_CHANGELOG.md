@@ -1939,3 +1939,69 @@ Result:
 
 - Releases can now be triggered from terminal with one command.
 - Manual control remains explicit, but without UI-only friction.
+
+## 2026-02-13 - Request 090
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add an extra release command for non-interactive environments where `gh run watch` cannot open an interactive run selector.
+
+Key decisions:
+
+- Kept existing commands unchanged:
+  - `release:run`
+  - `release:run:watch`
+- Added a new command:
+  - `release:run:watch:ci`
+- Implemented `--watch-latest` mode in release helper script:
+  - dispatch workflow,
+  - resolve latest run id via `gh run list`,
+  - watch explicitly by id with `gh run watch <id> --exit-status`.
+
+Result:
+
+- Non-interactive shells can now trigger and watch publish runs without prompt-selection failures.
+- Existing interactive workflow behavior remains intact.
+
+## 2026-02-13 - Request 091
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Clarify why publish dispatches on `main` and improve GitHub Actions run list readability by showing version-aware labels.
+
+Key decisions:
+
+- Added workflow-dispatch input `release_label` for run naming.
+- Added dynamic workflow `run-name` using label (or branch fallback).
+- Added workflow `concurrency` group to avoid overlapping publish executions on the same ref.
+- Updated release helper script to auto-infer label from root `package.json` version and send it on dispatch.
+- Kept explicit `--label` override for manual control.
+
+Result:
+
+- Publish runs are now easier to identify in GitHub Actions list.
+- Duplicate/overlapping publish runs are serialized by concurrency control.
+
+## 2026-02-13 - Request 092
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Implement automatic publish triggering from CI by detecting npm/local version drift, but keep publish logic in the dedicated publish workflow.
+
+Key decisions:
+
+- Added a new `publish-dispatch` job at the end of CI (`push` on `main` only, after successful validate + reports).
+- Implemented drift detection in CI by comparing each publishable package local version against `npm view <package> version`.
+- Kept publish implementation out of CI; CI only dispatches `publish-npm.yml` when drift exists.
+- Passed `release_label` input when dispatching, inferred from package versions.
+
+Result:
+
+- Release flow is now automated after successful CI when versions are publishable.
+- Publish responsibilities remain isolated in `publish-npm.yml`.

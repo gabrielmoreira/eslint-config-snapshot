@@ -25,6 +25,9 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Add CI npm-drift detection that dispatches publish workflow automatically instead of embedding publish logic in CI.
+- [x] Add dynamic publish workflow run naming with version/ref label and serialize runs via workflow concurrency.
+- [x] Add non-interactive release watch command that resolves run ID and watches `gh run` without prompt.
 - [x] Add CLI-based release workflow trigger scripts (`release:run`, `release:run:watch`) using GitHub CLI dispatch.
 - [x] Refactor release flow to manual GitHub dispatch publishing with automatic tag creation in workflow (no manual local tagging).
 - [x] Expand `.gitignore` to cover generated test report artifacts (`**/test-results/`, `*.junit.xml`, `.vitest/`).

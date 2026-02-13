@@ -28,15 +28,29 @@ function currentBranch() {
   return readOutput('git', ['rev-parse', '--abbrev-ref', 'HEAD']) ?? 'main'
 }
 
+function currentVersionLabel() {
+  const version = readOutput('node', ['-p', "require('./package.json').version"])
+  if (!version) {
+    return
+  }
+  return `v${version}`
+}
+
 function parseArguments(argv) {
   const parsed = {
     ref: currentBranch(),
-    watch: false
+    watch: false,
+    watchLatest: false,
+    label: currentVersionLabel()
   }
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index]
     if (token === '--watch') {
       parsed.watch = true
+      continue
+    }
+    if (token === '--watch-latest') {
+      parsed.watchLatest = true
       continue
     }
     if (token === '--ref') {
@@ -46,12 +60,54 @@ function parseArguments(argv) {
       }
       parsed.ref = next
       index += 1
+      continue
+    }
+    if (token === '--label') {
+      const next = argv[index + 1]
+      if (!next) {
+        throw new Error('Missing value for --label')
+      }
+      parsed.label = next
+      index += 1
     }
   }
   return parsed
 }
 
-function main() {
+async function sleep(milliseconds) {
+  await new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+function findLatestRunId(reference) {
+  return readOutput('gh', [
+    'run',
+    'list',
+    '--workflow',
+    'publish-npm.yml',
+    '--branch',
+    reference,
+    '--limit',
+    '1',
+    '--json',
+    'databaseId',
+    '--jq',
+    '.[0].databaseId'
+  ])
+}
+
+async function resolveLatestRunId(reference) {
+  const maxAttempts = 15
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const runId = findLatestRunId(reference)
+    if (runId && runId.length > 0) {
+      return runId
+    }
+    await sleep(2000)
+  }
+  throw new Error('Could not resolve latest workflow run ID for publish-npm.yml.')
+}
+
+async function main() {
   if (!hasGhCli()) {
     throw new Error('GitHub CLI (gh) not found. Install gh and run `gh auth login` first.')
   }
@@ -62,11 +118,22 @@ function main() {
   }
 
   console.log(`Dispatching Publish to npm workflow on ref "${commandArguments.ref}"...`)
-  if (run('gh', ['workflow', 'run', 'publish-npm.yml', '--ref', commandArguments.ref]) !== 0) {
+  const dispatchArguments = ['workflow', 'run', 'publish-npm.yml', '--ref', commandArguments.ref]
+  if (commandArguments.label && commandArguments.label.length > 0) {
+    dispatchArguments.push('-f', `release_label=${commandArguments.label}`)
+  }
+  if (run('gh', dispatchArguments) !== 0) {
     throw new Error('Failed to dispatch publish workflow.')
   }
 
-  if (commandArguments.watch) {
+  if (commandArguments.watchLatest) {
+    console.log('Resolving latest workflow run id...')
+    const runId = await resolveLatestRunId(commandArguments.ref)
+    console.log(`Watching workflow run ${runId}...`)
+    if (run('gh', ['run', 'watch', runId, '--exit-status']) !== 0) {
+      throw new Error('Failed while watching workflow run by id.')
+    }
+  } else if (commandArguments.watch) {
     console.log('Watching workflow runs...')
     if (run('gh', ['run', 'watch']) !== 0) {
       throw new Error('Failed while watching workflow run.')
@@ -77,7 +144,7 @@ function main() {
 }
 
 try {
-  main()
+  await main()
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
   console.error(message)

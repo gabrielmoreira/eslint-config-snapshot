@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
   checks: write
   pull-requests: write
 
@@ -116,3 +117,99 @@ jobs:
             packages/cli/test-results/junit.xml
             packages/api/coverage
             packages/cli/coverage
+
+  publish-dispatch:
+    runs-on: ubuntu-latest
+    needs: [validate, reports]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.validate.result == 'success' && needs.reports.result == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://registry.npmjs.org
+
+      - name: Detect npm drift
+        id: drift
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+          const { execFileSync } = require('node:child_process')
+
+          function npmPublishedVersion(packageName) {
+            try {
+              return execFileSync('npm', ['view', packageName, 'version', '--silent'], {
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'pipe']
+              }).trim()
+            } catch {
+              return ''
+            }
+          }
+
+          const packagesDir = path.join(process.cwd(), 'packages')
+          const packageDirectories = fs
+            .readdirSync(packagesDir, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => path.join(packagesDir, entry.name))
+
+          const publishablePackages = packageDirectories
+            .map((directory) => path.join(directory, 'package.json'))
+            .filter((manifestPath) => fs.existsSync(manifestPath))
+            .map((manifestPath) => JSON.parse(fs.readFileSync(manifestPath, 'utf8')))
+            .filter((manifest) => manifest.private !== true && typeof manifest.name === 'string' && typeof manifest.version === 'string')
+
+          const driftRows = []
+          for (const manifest of publishablePackages) {
+            const publishedVersion = npmPublishedVersion(manifest.name)
+            const localVersion = manifest.version
+            const drifted = publishedVersion.length === 0 || publishedVersion !== localVersion
+            driftRows.push({
+              name: manifest.name,
+              localVersion,
+              publishedVersion: publishedVersion || '<not published>',
+              drifted
+            })
+          }
+
+          const shouldPublish = driftRows.some((row) => row.drifted)
+          const versionSet = new Set(driftRows.map((row) => row.localVersion))
+          const inferredLabel = versionSet.size === 1 ? `v${driftRows[0]?.localVersion ?? 'unknown'}` : `mixed-${new Date().toISOString().slice(0, 10)}`
+
+          console.log('npm drift scan:')
+          for (const row of driftRows) {
+            console.log(`- ${row.name}: local=${row.localVersion}, npm=${row.publishedVersion}, drift=${row.drifted ? 'yes' : 'no'}`)
+          }
+          console.log(`publish needed: ${shouldPublish ? 'yes' : 'no'}`)
+          console.log(`release label: ${inferredLabel}`)
+
+          const outputPath = process.env.GITHUB_OUTPUT
+          fs.appendFileSync(outputPath, `should_publish=${shouldPublish ? 'true' : 'false'}\n`)
+          fs.appendFileSync(outputPath, `release_label=${inferredLabel}\n`)
+          NODE
+
+      - name: Dispatch publish workflow
+        if: ${{ steps.drift.outputs.should_publish == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'publish-npm.yml',
+              ref: 'main',
+              inputs: {
+                release_label: '${{ steps.drift.outputs.release_label }}'
+              }
+            })
+            core.info(`Dispatched publish-npm.yml with label: ${{ steps.drift.outputs.release_label }}`)
+
+      - name: Skip publish dispatch
+        if: ${{ steps.drift.outputs.should_publish != 'true' }}
+        run: echo "No npm drift detected. Publish dispatch skipped."
