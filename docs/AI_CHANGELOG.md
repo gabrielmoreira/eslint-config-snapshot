@@ -612,3 +612,21 @@ Result:
 
 - AI changelog now lives at a simpler canonical location: `docs/AI_CHANGELOG.md`.
 - Documentation links and process instructions are consistent with the new path.
+
+## 2026-02-13 - Request 029
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate failing GitHub pipeline and fix it.
+
+Key decisions:
+
+- Identified failure cause from workflow logs: pnpm version mismatch between workflow setup (`10`) and repository `packageManager` (`pnpm@10.29.3`).
+- Updated both GitHub workflows to pin `pnpm/action-setup` to `10.29.3`.
+
+Result:
+
+- CI and publish workflows are now aligned with repository package manager version policy.
+- The setup phase should no longer fail due to pnpm version mismatch.
