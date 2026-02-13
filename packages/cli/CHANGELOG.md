@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 0.10.0
+
+### Minor Changes
+
+- 1f6f0fc: Replace sampling hint globs with configurable `tokenHints` and improve sampling documentation clarity.
+
+### Patch Changes
+
+- Updated dependencies [1f6f0fc]
+  - @eslint-config-snapshot/api@0.10.0
+
 ## 0.9.0
 
 ### Minor Changes
