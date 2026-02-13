@@ -1,39 +1,75 @@
 # ESLint Config Snapshotter
 
-Deterministic CLI to snapshot and compare effective ESLint rule state across workspaces.
+[![npm version](https://img.shields.io/npm/v/%40eslint-config-snapshotter%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshotter/cli)
+[![npm downloads](https://img.shields.io/npm/dm/%40eslint-config-snapshotter%2Fcli)](https://www.npmjs.com/package/@eslint-config-snapshotter/cli)
 
-## Quick Start
+Keep your ESLint policy healthy over time.
+
+`eslint-config-snapshotter` captures the effective ESLint rule set in your repo and tells you what drifted after dependency/config changes.
+
+## Why it matters
+
+ESLint ecosystems evolve fast. Plugins and presets add, remove, and retune rules all the time.
+
+The common pain:
+
+- your project drifts silently after upgrades
+- new strict rules appear and nobody notices
+- old assumptions about rule severity/config become outdated
+
+This tool gives you a deterministic baseline and a fast answer to: "what changed in our lint policy?"
+
+## Quick Start (No Install)
+
+Use one of:
 
 ```bash
-pnpm install
-pnpm nx run-many -t build
+pnpm dlx @eslint-config-snapshotter/cli@latest init
 ```
-
-Run from source:
 
 ```bash
-pnpm cli:dev -- check
-pnpm cli:dev -- update
+npx @eslint-config-snapshotter/cli@latest init
 ```
 
-Run built CLI:
+Then create your first baseline:
 
 ```bash
-node packages/cli/dist/index.js [command]
+pnpm dlx @eslint-config-snapshotter/cli@latest --update
 ```
 
-Project config is intentionally minimal:
+And run drift checks anytime:
 
-```js
-// eslint-config-snapshotter.config.mjs
-export default {}
+```bash
+pnpm dlx @eslint-config-snapshotter/cli@latest
 ```
 
-Use `docs/EXAMPLES.md` for advanced configuration patterns.
+Default command (no subcommand) runs `check` summary output.
 
-## Commands
+## Setup Flow
 
-Canonical commands:
+1. `init`: bootstrap config
+2. `--update`: write baseline snapshots
+3. `check` (or no command): detect drift
+
+## Init behavior
+
+`init` now supports a lightweight setup assistant.
+
+- choose target: `file` or `package-json`
+- choose preset: `minimal` or `full`
+
+Recommended for most teams:
+
+- target: `package-json`
+- preset: `minimal`
+
+You can also run it non-interactively:
+
+```bash
+pnpm dlx @eslint-config-snapshotter/cli@latest init --yes --target package-json --preset minimal
+```
+
+## Core Commands
 
 - `check`
 - `update`
@@ -47,41 +83,27 @@ Compatibility aliases:
 - `status` => `check --format status`
 - `what-changed` => `check --format summary`
 
-Default invocation (no command) runs `check` summary output.
+## Snapshot Model
 
-## Common Options
-
-- `-u, --update` updates snapshots from default invocation.
-- `check --format <summary|status|diff>`
-- `print --format <json|short>`
-- `print --short`
-
-## Validation
-
-```bash
-pnpm nx run-many -t build
-pnpm nx run-many -t lint
-pnpm nx run-many -t typecheck
-pnpm nx run-many -t test
-```
-
-## Snapshot Guarantees
-
-Snapshots are deterministic JSON and include only:
+Snapshots are deterministic JSON and only store stable rule state:
 
 - `formatVersion`
 - `groupId`
 - `workspaces`
 - `rules`
 
-No volatile metadata is stored.
+No timestamps, hashes, absolute paths, sampled files, or env noise.
+
+## Configuration
+
+Main path: keep config minimal.
+
+Advanced patterns and recipes are in:
+
+- `docs/EXAMPLES.md`
 
 ## Documentation
 
-- `docs/SPEC.md`
-- `docs/SPEC_ENHANCED.md`
-- `docs/AGENTS.md`
-- `docs/TASKS.md`
 - `docs/CONTRIBUTING.md`
 - `docs/EXAMPLES.md`
-- `docs/ai-updates/AI_CHANGELOG.md`
+- `docs/SPEC.md`

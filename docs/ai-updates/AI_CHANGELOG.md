@@ -205,3 +205,41 @@ Result:
 Follow-up notes:
 
 - Current lint baseline still keeps existing cognitive-complexity warnings in API/CLI source as warnings (no behavior change in this request).
+
+## 2026-02-13 - Request 013
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Rewrite README for end users (not repository developers), with modern positioning, simple setup flow, and package-manager execution via `npx`/`pnpm dlx`.
+- Add npm badges in the main README.
+- Keep advanced configuration details out of the main README.
+- Improve `init` UX so first-time users can choose config target (`package.json` vs file) and preset (`minimal` vs `full`) without excessive CLI complexity.
+
+Key decisions:
+
+- Rewrote README around user value (lint drift detection) and minimal onboarding path.
+- Added npm badges for package version and monthly downloads.
+- Kept main README focused on:
+  - why the tool exists
+  - `init` -> `--update` -> `check` flow
+  - no-install execution (`pnpm dlx` / `npx`)
+- Kept advanced configuration examples in `docs/EXAMPLES.md`.
+- Implemented `init` options:
+  - `--target <file|package-json>`
+  - `--preset <minimal|full>`
+  - `--yes` for non-interactive usage
+- Added a short interactive setup assistant for TTY sessions when options are omitted.
+- Default non-interactive behavior remains deterministic and simple.
+
+Result:
+
+- End-user README now presents a modern, concise, high-signal UX.
+- `init` can now create config either as:
+  - `eslint-config-snapshotter.config.mjs`
+  - `package.json` field `eslint-config-snapshotter`
+- Added/updated CLI tests for:
+  - `init --target file --preset full`
+  - `init --target package-json --preset minimal`
+- Full CLI tests and lint/typecheck checks pass after the update.

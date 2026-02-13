@@ -199,15 +199,33 @@ no-debugger: off
 
     await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
 
-    const created = run(['init'])
+    const created = run(['init', '--yes', '--target', 'file', '--preset', 'minimal'])
     expect(created.status).toBe(0)
     expect(created.stdout).toBe('Created eslint-config-snapshotter.config.mjs\n')
     expect(created.stderr).toBe('')
 
-    const existing = run(['init'])
+    const existing = run(['init', '--yes', '--target', 'file'])
     expect(existing.status).toBe(1)
     expect(existing.stdout).toBe('')
     expect(existing.stderr).toBe('Config already exists: eslint-config-snapshotter.config.mjs\n')
+  })
+
+  it('init can write config to package.json', async () => {
+    const initRoot = path.join(tmpDir, 'init-package-json-case')
+    await rm(initRoot, { recursive: true, force: true })
+    await cp(fixtureRoot, initRoot, { recursive: true })
+    repoRoot = initRoot
+
+    await rm(path.join(repoRoot, 'eslint-config-snapshotter.config.mjs'), { force: true })
+
+    const created = run(['init', '--yes', '--target', 'package-json', '--preset', 'minimal'])
+    expect(created.status).toBe(0)
+    expect(created.stdout).toBe('Created config in package.json under "eslint-config-snapshotter"\n')
+    expect(created.stderr).toBe('')
+
+    const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
+    const parsed = JSON.parse(packageJsonRaw) as { 'eslint-config-snapshotter'?: Record<string, unknown> }
+    expect(parsed['eslint-config-snapshotter']).toEqual({})
   })
 
   it('surfaces runtime errors with exit code 1', async () => {

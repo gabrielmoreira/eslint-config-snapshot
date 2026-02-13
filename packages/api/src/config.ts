@@ -116,7 +116,13 @@ async function loadUserConfig(rawConfig: unknown): Promise<Partial<SnapshotterCo
   return resolved as Partial<SnapshotterConfig>
 }
 
-export function getConfigScaffold(): string {
+export type ConfigPreset = 'minimal' | 'full'
+
+export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
+  if (preset === 'minimal') {
+    return 'export default {}\n'
+  }
+
   return `export default {
   workspaceInput: { mode: 'discover' },
   grouping: {

@@ -86,13 +86,29 @@ no-debugger: off
     )
   })
 
-  it('init creates scaffold config', async () => {
+  it('init creates scaffold config file when target=file', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-init-'))
-    const code = await runCli('init', tmp)
+    const code = await runCli('init', tmp, ['--yes', '--target', 'file', '--preset', 'full'])
     expect(code).toBe(0)
 
     const content = await readFile(path.join(tmp, 'eslint-config-snapshotter.config.mjs'), 'utf8')
     expect(content).toContain("workspaceInput: { mode: 'discover' }")
+
+    await rm(tmp, { recursive: true, force: true })
+  })
+
+  it('init writes minimal config to package.json when target=package-json', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-init-pkg-'))
+    await writeFile(path.join(tmp, 'package.json'), JSON.stringify({ name: 'fixture', private: true }, null, 2))
+
+    const code = await runCli('init', tmp, ['--yes', '--target', 'package-json', '--preset', 'minimal'])
+    expect(code).toBe(0)
+
+    const packageJsonRaw = await readFile(path.join(tmp, 'package.json'), 'utf8')
+    const parsed = JSON.parse(packageJsonRaw) as {
+      'eslint-config-snapshotter'?: Record<string, unknown>
+    }
+    expect(parsed['eslint-config-snapshotter']).toEqual({})
 
     await rm(tmp, { recursive: true, force: true })
   })

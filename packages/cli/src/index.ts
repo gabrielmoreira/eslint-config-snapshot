@@ -16,8 +16,9 @@ import {
 } from '@eslint-config-snapshotter/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import fg from 'fast-glob'
-import { access, mkdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { createInterface } from 'node:readline'
 import { pathToFileURL } from 'node:url'
 
 
@@ -28,6 +29,8 @@ type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
 type SnapshotDiff = ReturnType<typeof diffSnapshots>
 type CheckFormat = 'summary' | 'status' | 'diff'
 type PrintFormat = 'json' | 'short'
+type InitTarget = 'file' | 'package-json'
+type InitPreset = 'minimal' | 'full'
 
 type RootOptions = {
   update?: boolean
@@ -137,9 +140,12 @@ function createProgram(cwd: string, onActionExit: (code: number) => void): Comma
 
   program
     .command('init')
-    .description('Create eslint-config-snapshotter.config.mjs')
-    .action(async () => {
-      onActionExit(await runInit(cwd))
+    .description('Initialize config (file or package.json)')
+    .option('--target <target>', 'Config target: file|package-json', parseInitTarget)
+    .option('--preset <preset>', 'Config preset: minimal|full', parseInitPreset)
+    .option('-y, --yes', 'Skip prompts and use defaults/options')
+    .action(async (opts: { target?: InitTarget; preset?: InitPreset; yes?: boolean }) => {
+      onActionExit(await runInit(cwd, opts))
     })
 
   // Backward-compatible aliases kept out of help.
@@ -181,6 +187,24 @@ function parsePrintFormat(value: string): PrintFormat {
   }
 
   throw new InvalidArgumentError('Expected one of: json, short')
+}
+
+function parseInitTarget(value: string): InitTarget {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'file' || normalized === 'package-json') {
+    return normalized
+  }
+
+  throw new InvalidArgumentError('Expected one of: file, package-json')
+}
+
+function parseInitPreset(value: string): InitPreset {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'minimal' || normalized === 'full') {
+    return normalized
+  }
+
+  throw new InvalidArgumentError('Expected one of: minimal, full')
 }
 
 async function executeCheck(cwd: string, format: CheckFormat): Promise<number> {
@@ -427,7 +451,52 @@ function getDisplayOptionChanges(diff: SnapshotDiff): SnapshotDiff['optionChange
   return diff.optionChanges.filter((change) => !removedRules.has(change.rule) && !severityChangedRules.has(change.rule))
 }
 
-async function runInit(cwd: string): Promise<number> {
+async function runInit(
+  cwd: string,
+  opts: { target?: InitTarget; preset?: InitPreset; yes?: boolean } = {}
+): Promise<number> {
+  let target = opts.target
+  let preset = opts.preset
+  if (!opts.yes && !target && !preset && process.stdin.isTTY && process.stdout.isTTY) {
+    const interactive = await askInitPreferences()
+    target = interactive.target
+    preset = interactive.preset
+  }
+
+  const finalTarget = target ?? 'file'
+  const finalPreset = preset ?? 'minimal'
+
+  if (finalTarget === 'package-json') {
+    return runInitInPackageJson(cwd, finalPreset)
+  }
+
+  return runInitInFile(cwd, finalPreset)
+}
+
+async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    const targetRaw = await askQuestion(rl, 'Write config to file or package.json? [package-json] ')
+    const presetRaw = await askQuestion(rl, 'Use minimal or full preset? [minimal] ')
+    const targetAnswer = targetRaw.trim().toLowerCase()
+    const presetAnswer = presetRaw.trim().toLowerCase()
+    const target = targetAnswer === 'file' ? 'file' : 'package-json'
+    const preset = presetAnswer === 'full' ? 'full' : 'minimal'
+    return { target, preset }
+  } finally {
+    rl.close()
+  }
+}
+
+function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
+  return new Promise((resolve) => {
+    rl.question(prompt, (answer) => {
+      resolve(answer)
+    })
+  })
+}
+
+async function runInitInFile(cwd: string, preset: InitPreset): Promise<number> {
   const candidates = [
     '.eslint-config-snapshotter.js',
     '.eslint-config-snapshotter.cjs',
@@ -448,9 +517,55 @@ async function runInit(cwd: string): Promise<number> {
   }
 
   const target = path.join(cwd, 'eslint-config-snapshotter.config.mjs')
-  await writeFile(target, getConfigScaffold(), 'utf8')
+  await writeFile(target, getConfigScaffold(preset), 'utf8')
   process.stdout.write(`Created ${path.basename(target)}\n`)
   return 0
+}
+
+async function runInitInPackageJson(cwd: string, preset: InitPreset): Promise<number> {
+  const packageJsonPath = path.join(cwd, 'package.json')
+
+  let packageJsonRaw: string
+  try {
+    packageJsonRaw = await readFile(packageJsonPath, 'utf8')
+  } catch {
+    process.stderr.write('package.json not found in current directory.\n')
+    return 1
+  }
+
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(packageJsonRaw) as Record<string, unknown>
+  } catch {
+    process.stderr.write('Invalid package.json (must be valid JSON).\n')
+    return 1
+  }
+
+  if (parsed['eslint-config-snapshotter'] !== undefined) {
+    process.stderr.write('Config already exists in package.json: eslint-config-snapshotter\n')
+    return 1
+  }
+
+  parsed['eslint-config-snapshotter'] = preset === 'full' ? getFullPresetObject() : {}
+  await writeFile(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
+  process.stdout.write('Created config in package.json under "eslint-config-snapshotter"\n')
+  return 0
+}
+
+function getFullPresetObject() {
+  return {
+    workspaceInput: { mode: 'discover' },
+    grouping: {
+      mode: 'match',
+      groups: [{ name: 'default', match: ['**/*'] }]
+    },
+    sampling: {
+      maxFilesPerWorkspace: 8,
+      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
+      excludeGlobs: ['**/node_modules/**', '**/dist/**'],
+      hintGlobs: []
+    }
+  }
 }
 
 export async function main(): Promise<void> {
