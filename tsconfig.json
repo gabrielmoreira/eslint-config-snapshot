@@ -2,13 +2,6 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/workspace" },
-    { "path": "./packages/sampling" },
-    { "path": "./packages/extract" },
-    { "path": "./packages/snapshot" },
-    { "path": "./packages/diff" },
-    { "path": "./packages/config" },
     { "path": "./packages/api" },
     { "path": "./packages/cli" }
   ]

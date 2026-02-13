@@ -5,12 +5,20 @@ import { pathToFileURL } from 'node:url'
 
 import fg from 'fast-glob'
 
-import { getConfigScaffold, loadConfig } from '@eslint-config-snapshotter/config'
-import { hasDiff, diffSnapshots } from '@eslint-config-snapshotter/diff'
-import { extractRulesFromPrintConfig } from '@eslint-config-snapshotter/extract'
-import { sampleWorkspaceFiles } from '@eslint-config-snapshotter/sampling'
-import { aggregateRules, buildSnapshot, readSnapshotFile, writeSnapshotFile } from '@eslint-config-snapshotter/snapshot'
-import { assignGroupsByMatch, discoverWorkspaces } from '@eslint-config-snapshotter/workspace'
+import {
+  aggregateRules,
+  assignGroupsByMatch,
+  buildSnapshot,
+  diffSnapshots,
+  discoverWorkspaces,
+  extractRulesFromPrintConfig,
+  getConfigScaffold,
+  hasDiff,
+  loadConfig,
+  readSnapshotFile,
+  sampleWorkspaceFiles,
+  writeSnapshotFile
+} from '@eslint-config-snapshotter/api'
 
 const SNAPSHOT_DIR = '.eslint-config-snapshots'
 const HELP_TEXT = `eslint-config-snapshotter

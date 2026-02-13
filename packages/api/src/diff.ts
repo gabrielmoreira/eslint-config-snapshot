@@ -1,6 +1,6 @@
-import { canonicalizeJson, sortUnique } from '@eslint-config-snapshotter/core'
+import { canonicalizeJson, sortUnique } from './core.js'
 
-import type { SnapshotFile } from '@eslint-config-snapshotter/snapshot'
+import type { SnapshotFile } from './snapshot.js'
 
 export type RuleSeverityChange = {
   rule: string

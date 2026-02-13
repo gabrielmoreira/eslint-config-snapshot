@@ -74,98 +74,27 @@ importers:
 
   packages/api:
     dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-      '@eslint-config-snapshotter/extract':
-        specifier: workspace:*
-        version: link:../extract
-      '@eslint-config-snapshotter/workspace':
-        specifier: workspace:*
-        version: link:../workspace
-
-  packages/cli:
-    dependencies:
-      '@eslint-config-snapshotter/config':
-        specifier: workspace:*
-        version: link:../config
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-      '@eslint-config-snapshotter/diff':
-        specifier: workspace:*
-        version: link:../diff
-      '@eslint-config-snapshotter/extract':
-        specifier: workspace:*
-        version: link:../extract
-      '@eslint-config-snapshotter/sampling':
-        specifier: workspace:*
-        version: link:../sampling
-      '@eslint-config-snapshotter/snapshot':
-        specifier: workspace:*
-        version: link:../snapshot
-      '@eslint-config-snapshotter/workspace':
-        specifier: workspace:*
-        version: link:../workspace
-      fast-glob:
-        specifier: ^3.3.3
-        version: 3.3.3
-
-  packages/config:
-    dependencies:
-      cosmiconfig:
-        specifier: ^9.0.0
-        version: 9.0.0(typescript@5.9.3)
-
-  packages/core: {}
-
-  packages/diff:
-    dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-      '@eslint-config-snapshotter/snapshot':
-        specifier: workspace:*
-        version: link:../snapshot
-
-  packages/extract:
-    dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-
-  packages/sampling:
-    dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-      fast-glob:
-        specifier: ^3.3.3
-        version: 3.3.3
-      picomatch:
-        specifier: ^4.0.3
-        version: 4.0.3
-
-  packages/snapshot:
-    dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
-      '@eslint-config-snapshotter/extract':
-        specifier: workspace:*
-        version: link:../extract
-
-  packages/workspace:
-    dependencies:
-      '@eslint-config-snapshotter/core':
-        specifier: workspace:*
-        version: link:../core
       '@manypkg/get-packages':
         specifier: ^3.1.0
         version: 3.1.0
+      cosmiconfig:
+        specifier: ^9.0.0
+        version: 9.0.0(typescript@5.9.3)
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
       picomatch:
         specifier: ^4.0.3
         version: 4.0.3
+
+  packages/cli:
+    dependencies:
+      '@eslint-config-snapshotter/api':
+        specifier: workspace:*
+        version: link:../api
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
 
 packages:
 

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { getPackages } from '@manypkg/get-packages'
 import picomatch from 'picomatch'
 
-import { normalizePath, sortUnique } from '@eslint-config-snapshotter/core'
+import { normalizePath, sortUnique } from './core.js'
 
 export type WorkspaceDiscovery = {
   rootAbs: string

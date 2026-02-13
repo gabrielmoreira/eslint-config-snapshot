@@ -1,9 +1,9 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { canonicalizeJson, compareSeverity, sortUnique } from '@eslint-config-snapshotter/core'
+import { canonicalizeJson, compareSeverity, sortUnique } from './core.js'
 
-import type { NormalizedRuleEntry } from '@eslint-config-snapshotter/extract'
+import type { NormalizedRuleEntry } from './extract.js'
 
 export type SnapshotFile = {
   formatVersion: 1

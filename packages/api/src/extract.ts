@@ -1,9 +1,9 @@
-import { createRequire } from 'node:module'
-import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import path from 'node:path'
 
-import { canonicalizeJson, normalizeSeverity } from '@eslint-config-snapshotter/core'
+import { canonicalizeJson, normalizeSeverity } from './core.js'
 
 export type NormalizedRuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
 

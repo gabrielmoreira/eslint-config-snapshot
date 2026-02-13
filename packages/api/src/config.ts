@@ -1,14 +1,17 @@
 import path from 'node:path'
+
 import { cosmiconfig } from 'cosmiconfig'
 
 export type SnapshotterConfig = {
-  workspaceInput: {
-    mode: 'discover'
-  } | {
-    mode: 'manual'
-    rootAbs?: string
-    workspaces: string[]
-  }
+  workspaceInput:
+    | {
+        mode: 'discover'
+      }
+    | {
+        mode: 'manual'
+        rootAbs?: string
+        workspaces: string[]
+      }
   grouping: {
     mode: 'match' | 'standalone'
     allowEmptyGroups?: boolean

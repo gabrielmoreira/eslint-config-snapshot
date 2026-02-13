@@ -1,7 +1,7 @@
 import fg from 'fast-glob'
 import picomatch from 'picomatch'
 
-import { normalizePath, sortUnique } from '@eslint-config-snapshotter/core'
+import { normalizePath, sortUnique } from './core.js'
 
 export type SamplingConfig = {
   maxFilesPerWorkspace: number

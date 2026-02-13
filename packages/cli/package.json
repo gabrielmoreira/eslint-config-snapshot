@@ -16,13 +16,7 @@
     }
   },
   "dependencies": {
-    "@eslint-config-snapshotter/config": "workspace:*",
-    "@eslint-config-snapshotter/core": "workspace:*",
-    "@eslint-config-snapshotter/diff": "workspace:*",
-    "@eslint-config-snapshotter/extract": "workspace:*",
-    "@eslint-config-snapshotter/sampling": "workspace:*",
-    "@eslint-config-snapshotter/snapshot": "workspace:*",
-    "@eslint-config-snapshotter/workspace": "workspace:*",
+    "@eslint-config-snapshotter/api": "workspace:*",
     "fast-glob": "^3.3.3"
   }
 }

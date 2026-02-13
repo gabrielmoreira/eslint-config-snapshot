@@ -1,3 +1,20 @@
-export { normalizePath, sortUnique } from '@eslint-config-snapshotter/core'
-export { assignGroupsByMatch, discoverWorkspaces } from '@eslint-config-snapshotter/workspace'
-export { resolveEslintBinForWorkspace } from '@eslint-config-snapshotter/extract'
+export { canonicalizeJson, compareSeverity, normalizePath, normalizeSeverity, sortUnique } from './core.js'
+export type { JsonPrimitive, JsonValue } from './core.js'
+
+export { assignGroupsByMatch, discoverWorkspaces } from './workspace.js'
+export type { GroupAssignment, GroupDefinition, WorkspaceDiscovery, WorkspaceInput } from './workspace.js'
+
+export { sampleWorkspaceFiles } from './sampling.js'
+export type { SamplingConfig } from './sampling.js'
+
+export { extractRulesFromPrintConfig, resolveEslintBinForWorkspace } from './extract.js'
+export type { ExtractedWorkspaceRules, NormalizedRuleEntry } from './extract.js'
+
+export { aggregateRules, buildSnapshot, readSnapshotFile, writeSnapshotFile } from './snapshot.js'
+export type { SnapshotFile } from './snapshot.js'
+
+export { diffSnapshots, hasDiff } from './diff.js'
+export type { RuleOptionChange, RuleSeverityChange, SnapshotDiff, WorkspaceMembershipChange } from './diff.js'
+
+export { DEFAULT_CONFIG, getConfigScaffold, loadConfig } from './config.js'
+export type { SnapshotterConfig } from './config.js'
