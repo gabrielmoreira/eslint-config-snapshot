@@ -42,44 +42,37 @@ Run built CLI:
 node packages/cli/dist/index.js [command]
 ```
 
-No command defaults to `what-changed` style output.
+No command defaults to `check` (human summary diff output).
 
 Commands:
 
-- `snapshot`
-- `compare`
-- `what-changed`
-- `status`
+- `check` (canonical)
+- `update` (canonical)
 - `print`
 - `init`
+- compatibility aliases: `snapshot`, `compare`, `status`, `what-changed`
 - `help`
 
 Useful print option:
 - `print --short` for compact human-readable output (line-oriented by rule).
 Useful global option:
-- `--update` updates snapshots without explicitly typing the `snapshot` command.
+- `-u, --update` updates snapshots from default mode without typing `update`.
 
 Help output (`--help`):
 
 ```text
-eslint-config-snapshotter
-
-Usage:
-  eslint-config-snapshotter [command] [options]
-
-Commands:
-  snapshot   Compute and write snapshots to .eslint-config-snapshots/
-  compare    Compare current state against stored snapshots
-  what-changed Compare current state against stored snapshots and print a human summary
-  status     Print minimal status (clean/changes)
-  print      Print aggregated rules (JSON by default)
-  init       Create eslint-config-snapshotter.config.mjs
-  help       Show this help
+Usage: eslint-config-snapshotter [options] [command]
 
 Options:
-  -h, --help   Show this help
-  --update     Update snapshots (usable without command)
-  --short      Print compact human-readable output (print command only)
+  -u, --update     Update snapshots (default mode only)
+  -h, --help       display help for command
+
+Commands:
+  check [options]  Compare current state against stored snapshots
+  update|snapshot  Compute and write snapshots to .eslint-config-snapshots/
+  print [options]  Print aggregated rules
+  init             Create eslint-config-snapshotter.config.mjs
+  help [command]   display help for command
 ```
 
 ## Config Loading
@@ -125,15 +118,15 @@ Use source directly so you never run stale compiled output:
 
 ```bash
 pnpm cli:dev -- --help
-pnpm cli:dev -- snapshot
-pnpm cli:dev -- compare
+pnpm cli:dev -- update
+pnpm cli:dev -- check
 ```
 
 Examples from repository root:
 
 ```bash
-pnpm cli:dev -- snapshot
-pnpm cli:dev -- status
+pnpm cli:dev -- update
+pnpm cli:dev -- check --format status
 pnpm cli:dev -- print
 ```
 
@@ -159,9 +152,9 @@ node packages/cli/dist/index.js --help
 
 ## Exit Codes
 
-- `snapshot`: `0` on success
-- `compare`: `0` when clean, `1` when changes exist
-- `status`: `0` when clean, `1` when changes exist
+- `update`/`snapshot`: `0` on success
+- `check`: `0` when clean, `1` when changes exist
+- `check --format status`: `0` when clean, `1` when changes exist
 - `print`: `0`
 - `init`: `0` on success, `1` on error
 

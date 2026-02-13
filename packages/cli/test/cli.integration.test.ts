@@ -112,6 +112,11 @@ no-debugger: off
     expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Snapshots updated:'))
   })
 
+  it('supports canonical check and update commands', async () => {
+    expect(await runCli('update', fixtureRoot)).toBe(0)
+    expect(await runCli('check', fixtureRoot)).toBe(0)
+  })
+
   it('supports ordered multi-group matching with first match wins', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshotter-cli-grouped-'))
     await cp(fixtureRoot, tmp, { recursive: true })

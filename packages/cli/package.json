@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@eslint-config-snapshotter/api": "workspace:*",
+    "commander": "^14.0.3",
     "fast-glob": "^3.3.3"
   }
 }

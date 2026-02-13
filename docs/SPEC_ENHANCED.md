@@ -41,3 +41,30 @@ The monorepo is intentionally collapsed to two publishable packages:
 All previously split internal concerns (`core`, `config`, `workspace`, `sampling`, `extract`, `snapshot`, `diff`) must live as internal modules inside `@eslint-config-snapshotter/api`.
 
 `@eslint-config-snapshotter/cli` must consume those capabilities from `@eslint-config-snapshotter/api`.
+
+### E-003: Modern CLI Contract and Command Model
+
+CLI command parsing and help generation must use `commander` to avoid duplicated hardcoded help text and to keep command metadata centralized.
+
+Canonical command model:
+
+1. default invocation (no command): `check` with human summary output
+2. `check`: compare current state against local snapshots
+3. `update`: compute and write snapshots
+4. `print`: inspect aggregated rules
+5. `init`: create starter config
+
+Option model:
+
+1. `-u, --update`: update snapshots from default invocation (Jest-style snapshot update flow)
+2. `check --format <summary|status|diff>`
+3. `print --format <json|short>` with `--short` as compatibility shorthand
+
+Backward-compatibility aliases must remain supported:
+
+1. `snapshot` => `update`
+2. `compare` => `check --format diff`
+3. `status` => `check --format status`
+4. `what-changed` => `check --format summary`
+
+Help output should prioritize canonical commands and may hide legacy aliases from default help listing.

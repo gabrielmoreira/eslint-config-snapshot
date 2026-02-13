@@ -3,6 +3,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import fg from 'fast-glob'
 
 import {
@@ -22,108 +23,168 @@ import {
 } from '@eslint-config-snapshotter/api'
 
 const SNAPSHOT_DIR = '.eslint-config-snapshots'
-const HELP_TEXT = `eslint-config-snapshotter
 
-Usage:
-  eslint-config-snapshotter [command] [options]
+type BuiltSnapshot = Awaited<ReturnType<typeof buildSnapshot>>
+type StoredSnapshot = Awaited<ReturnType<typeof readSnapshotFile>>
+type SnapshotDiff = ReturnType<typeof diffSnapshots>
+type CheckFormat = 'summary' | 'status' | 'diff'
+type PrintFormat = 'json' | 'short'
 
-Commands:
-  snapshot   Compute and write snapshots to .eslint-config-snapshots/
-  compare    Compare current state against stored snapshots
-  what-changed Compare current state against stored snapshots and print a human summary
-  status     Print minimal status (clean/changes)
-  print      Print aggregated rules (JSON by default)
-  init       Create eslint-config-snapshotter.config.mjs
-  help       Show this help
-
-Options:
-  -h, --help   Show this help
-  --update     Update snapshots (usable without command)
-  --short      Print compact human-readable output (print command only)
-`
-
-export async function runCli(command: string | undefined, cwd: string, flags: string[] = []): Promise<number> {
-  if (command && ['help', '-h', '--help'].includes(command)) {
-    process.stdout.write(HELP_TEXT)
-    return 0
-  }
-
-  const options = parseFlags(flags)
-  if (!command && options.help) {
-    process.stdout.write(HELP_TEXT)
-    return 0
-  }
-
-  if (!command) {
-    return runDefaultMode(cwd, options)
-  }
-
-  if (command === 'init') {
-    return runInit(cwd)
-  }
-
-  if (!['snapshot', 'compare', 'status', 'print', 'what-changed'].includes(command)) {
-    console.error(`Unknown command: ${command}`)
-    return 1
-  }
-
-  if (options.update && command !== 'snapshot') {
-    throw new Error('--update can only be used without command or with snapshot')
-  }
-
-  const currentSnapshots = await computeCurrentSnapshots(cwd)
-
-  if (command === 'snapshot') {
-    await writeSnapshots(cwd, currentSnapshots)
-    return 0
-  }
-
-  if (command === 'print') {
-    if (options.short) {
-      process.stdout.write(formatShortPrint([...currentSnapshots.values()]))
-    } else {
-      const output = [...currentSnapshots.values()].map((snapshot) => ({
-        groupId: snapshot.groupId,
-        rules: snapshot.rules
-      }))
-      process.stdout.write(`${JSON.stringify(output, null, 2)}\n`)
-    }
-    return 0
-  }
-
-  const storedSnapshots = await loadStoredSnapshots(cwd)
-  if (storedSnapshots.size === 0 && (command === 'compare' || command === 'what-changed')) {
-    process.stdout.write('No local snapshots found to compare against.\nRun `eslint-config-snapshotter --update` first.\n')
-    return 1
-  }
-
-  const changes = compareSnapshotMaps(storedSnapshots, currentSnapshots)
-
-  if (command === 'what-changed') {
-    return printWhatChanged(changes, currentSnapshots)
-  }
-
-  if (command === 'compare') {
-    if (changes.length === 0) {
-      process.stdout.write('No snapshot changes detected.\n')
-      return 0
-    }
-    for (const change of changes) {
-      process.stdout.write(`${formatDiff(change.groupId, change.diff)}\n`)
-    }
-    return 1
-  }
-
-  if (changes.length === 0) {
-    process.stdout.write('clean\n')
-    return 0
-  }
-
-  process.stdout.write('changes\n')
-  return 1
+type RootOptions = {
+  update?: boolean
 }
 
-async function runDefaultMode(cwd: string, options: CliFlags): Promise<number> {
+export async function runCli(command: string | undefined, cwd: string, flags: string[] = []): Promise<number> {
+  const argv = command ? [command, ...flags] : [...flags]
+  return runArgv(argv, cwd)
+}
+
+async function runArgv(argv: string[], cwd: string): Promise<number> {
+  const hasCommandToken = argv.some((token) => !token.startsWith('-'))
+  if (!hasCommandToken) {
+    return runDefaultInvocation(argv, cwd)
+  }
+
+  let actionCode: number | undefined
+
+  const program = createProgram(cwd, (code) => {
+    actionCode = code
+  })
+
+  try {
+    await program.parseAsync(argv, { from: 'user' })
+  } catch (error: unknown) {
+    if (error instanceof CommanderError) {
+      if (error.code === 'commander.helpDisplayed') {
+        return 0
+      }
+      return error.exitCode
+    }
+
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`${message}\n`)
+    return 1
+  }
+
+  return actionCode ?? 0
+}
+
+async function runDefaultInvocation(argv: string[], cwd: string): Promise<number> {
+  const known = new Set(['-u', '--update', '-h', '--help'])
+  for (const token of argv) {
+    if (!known.has(token)) {
+      process.stderr.write(`error: unknown option '${token}'\n`)
+      return 1
+    }
+  }
+
+  if (argv.includes('-h') || argv.includes('--help')) {
+    const program = createProgram(cwd, () => {
+      // no-op
+    })
+    program.outputHelp()
+    return 0
+  }
+
+  if (argv.includes('-u') || argv.includes('--update')) {
+    return executeUpdate(cwd, true)
+  }
+
+  return executeCheck(cwd, 'summary')
+}
+
+function createProgram(cwd: string, onActionExit: (code: number) => void): Command {
+  const program = new Command()
+
+  program
+    .name('eslint-config-snapshotter')
+    .description('Deterministic ESLint config snapshot drift checker for workspaces')
+    .showHelpAfterError('(add --help for usage)')
+    .option('-u, --update', 'Update snapshots (default mode only)')
+
+  program.hook('preAction', (thisCommand) => {
+    const opts = thisCommand.opts<RootOptions>()
+    if (opts.update) {
+      throw new Error('--update can only be used without a command')
+    }
+  })
+
+  program
+    .command('check')
+    .description('Compare current state against stored snapshots')
+    .option('--format <format>', 'Output format: summary|status|diff', parseCheckFormat, 'summary')
+    .action(async (opts: { format: CheckFormat }) => {
+      onActionExit(await executeCheck(cwd, opts.format))
+    })
+
+  program
+    .command('update')
+    .alias('snapshot')
+    .description('Compute and write snapshots to .eslint-config-snapshots/')
+    .action(async () => {
+      onActionExit(await executeUpdate(cwd, true))
+    })
+
+  program
+    .command('print')
+    .description('Print aggregated rules')
+    .option('--format <format>', 'Output format: json|short', parsePrintFormat, 'json')
+    .option('--short', 'Alias for --format short')
+    .action(async (opts: { format: PrintFormat; short?: boolean }) => {
+      const format: PrintFormat = opts.short ? 'short' : opts.format
+      await executePrint(cwd, format)
+      onActionExit(0)
+    })
+
+  program
+    .command('init')
+    .description('Create eslint-config-snapshotter.config.mjs')
+    .action(async () => {
+      onActionExit(await runInit(cwd))
+    })
+
+  // Backward-compatible aliases kept out of help.
+  program
+    .command('compare', { hidden: true })
+    .action(async () => {
+      onActionExit(await executeCheck(cwd, 'diff'))
+    })
+
+  program
+    .command('status', { hidden: true })
+    .action(async () => {
+      onActionExit(await executeCheck(cwd, 'status'))
+    })
+
+  program
+    .command('what-changed', { hidden: true })
+    .action(async () => {
+      onActionExit(await executeCheck(cwd, 'summary'))
+    })
+
+  program.exitOverride()
+  return program
+}
+
+function parseCheckFormat(value: string): CheckFormat {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'summary' || normalized === 'status' || normalized === 'diff') {
+    return normalized
+  }
+
+  throw new InvalidArgumentError('Expected one of: summary, status, diff')
+}
+
+function parsePrintFormat(value: string): PrintFormat {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'json' || normalized === 'short') {
+    return normalized
+  }
+
+  throw new InvalidArgumentError('Expected one of: json, short')
+}
+
+async function executeCheck(cwd: string, format: CheckFormat): Promise<number> {
   const foundConfig = await findConfigPath(cwd)
   if (!foundConfig) {
     process.stdout.write(
@@ -133,24 +194,77 @@ async function runDefaultMode(cwd: string, options: CliFlags): Promise<number> {
   }
 
   const currentSnapshots = await computeCurrentSnapshots(cwd)
-  if (options.update) {
-    await writeSnapshots(cwd, currentSnapshots)
-    const summary = summarizeSnapshots(currentSnapshots)
-    process.stdout.write(`Snapshots updated: ${summary.groups} groups, ${summary.rules} rules.\n`)
-    return 0
-  }
-
   const storedSnapshots = await loadStoredSnapshots(cwd)
+
   if (storedSnapshots.size === 0) {
     process.stdout.write('No local snapshots found to compare against.\nRun `eslint-config-snapshotter --update` first.\n')
     return 1
   }
 
   const changes = compareSnapshotMaps(storedSnapshots, currentSnapshots)
+
+  if (format === 'status') {
+    if (changes.length === 0) {
+      process.stdout.write('clean\n')
+      return 0
+    }
+
+    process.stdout.write('changes\n')
+    return 1
+  }
+
+  if (format === 'diff') {
+    if (changes.length === 0) {
+      process.stdout.write('No snapshot changes detected.\n')
+      return 0
+    }
+
+    for (const change of changes) {
+      process.stdout.write(`${formatDiff(change.groupId, change.diff)}\n`)
+    }
+
+    return 1
+  }
+
   return printWhatChanged(changes, currentSnapshots)
 }
 
-async function computeCurrentSnapshots(cwd: string) {
+async function executeUpdate(cwd: string, printSummary: boolean): Promise<number> {
+  const foundConfig = await findConfigPath(cwd)
+  if (!foundConfig) {
+    process.stdout.write(
+      'No snapshotter config found.\nRun `eslint-config-snapshotter init` to create one, then run `eslint-config-snapshotter --update`.\n'
+    )
+    return 1
+  }
+
+  const currentSnapshots = await computeCurrentSnapshots(cwd)
+  await writeSnapshots(cwd, currentSnapshots)
+
+  if (printSummary) {
+    const summary = summarizeSnapshots(currentSnapshots)
+    process.stdout.write(`Snapshots updated: ${summary.groups} groups, ${summary.rules} rules.\n`)
+  }
+
+  return 0
+}
+
+async function executePrint(cwd: string, format: PrintFormat): Promise<void> {
+  const currentSnapshots = await computeCurrentSnapshots(cwd)
+
+  if (format === 'short') {
+    process.stdout.write(formatShortPrint([...currentSnapshots.values()]))
+    return
+  }
+
+  const output = [...currentSnapshots.values()].map((snapshot) => ({
+    groupId: snapshot.groupId,
+    rules: snapshot.rules
+  }))
+  process.stdout.write(`${JSON.stringify(output, null, 2)}\n`)
+}
+
+async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSnapshot>> {
   const config = await loadConfig(cwd)
   const discovery = await discoverWorkspaces({ cwd, workspaceInput: config.workspaceInput })
 
@@ -167,7 +281,7 @@ async function computeCurrentSnapshots(cwd: string) {
     }
   }
 
-  const snapshots = new Map<string, Awaited<ReturnType<typeof buildSnapshot>>>()
+  const snapshots = new Map<string, BuiltSnapshot>()
 
   for (const group of assignments) {
     const extractedForGroup = []
@@ -189,10 +303,10 @@ async function computeCurrentSnapshots(cwd: string) {
   return snapshots
 }
 
-async function loadStoredSnapshots(cwd: string) {
+async function loadStoredSnapshots(cwd: string): Promise<Map<string, StoredSnapshot>> {
   const dir = path.join(cwd, SNAPSHOT_DIR)
   const files = await fg('**/*.json', { cwd: dir, absolute: true, onlyFiles: true, dot: true, suppressErrors: true })
-  const snapshots = new Map<string, Awaited<ReturnType<typeof readSnapshotFile>>>()
+  const snapshots = new Map<string, StoredSnapshot>()
 
   for (const file of files.sort()) {
     const snapshot = await readSnapshotFile(file)
@@ -202,19 +316,16 @@ async function loadStoredSnapshots(cwd: string) {
   return snapshots
 }
 
-async function writeSnapshots(cwd: string, snapshots: Map<string, Awaited<ReturnType<typeof buildSnapshot>>>) {
+async function writeSnapshots(cwd: string, snapshots: Map<string, BuiltSnapshot>): Promise<void> {
   await mkdir(path.join(cwd, SNAPSHOT_DIR), { recursive: true })
   for (const snapshot of snapshots.values()) {
     await writeSnapshotFile(path.join(cwd, SNAPSHOT_DIR), snapshot)
   }
 }
 
-function compareSnapshotMaps(
-  before: Map<string, Awaited<ReturnType<typeof readSnapshotFile>>>,
-  after: Map<string, Awaited<ReturnType<typeof buildSnapshot>>>
-) {
+function compareSnapshotMaps(before: Map<string, StoredSnapshot>, after: Map<string, BuiltSnapshot>) {
   const ids = [...new Set([...before.keys(), ...after.keys()])].sort()
-  const changes: Array<{ groupId: string; diff: ReturnType<typeof diffSnapshots> }> = []
+  const changes: Array<{ groupId: string; diff: SnapshotDiff }> = []
 
   for (const id of ids) {
     const prev =
@@ -244,7 +355,7 @@ function compareSnapshotMaps(
   return changes
 }
 
-function formatDiff(groupId: string, diff: ReturnType<typeof diffSnapshots>): string {
+function formatDiff(groupId: string, diff: SnapshotDiff): string {
   const lines = [`group: ${groupId}`]
 
   if (diff.introducedRules.length > 0) {
@@ -300,53 +411,15 @@ async function runInit(cwd: string): Promise<number> {
 }
 
 export async function main(): Promise<void> {
-  const [arg1, ...rest] = process.argv.slice(2)
-  const command = arg1 && !arg1.startsWith('-') ? arg1 : undefined
-  const flags = command ? rest : process.argv.slice(2)
-  try {
-    const code = await runCli(command, process.cwd(), flags)
-    process.exit(code)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    process.stderr.write(`${message}\n`)
-    process.exit(1)
-  }
+  const code = await runArgv(process.argv.slice(2), process.cwd())
+  process.exit(code)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main()
 }
 
-type CliFlags = {
-  help: boolean
-  update: boolean
-  short: boolean
-}
-
-function parseFlags(flags: readonly string[]): CliFlags {
-  const options: CliFlags = { help: false, update: false, short: false }
-  for (const flag of flags) {
-    if (flag === '-h' || flag === '--help') {
-      options.help = true
-      continue
-    }
-    if (flag === '--update') {
-      options.update = true
-      continue
-    }
-    if (flag === '--short') {
-      options.short = true
-      continue
-    }
-    throw new Error(`Unknown option: ${flag}`)
-  }
-  return options
-}
-
-function printWhatChanged(
-  changes: Array<{ groupId: string; diff: ReturnType<typeof diffSnapshots> }>,
-  currentSnapshots: Map<string, Awaited<ReturnType<typeof buildSnapshot>>>
-): number {
+function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }>, currentSnapshots: Map<string, BuiltSnapshot>): number {
   const color = createColorizer()
   const currentSummary = summarizeSnapshots(currentSnapshots)
   const changeSummary = summarizeChanges(changes)
@@ -380,7 +453,7 @@ function printWhatChanged(
   return 1
 }
 
-function summarizeChanges(changes: Array<{ groupId: string; diff: ReturnType<typeof diffSnapshots> }>) {
+function summarizeChanges(changes: Array<{ groupId: string; diff: SnapshotDiff }>) {
   let introduced = 0
   let removed = 0
   let severity = 0
@@ -396,7 +469,7 @@ function summarizeChanges(changes: Array<{ groupId: string; diff: ReturnType<typ
   return { introduced, removed, severity, options, workspace }
 }
 
-function summarizeSnapshots(snapshots: Map<string, Awaited<ReturnType<typeof buildSnapshot>>>) {
+function summarizeSnapshots(snapshots: Map<string, BuiltSnapshot>) {
   let rules = 0
   let error = 0
   let warn = 0

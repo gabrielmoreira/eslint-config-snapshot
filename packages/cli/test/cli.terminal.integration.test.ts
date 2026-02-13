@@ -8,26 +8,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 const fixtureRoot = path.resolve('test/fixtures/repo')
 const cliDist = path.resolve('dist/index.js')
 
-const HELP_TEXT = `eslint-config-snapshotter
-
-Usage:
-  eslint-config-snapshotter [command] [options]
-
-Commands:
-  snapshot   Compute and write snapshots to .eslint-config-snapshots/
-  compare    Compare current state against stored snapshots
-  what-changed Compare current state against stored snapshots and print a human summary
-  status     Print minimal status (clean/changes)
-  print      Print aggregated rules (JSON by default)
-  init       Create eslint-config-snapshotter.config.mjs
-  help       Show this help
-
-Options:
-  -h, --help   Show this help
-  --update     Update snapshots (usable without command)
-  --short      Print compact human-readable output (print command only)
-`
-
 let tmpDir = ''
 let repoRoot = ''
 
@@ -68,7 +48,11 @@ describe('cli terminal invocation', () => {
   it('prints help text and exits 0', () => {
     const result = run(['--help'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toBe(HELP_TEXT)
+    expect(result.stdout).toContain('Usage: eslint-config-snapshotter [options] [command]')
+    expect(result.stdout).toContain('check [options]')
+    expect(result.stdout).toContain('update|snapshot')
+    expect(result.stdout).toContain('print [options]')
+    expect(result.stdout).toContain('init')
     expect(result.stderr).toBe('')
   })
 
@@ -76,13 +60,13 @@ describe('cli terminal invocation', () => {
     const result = run(['unknown'])
     expect(result.status).toBe(1)
     expect(result.stdout).toBe('')
-    expect(result.stderr).toBe('Unknown command: unknown\n')
+    expect(result.stderr).toContain("error: unknown command 'unknown'")
   })
 
   it('snapshot succeeds and compare returns clean result', () => {
     const snapshot = run(['snapshot'])
     expect(snapshot.status).toBe(0)
-    expect(snapshot.stdout).toBe('')
+    expect(snapshot.stdout).toContain('Snapshots updated:')
     expect(snapshot.stderr).toBe('')
 
     const compare = run(['compare'])
@@ -251,6 +235,16 @@ no-debugger: off
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Snapshots updated:')
     expect(result.stderr).toBe('')
+  })
+
+  it('supports canonical check and update commands', () => {
+    const update = run(['update'])
+    expect(update.status).toBe(0)
+    expect(update.stdout).toContain('Snapshots updated:')
+
+    const check = run(['check'])
+    expect(check.status).toBe(0)
+    expect(check.stdout).toContain('No snapshot drift detected.')
   })
 
   it('explains missing config when running default command', async () => {
