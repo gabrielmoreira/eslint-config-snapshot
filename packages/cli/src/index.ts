@@ -1,29 +1,21 @@
 #!/usr/bin/env node
 import {
-  discoverWorkspaces,
   findConfigPath,
-  getConfigScaffold,
-  loadConfig,
-  normalizePath
+  loadConfig
 } from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import createDebug from 'debug'
-import fg from 'fast-glob'
-import { existsSync, readFileSync } from 'node:fs'
-import { access, readFile, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import path from 'node:path'
 import { createInterface } from 'node:readline'
 
+import { runInit } from './init.js'
 import {
   countUniqueWorkspaces,
   createColorizer,
   decorateDiffLine,
-  formatCommandDisplayLabel,
   formatDiff,
   formatShortConfig,
   formatShortPrint,
-  formatStoredSnapshotSummary,
   summarizeChanges,
   summarizeSnapshots
 } from './output.js'
@@ -36,10 +28,22 @@ import {
   resolveGroupEslintVersions,
   resolveWorkspaceAssignments,
   type SnapshotDiff,
-  type StoredSnapshot,
   type WorkspaceAssignments,
   writeSnapshots
 } from './runtime.js'
+import {
+  beginRunTimer,
+  endRunTimer,
+  pauseRunTimer,
+  resolveInvocationLabel,
+  resumeRunTimer,
+  runPromptWithPausedTimer,
+  shouldShowRunLogs,
+  writeEslintVersionSummary,
+  writeRunContextHeader,
+  writeSectionTitle,
+  writeSubtleInfo
+} from './ui.js'
 
 
 const SNAPSHOT_DIR = '.eslint-config-snapshot'
@@ -53,16 +57,6 @@ type InitPreset = 'recommended' | 'minimal' | 'full'
 type RootOptions = {
   update?: boolean
 }
-
-type RunTimer = {
-  label: string
-  startedAtMs: number
-  pausedMs: number
-  pauseStartedAtMs: number | undefined
-}
-
-let activeRunTimer: RunTimer | undefined
-let cachedCliVersion: string | undefined
 const debugRun = createDebug('eslint-config-snapshot:run')
 const debugTiming = createDebug('eslint-config-snapshot:timing')
 
@@ -70,6 +64,8 @@ export async function runCli(command: string | undefined, cwd: string, flags: st
   const argv = command ? [command, ...flags] : [...flags]
   return runArgv(argv, cwd)
 }
+
+export { buildRecommendedConfigFromAssignments } from './init.js'
 
 async function runArgv(argv: string[], cwd: string): Promise<number> {
   const invocationLabel = resolveInvocationLabel(argv)
@@ -111,7 +107,15 @@ async function runArgv(argv: string[], cwd: string): Promise<number> {
     debugRun('done label=%s exitCode=%d', invocationLabel, exitCode)
     return exitCode
   } finally {
-    endRunTimer(exitCode)
+    endRunTimer(exitCode, (timer, elapsedMs) => {
+      debugTiming(
+        'command=%s exitCode=%d elapsedMs=%d pausedMs=%d',
+        timer.label,
+        exitCode,
+        elapsedMs,
+        timer.pausedMs
+      )
+    })
   }
 }
 
@@ -217,7 +221,17 @@ Examples:
 `
     )
     .action(async (opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean; showEffective?: boolean }) => {
-      onActionExit(await runInit(cwd, opts))
+      onActionExit(
+        await runInit(cwd, opts, {
+          runPromptWithPausedTimer,
+          writeStdout: (message) => {
+            process.stdout.write(message)
+          },
+          writeStderr: (message) => {
+            process.stderr.write(message)
+          }
+        })
+      )
     })
 
   // Backward-compatible aliases kept out of help.
@@ -399,9 +413,8 @@ async function executeUpdate(cwd: string, printSummary: boolean): Promise<number
   if (printSummary) {
     const summary = summarizeSnapshots(currentSnapshots)
     const workspaceCount = countUniqueWorkspaces(currentSnapshots)
-    const color = createColorizer()
     const eslintVersionsByGroup = shouldShowRunLogs() ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
-    writeSectionTitle('📊 Summary', color)
+    writeSectionTitle('📊 Summary')
     process.stdout.write(
       `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nWorkspaces scanned: ${workspaceCount}.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
     )
@@ -461,77 +474,6 @@ async function executeConfig(cwd: string, format: PrintFormat): Promise<void> {
   process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`)
 }
 
-
-
-async function runInit(
-  cwd: string,
-  opts: { target?: InitTarget; preset?: InitPreset; force?: boolean; yes?: boolean; showEffective?: boolean } = {}
-): Promise<number> {
-  const force = opts.force ?? false
-  const showEffective = opts.showEffective ?? false
-  const existing = await findConfigPath(cwd)
-  if (existing && !force) {
-    process.stderr.write(
-      `Existing config detected at ${existing.path}. Creating another config can cause conflicts. Remove the existing config or rerun with --force.\n`
-    )
-    return 1
-  }
-
-  let target = opts.target
-  let preset = opts.preset
-  if (!opts.yes && !target && !preset && process.stdin.isTTY && process.stdout.isTTY) {
-    const interactive = await askInitPreferences()
-    target = interactive.target
-    preset = interactive.preset
-  }
-
-  const finalTarget = target ?? 'file'
-  const finalPreset = preset ?? 'recommended'
-  const configObject = await resolveInitConfigObject(cwd, finalPreset, Boolean(opts.yes))
-
-  if (showEffective) {
-    process.stdout.write(`Effective config preview:\n${JSON.stringify(configObject, null, 2)}\n`)
-  }
-
-  if (finalTarget === 'package-json') {
-    return runInitInPackageJson(cwd, configObject, force)
-  }
-
-  return runInitInFile(cwd, configObject, force)
-}
-
-async function askInitPreferences(): Promise<{ target: InitTarget; preset: InitPreset }> {
-  const { select } = await import('@inquirer/prompts')
-  const target = await runPromptWithPausedTimer(() => askInitTarget(select))
-  const preset = await runPromptWithPausedTimer(() => askInitPreset(select))
-  return { target, preset }
-}
-
-async function askInitTarget(
-  selectPrompt: (options: { message: string; choices: Array<{ name: string; value: InitTarget }> }) => Promise<InitTarget>
-): Promise<InitTarget> {
-  return selectPrompt({
-    message: 'Select config target',
-    choices: [
-      { name: 'package-json (recommended)', value: 'package-json' },
-      { name: 'file', value: 'file' }
-    ]
-  })
-}
-
-async function askInitPreset(
-  selectPrompt: (options: { message: string; choices: Array<{ name: string; value: InitPreset }> }) => Promise<InitPreset>
-): Promise<InitPreset> {
-  return selectPrompt({
-    message: 'Select preset',
-    choices: [
-      { name: 'recommended (dynamic catch-all "*" + optional static exceptions)', value: 'recommended' },
-      { name: 'minimal', value: 'minimal' },
-      { name: 'full', value: 'full' }
-    ]
-  })
-}
-
 function askQuestion(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
   pauseRunTimer()
   return new Promise((resolve) => {
@@ -554,242 +496,6 @@ async function askYesNo(prompt: string, defaultYes: boolean): Promise<boolean> {
     return answer === 'y' || answer === 'yes'
   } finally {
     rl.close()
-  }
-}
-
-async function runInitInFile(cwd: string, configObject: Record<string, unknown>, force: boolean): Promise<number> {
-  const candidates = [
-    '.eslint-config-snapshot.js',
-    '.eslint-config-snapshot.cjs',
-    '.eslint-config-snapshot.mjs',
-    'eslint-config-snapshot.config.js',
-    'eslint-config-snapshot.config.cjs',
-    'eslint-config-snapshot.config.mjs'
-  ]
-
-  for (const candidate of candidates) {
-    try {
-      await access(path.join(cwd, candidate))
-      if (!force) {
-        process.stderr.write(`Config already exists: ${candidate}\n`)
-        return 1
-      }
-    } catch {
-      // continue
-    }
-  }
-
-  const target = path.join(cwd, 'eslint-config-snapshot.config.mjs')
-  await writeFile(target, toConfigScaffold(configObject), 'utf8')
-  process.stdout.write(`Created ${path.basename(target)}\n`)
-  return 0
-}
-
-async function runInitInPackageJson(cwd: string, configObject: Record<string, unknown>, force: boolean): Promise<number> {
-  const packageJsonPath = path.join(cwd, 'package.json')
-
-  let packageJsonRaw: string
-  try {
-    packageJsonRaw = await readFile(packageJsonPath, 'utf8')
-  } catch {
-    process.stderr.write('package.json not found in current directory.\n')
-    return 1
-  }
-
-  let parsed: Record<string, unknown>
-  try {
-    parsed = JSON.parse(packageJsonRaw) as Record<string, unknown>
-  } catch {
-    process.stderr.write('Invalid package.json (must be valid JSON).\n')
-    return 1
-  }
-
-  if (parsed['eslint-config-snapshot'] !== undefined && !force) {
-      process.stderr.write('Config already exists in package.json: eslint-config-snapshot\n')
-      return 1
-    }
-
-  parsed['eslint-config-snapshot'] = configObject
-  await writeFile(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
-  process.stdout.write('Created config in package.json under "eslint-config-snapshot"\n')
-  return 0
-}
-
-async function resolveInitConfigObject(
-  cwd: string,
-  preset: InitPreset,
-  nonInteractive: boolean
-): Promise<Record<string, unknown>> {
-  if (preset === 'minimal') {
-    return {}
-  }
-
-  if (preset === 'full') {
-    return getFullPresetObject()
-  }
-
-  return buildRecommendedPresetObject(cwd, nonInteractive)
-}
-
-async function buildRecommendedPresetObject(cwd: string, nonInteractive: boolean): Promise<Record<string, unknown>> {
-  const workspaces = await discoverInitWorkspaces(cwd)
-  const useInteractiveGrouping = !nonInteractive && process.stdin.isTTY && process.stdout.isTTY
-  const assignments = useInteractiveGrouping ? await askRecommendedGroupAssignments(workspaces) : new Map<string, number>()
-  return buildRecommendedConfigFromAssignments(workspaces, assignments)
-}
-
-export function buildRecommendedConfigFromAssignments(
-  workspaces: string[],
-  assignments: Map<string, number>
-): Record<string, unknown> {
-  const groupNumbers = [...new Set(assignments.values())].sort((a, b) => a - b)
-  if (groupNumbers.length === 0) {
-    return {}
-  }
-
-  const explicitGroups = groupNumbers.map((number) => ({
-    name: `group-${number}`,
-    match: workspaces.filter((workspace) => assignments.get(workspace) === number)
-  }))
-
-  return {
-    grouping: {
-      mode: 'match',
-      groups: [...explicitGroups, { name: 'default', match: ['**/*'] }]
-    }
-  }
-}
-
-async function discoverInitWorkspaces(cwd: string): Promise<string[]> {
-  const discovered = await discoverWorkspaces({ cwd, workspaceInput: { mode: 'discover' } })
-  if (!(discovered.workspacesRel.length === 1 && discovered.workspacesRel[0] === '.')) {
-    return discovered.workspacesRel
-  }
-
-  const packageJsonPath = path.join(cwd, 'package.json')
-  try {
-    const raw = await readFile(packageJsonPath, 'utf8')
-    const parsed = JSON.parse(raw) as { workspaces?: string[] | { packages?: string[] } }
-    let workspacePatterns: string[] = []
-    if (Array.isArray(parsed.workspaces)) {
-      workspacePatterns = parsed.workspaces
-    } else if (parsed.workspaces && typeof parsed.workspaces === 'object' && Array.isArray(parsed.workspaces.packages)) {
-      workspacePatterns = parsed.workspaces.packages
-    }
-
-    if (workspacePatterns.length === 0) {
-      return discovered.workspacesRel
-    }
-
-    const workspacePackageFiles = await fg(
-      workspacePatterns.map((pattern) => `${trimTrailingSlashes(pattern)}/package.json`),
-      { cwd, onlyFiles: true, dot: true }
-    )
-    const workspaceDirs = [...new Set(workspacePackageFiles.map((entry) => normalizePath(path.dirname(entry))))].sort((a, b) =>
-      a.localeCompare(b)
-    )
-    if (workspaceDirs.length > 0) {
-      return workspaceDirs
-    }
-  } catch {
-    // fallback to discovered output
-  }
-
-  return discovered.workspacesRel
-}
-
-function trimTrailingSlashes(value: string): string {
-  let normalized = value
-  while (normalized.endsWith('/')) {
-    normalized = normalized.slice(0, -1)
-  }
-  return normalized
-}
-
-async function askRecommendedGroupAssignments(workspaces: string[]): Promise<Map<string, number>> {
-  const { checkbox, select } = await import('@inquirer/prompts')
-  process.stdout.write(
-    'Recommended setup: default group "*" is a dynamic catch-all for every discovered workspace.\n'
-  )
-  process.stdout.write('Select only workspaces that should move to explicit static groups.\n')
-  const overrides = await runPromptWithPausedTimer(() =>
-    checkbox<string>({
-      message: 'Choose exception workspaces (leave empty to keep all in default "*"):',
-      choices: workspaces.map((workspace) => ({ name: workspace, value: workspace })),
-      pageSize: Math.min(12, Math.max(4, workspaces.length))
-    })
-  )
-
-  const assignments = new Map<string, number>()
-  let nextGroup = 1
-  for (const workspace of overrides) {
-    const usedGroups = [...new Set(assignments.values())].sort((a, b) => a - b)
-    while (usedGroups.includes(nextGroup)) {
-      nextGroup += 1
-    }
-
-    const selected = await runPromptWithPausedTimer(() =>
-      select<number | 'new'>({
-        message: `Select group for ${workspace}`,
-        choices: [
-          ...usedGroups.map((group) => ({ name: `group-${group}`, value: group })),
-          { name: `create new group (group-${nextGroup})`, value: 'new' }
-        ]
-      })
-    )
-    const groupNumber = selected === 'new' ? nextGroup : selected
-    assignments.set(workspace, groupNumber)
-  }
-
-  return assignments
-}
-
-function toConfigScaffold(configObject: Record<string, unknown>): string {
-  if (Object.keys(configObject).length === 0) {
-    return getConfigScaffold('minimal')
-  }
-
-  return `export default ${JSON.stringify(configObject, null, 2)}\n`
-}
-
-function getFullPresetObject() {
-  return {
-    workspaceInput: { mode: 'discover' },
-    grouping: {
-      mode: 'match',
-      groups: [{ name: 'default', match: ['**/*'] }]
-    },
-    sampling: {
-      maxFilesPerWorkspace: 10,
-      includeGlobs: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
-      excludeGlobs: ['**/node_modules/**', '**/dist/**'],
-      tokenHints: [
-        'chunk',
-        'conf',
-        'config',
-        'container',
-        'controller',
-        'helpers',
-        'mock',
-        'mocks',
-        'presentation',
-        'repository',
-        'route',
-        'routes',
-        'schema',
-        'setup',
-        'spec',
-        'stories',
-        'style',
-        'styles',
-        'test',
-        'type',
-        'types',
-        'utils',
-        'view',
-        'views'
-      ]
-    }
   }
 }
 
@@ -824,7 +530,7 @@ function printWhatChanged(
 
   if (changes.length === 0) {
     process.stdout.write(color.green('✅ Great news: no snapshot drift detected.\n'))
-    writeSectionTitle('📊 Summary', color)
+    writeSectionTitle('📊 Summary')
     process.stdout.write(
       `- 📦 baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- 🗂️ workspaces scanned: ${workspaceCount}\n- 🎚️ severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
     )
@@ -833,14 +539,14 @@ function printWhatChanged(
   }
 
   process.stdout.write(color.red('⚠️ Heads up: snapshot drift detected.\n'))
-  writeSectionTitle('📊 Summary', color)
+  writeSectionTitle('📊 Summary')
   process.stdout.write(
     `- changed groups: ${changes.length}\n- introduced rules: ${changeSummary.introduced}\n- removed rules: ${changeSummary.removed}\n- severity changes: ${changeSummary.severity}\n- options changes: ${changeSummary.options}\n- workspace membership changes: ${changeSummary.workspace}\n- 🗂️ workspaces scanned: ${workspaceCount}\n- current baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- current severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
   )
   writeEslintVersionSummary(eslintVersionsByGroup)
   process.stdout.write('\n')
 
-  writeSectionTitle('🧾 Changes', color)
+  writeSectionTitle('🧾 Changes')
   for (const change of changes) {
     process.stdout.write(color.bold(`group ${change.groupId}\n`))
     const lines = formatDiff(change.groupId, change.diff).split('\n').slice(1)
@@ -853,254 +559,4 @@ function printWhatChanged(
   writeSubtleInfo(UPDATE_HINT)
 
   return 1
-}
-
-function writeSectionTitle(title: string, color: ReturnType<typeof createColorizer>): void {
-  process.stdout.write(`${color.bold(title)}\n`)
-}
-
-
-function writeSubtleInfo(text: string): void {
-  const color = createColorizer()
-  process.stdout.write(color.dim(text))
-}
-
-function resolveInvocationLabel(argv: string[]): string {
-  const commandToken = argv.find((entry) => !entry.startsWith('-'))
-  if (commandToken) {
-    return commandToken
-  }
-  if (argv.includes('-u') || argv.includes('--update')) {
-    return 'update'
-  }
-  if (argv.includes('-h') || argv.includes('--help')) {
-    return 'help'
-  }
-  return 'check'
-}
-
-function shouldShowRunLogs(): boolean {
-  if (process.env.ESLINT_CONFIG_SNAPSHOT_NO_PROGRESS === '1') {
-    return false
-  }
-  return process.stdout.isTTY === true
-}
-
-function beginRunTimer(label: string): void {
-  if (!shouldShowRunLogs()) {
-    activeRunTimer = undefined
-    return
-  }
-
-  activeRunTimer = {
-    label,
-    startedAtMs: Date.now(),
-    pausedMs: 0,
-    pauseStartedAtMs: undefined
-  }
-}
-
-function endRunTimer(exitCode: number): void {
-  if (!activeRunTimer || !shouldShowRunLogs()) {
-    return
-  }
-
-  if (activeRunTimer.pauseStartedAtMs !== undefined) {
-    activeRunTimer.pausedMs += Date.now() - activeRunTimer.pauseStartedAtMs
-    activeRunTimer.pauseStartedAtMs = undefined
-  }
-
-  const elapsedMs = Math.max(0, Date.now() - activeRunTimer.startedAtMs - activeRunTimer.pausedMs)
-  const seconds = (elapsedMs / 1000).toFixed(2)
-  debugTiming(
-    'command=%s exitCode=%d elapsedMs=%d pausedMs=%d',
-    activeRunTimer.label,
-    exitCode,
-    elapsedMs,
-    activeRunTimer.pausedMs
-  )
-  if (exitCode === 0) {
-    writeSubtleInfo(`⏱️ Finished in ${seconds}s\n`)
-  } else {
-    writeSubtleInfo(`⏱️ Finished with errors in ${seconds}s\n`)
-  }
-  activeRunTimer = undefined
-}
-
-function pauseRunTimer(): void {
-  if (!activeRunTimer || activeRunTimer.pauseStartedAtMs !== undefined) {
-    return
-  }
-  activeRunTimer.pauseStartedAtMs = Date.now()
-}
-
-function resumeRunTimer(): void {
-  if (!activeRunTimer || activeRunTimer.pauseStartedAtMs === undefined) {
-    return
-  }
-
-  activeRunTimer.pausedMs += Date.now() - activeRunTimer.pauseStartedAtMs
-  activeRunTimer.pauseStartedAtMs = undefined
-}
-
-async function runPromptWithPausedTimer<T>(prompt: () => Promise<T>): Promise<T> {
-  pauseRunTimer()
-  try {
-    return await prompt()
-  } finally {
-    resumeRunTimer()
-  }
-}
-
-function readCliVersion(): string {
-  if (cachedCliVersion !== undefined) {
-    return cachedCliVersion
-  }
-
-  const envPackageName = process.env.npm_package_name
-  const envPackageVersion = process.env.npm_package_version
-  if (isCliPackageName(envPackageName) && typeof envPackageVersion === 'string' && envPackageVersion.length > 0) {
-    cachedCliVersion = envPackageVersion
-    return cachedCliVersion
-  }
-
-  const scriptPath = process.argv[1]
-  if (!scriptPath) {
-    cachedCliVersion = 'unknown'
-    return cachedCliVersion
-  }
-
-  try {
-    const req = createRequire(path.resolve(scriptPath))
-    const resolvedCliEntry = req.resolve('@eslint-config-snapshot/cli')
-    const resolvedVersion = readVersionFromResolvedEntry(resolvedCliEntry)
-    if (resolvedVersion !== undefined) {
-      cachedCliVersion = resolvedVersion
-      return cachedCliVersion
-    }
-  } catch {
-    // continue to path-walk fallback
-  }
-
-  let current = path.resolve(path.dirname(scriptPath))
-  let fallbackVersion: string | undefined
-  while (true) {
-    const packageJsonPath = path.join(current, 'package.json')
-    if (existsSync(packageJsonPath)) {
-      try {
-        const raw = readFileSync(packageJsonPath, 'utf8')
-        const parsed = JSON.parse(raw) as { name?: string; version?: string }
-        if (typeof parsed.version === 'string' && parsed.version.length > 0) {
-          if (isCliPackageName(parsed.name)) {
-            cachedCliVersion = parsed.version
-            return cachedCliVersion
-          }
-
-          if (fallbackVersion === undefined) {
-            fallbackVersion = parsed.version
-          }
-        }
-      } catch {
-        // continue walking up
-      }
-    }
-
-    const parent = path.dirname(current)
-    if (parent === current) {
-      break
-    }
-    current = parent
-  }
-
-  cachedCliVersion = fallbackVersion ?? 'unknown'
-  return cachedCliVersion
-}
-
-function isCliPackageName(value: string | undefined): boolean {
-  return value === '@eslint-config-snapshot/cli' || value === 'eslint-config-snapshot'
-}
-
-function readVersionFromResolvedEntry(entryAbs: string): string | undefined {
-  let current = path.resolve(path.dirname(entryAbs))
-
-  while (true) {
-    const packageJsonPath = path.join(current, 'package.json')
-    if (existsSync(packageJsonPath)) {
-      try {
-        const raw = readFileSync(packageJsonPath, 'utf8')
-        const parsed = JSON.parse(raw) as { name?: string; version?: string }
-        if (isCliPackageName(parsed.name) && typeof parsed.version === 'string' && parsed.version.length > 0) {
-          return parsed.version
-        }
-      } catch {
-        // continue walking up
-      }
-    }
-
-    const parent = path.dirname(current)
-    if (parent === current) {
-      break
-    }
-    current = parent
-  }
-
-  return undefined
-}
-
-function writeRunContextHeader(
-  cwd: string,
-  commandLabel: string,
-  configPath: string | undefined,
-  storedSnapshots: Map<string, StoredSnapshot>
-): void {
-  if (!shouldShowRunLogs()) {
-    return
-  }
-
-  const color = createColorizer()
-  process.stdout.write(color.bold(`eslint-config-snapshot v${readCliVersion()} • ${formatCommandDisplayLabel(commandLabel)}\n`))
-  process.stdout.write(`📁 Repository: ${cwd}\n`)
-  process.stdout.write(`📁 Baseline: ${formatStoredSnapshotSummary(storedSnapshots)}\n`)
-  process.stdout.write(`⚙️ Config source: ${formatConfigSource(cwd, configPath)}\n`)
-  process.stdout.write('\n')
-}
-
-
-function formatConfigSource(cwd: string, configPath: string | undefined): string {
-  if (!configPath) {
-    return 'built-in defaults'
-  }
-
-  const rel = normalizePath(path.relative(cwd, configPath))
-  if (path.basename(configPath) === 'package.json') {
-    return `${rel} (eslint-config-snapshot field)`
-  }
-
-  return rel
-}
-
-
-function writeEslintVersionSummary(eslintVersionsByGroup: GroupEslintVersions): void {
-  if (!shouldShowRunLogs() || eslintVersionsByGroup.size === 0) {
-    return
-  }
-
-  const allVersions = new Set<string>()
-  for (const versions of eslintVersionsByGroup.values()) {
-    for (const version of versions) {
-      allVersions.add(version)
-    }
-  }
-
-  const sortedAllVersions = [...allVersions].sort((a, b) => a.localeCompare(b))
-  if (sortedAllVersions.length === 1) {
-    process.stdout.write(`- 🧩 eslint runtime: ${sortedAllVersions[0]} (all groups)\n`)
-    return
-  }
-
-  process.stdout.write('- 🧩 eslint runtime by group:\n')
-  const sortedEntries = [...eslintVersionsByGroup.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  for (const [groupName, versions] of sortedEntries) {
-    process.stdout.write(`  - ${groupName}: ${versions.join(', ')}\n`)
-  }
 }

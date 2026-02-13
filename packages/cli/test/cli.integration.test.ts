@@ -84,7 +84,7 @@ describe.sequential('cli integration', () => {
       workspaces: ['packages/ws-a', 'packages/ws-b'],
       rules: {
         eqeqeq: ['error', 'always'],
-        'no-console': ['error'],
+        'no-console': [['error'], ['warn']],
         'no-debugger': ['off']
       }
     })
@@ -130,7 +130,7 @@ describe.sequential('cli integration', () => {
 workspaces (2): packages/ws-a, packages/ws-b
 rules (3): error 2, warn 0, off 1
 eqeqeq: error "always"
-no-console: error
+no-console: [["error"],["warn"]]
 no-debugger: off
 `
     )

@@ -1,7 +1,7 @@
-import type { SnapshotDiff } from '@eslint-config-snapshot/api'
+import type { SnapshotDiff, SnapshotRuleEntry } from '@eslint-config-snapshot/api'
 
 export type RuleEntry = [severity: 'off' | 'warn' | 'error'] | [severity: 'off' | 'warn' | 'error', options: unknown]
-export type RuleObject = Record<string, RuleEntry>
+export type RuleObject = Record<string, SnapshotRuleEntry>
 
 export type SnapshotLike = {
   groupId: string
@@ -126,7 +126,7 @@ export function formatShortPrint(snapshots: SnapshotLike[]): string {
     const severityCounts = { error: 0, warn: 0, off: 0 }
 
     for (const name of ruleNames) {
-      const severity = snapshot.rules[name]?.[0]
+      const severity = getPrimarySeverity(snapshot.rules[name])
       if (severity) {
         severityCounts[severity] += 1
       }
@@ -143,8 +143,15 @@ export function formatShortPrint(snapshots: SnapshotLike[]): string {
       if (!entry) {
         continue
       }
-      const suffix = entry.length > 1 ? ` ${JSON.stringify(entry[1])}` : ''
-      lines.push(`${ruleName}: ${entry[0]}${suffix}`)
+      if (!Array.isArray(entry[0])) {
+        const singleEntry = entry as RuleEntry
+        const suffix = singleEntry.length > 1 ? ` ${JSON.stringify(singleEntry[1])}` : ''
+        lines.push(`${ruleName}: ${singleEntry[0]}${suffix}`)
+        continue
+      }
+
+      const variants = entry as RuleEntry[]
+      lines.push(`${ruleName}: ${JSON.stringify(variants)}`)
     }
   }
 
@@ -227,9 +234,10 @@ export function countRuleSeverities(ruleObjects: RuleObject[]) {
   for (const rulesObject of ruleObjects) {
     for (const entry of Object.values(rulesObject)) {
       rules += 1
-      if (entry[0] === 'error') {
+      const severity = getPrimarySeverity(entry)
+      if (severity === 'error') {
         error += 1
-      } else if (entry[0] === 'warn') {
+      } else if (severity === 'warn') {
         warn += 1
       } else {
         off += 1
@@ -238,4 +246,23 @@ export function countRuleSeverities(ruleObjects: RuleObject[]) {
   }
 
   return { rules, error, warn, off }
+}
+
+function getPrimarySeverity(entry: SnapshotRuleEntry | undefined): 'off' | 'warn' | 'error' | undefined {
+  if (!entry) {
+    return undefined
+  }
+
+  if (!Array.isArray(entry[0])) {
+    return (entry as RuleEntry)[0]
+  }
+
+  const variants = entry as RuleEntry[]
+  if (variants.some((variant) => variant[0] === 'error')) {
+    return 'error'
+  }
+  if (variants.some((variant) => variant[0] === 'warn')) {
+    return 'warn'
+  }
+  return 'off'
 }

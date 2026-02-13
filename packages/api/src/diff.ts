@@ -1,6 +1,7 @@
 import { canonicalizeJson, sortUnique } from './core.js'
 
-import type { SnapshotFile } from './snapshot.js'
+import type { NormalizedRuleEntry } from './extract.js'
+import type { SnapshotFile, SnapshotRuleEntry } from './snapshot.js'
 
 export type RuleSeverityChange = {
   rule: string
@@ -43,37 +44,56 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
   for (const name of beforeNames.filter((entry) => afterNames.includes(entry))) {
     const oldEntry = beforeRules[name]
     const newEntry = afterRules[name]
+    const oldVariants = toVariants(oldEntry)
+    const newVariants = toVariants(newEntry)
 
-    if (oldEntry[0] !== newEntry[0]) {
+    const oldSeverity = summarizeSeveritySet(oldVariants)
+    const newSeverity = summarizeSeveritySet(newVariants)
+    if (oldSeverity !== newSeverity) {
       severityChanges.push({
         rule: name,
-        before: oldEntry[0],
-        after: newEntry[0]
+        before: oldSeverity,
+        after: newSeverity
       })
     }
 
-    const oldOptions = oldEntry.length > 1 ? canonicalizeJson(oldEntry[1]) : undefined
-    const newOptions = newEntry.length > 1 ? canonicalizeJson(newEntry[1]) : undefined
+    const oldSerialized = JSON.stringify(oldVariants)
+    const newSerialized = JSON.stringify(newVariants)
+    if (oldSerialized === newSerialized) {
+      continue
+    }
 
-    if (oldEntry[0] === 'off' || newEntry[0] === 'off') {
+    const oldIsOnlyOff = oldVariants.every((entry) => entry[0] === 'off')
+    const newIsOnlyOff = newVariants.every((entry) => entry[0] === 'off')
+    if (oldIsOnlyOff || newIsOnlyOff) {
       // Treat off->off option removal/addition as removed/introduced config intent.
-      if (oldEntry[0] === 'off' && newEntry[0] === 'off') {
-        if (oldOptions !== undefined && newOptions === undefined) {
+      if (oldIsOnlyOff && newIsOnlyOff) {
+        const oldHasOptions = oldVariants.some((variant) => variant.length > 1)
+        const newHasOptions = newVariants.some((variant) => variant.length > 1)
+        if (oldHasOptions && !newHasOptions) {
           removedRules.push(name)
-        } else if (oldOptions === undefined && newOptions !== undefined) {
+        } else if (!oldHasOptions && newHasOptions) {
           introducedRules.push(name)
+        } else if (oldVariants.length > newVariants.length) {
+          removedRules.push(name)
+        } else if (oldVariants.length < newVariants.length) {
+          introducedRules.push(name)
+        } else {
+          optionChanges.push({
+            rule: name,
+            before: oldVariants,
+            after: newVariants
+          })
         }
       }
       continue
     }
 
-    if (JSON.stringify(oldOptions) !== JSON.stringify(newOptions)) {
-      optionChanges.push({
-        rule: name,
-        before: oldOptions,
-        after: newOptions
-      })
-    }
+    optionChanges.push({
+      rule: name,
+      before: oldVariants,
+      after: newVariants
+    })
   }
 
   const beforeWorkspaces = sortUnique(before.workspaces)
@@ -89,6 +109,20 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
       removed: beforeWorkspaces.filter((ws) => !afterWorkspaces.includes(ws))
     }
   }
+}
+
+function toVariants(entry: SnapshotRuleEntry): NormalizedRuleEntry[] {
+  if (!Array.isArray(entry[0])) {
+    return [canonicalizeJson(entry as NormalizedRuleEntry)]
+  }
+
+  return (entry as NormalizedRuleEntry[]).map((variant) => canonicalizeJson(variant))
+}
+
+function summarizeSeveritySet(variants: NormalizedRuleEntry[]): string {
+  const severityOrder: Array<'error' | 'warn' | 'off'> = ['error', 'warn', 'off']
+  const severities = new Set(variants.map((variant) => variant[0]))
+  return severityOrder.filter((severity) => severities.has(severity)).join('|')
 }
 
 export function hasDiff(diff: SnapshotDiff): boolean {

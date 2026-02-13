@@ -16,7 +16,7 @@ export {
 export type { ExtractedWorkspaceRules, NormalizedRuleEntry, WorkspaceExtractionResult } from './extract.js'
 
 export { aggregateRules, buildSnapshot, readSnapshotFile, writeSnapshotFile } from './snapshot.js'
-export type { SnapshotFile } from './snapshot.js'
+export type { SnapshotFile, SnapshotRuleEntry } from './snapshot.js'
 
 export { diffSnapshots, hasDiff } from './diff.js'
 export type { RuleOptionChange, RuleSeverityChange, SnapshotDiff, WorkspaceMembershipChange } from './diff.js'

@@ -132,7 +132,7 @@ describe('cli terminal invocation', () => {
     const compare = run(['compare'])
     expect(compare.status).toBe(1)
     expect(compare.stdout).toBe(
-      'group: default\noptions changed:\n  - eqeqeq: "always" -> "smart"\nTip: when you intentionally accept changes, run `eslint-config-snapshot --update` to refresh the baseline.\n'
+      'group: default\noptions changed:\n  - eqeqeq: [["error","always"]] -> [["error","smart"]]\nTip: when you intentionally accept changes, run `eslint-config-snapshot --update` to refresh the baseline.\n'
     )
     expect(compare.stderr).toBe('')
   })
@@ -185,7 +185,12 @@ describe('cli terminal invocation', () => {
         "always"
       ],
       "no-console": [
-        "error"
+        [
+          "error"
+        ],
+        [
+          "warn"
+        ]
       ],
       "no-debugger": [
         "off"
@@ -206,7 +211,7 @@ describe('cli terminal invocation', () => {
 workspaces (2): packages/ws-a, packages/ws-b
 rules (3): error 2, warn 0, off 1
 eqeqeq: error "always"
-no-console: error
+no-console: [["error"],["warn"]]
 no-debugger: off
 `
     )

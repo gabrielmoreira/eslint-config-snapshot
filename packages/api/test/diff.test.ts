@@ -55,6 +55,54 @@ describe('diffSnapshots', () => {
 
     const diff = diffSnapshots(before, after)
     expect(diff.removedRules).toContain('offRule')
-    expect(diff.optionChanges).toEqual([{ rule: 'configured', before: { allow: false }, after: { allow: true } }])
+    expect(diff.optionChanges).toEqual([
+      {
+        rule: 'configured',
+        before: [['error', { allow: false }]],
+        after: [['error', { allow: true }]]
+      }
+    ])
+  })
+
+  it('tracks severity-set and variant changes for multi-variant rules', () => {
+    const before = {
+      formatVersion: 1 as const,
+      groupId: 'default',
+      workspaces: ['packages/a'],
+      rules: {
+        mixed: [
+          ['error', { mode: 'strict' }],
+          ['warn', { mode: 'legacy' }]
+        ] as const
+      }
+    }
+
+    const after = {
+      formatVersion: 1 as const,
+      groupId: 'default',
+      workspaces: ['packages/a'],
+      rules: {
+        mixed: [
+          ['error', { mode: 'strict' }],
+          ['off']
+        ] as const
+      }
+    }
+
+    const diff = diffSnapshots(before, after)
+    expect(diff.severityChanges).toEqual([{ rule: 'mixed', before: 'error|warn', after: 'error|off' }])
+    expect(diff.optionChanges).toEqual([
+      {
+        rule: 'mixed',
+        before: [
+          ['error', { mode: 'strict' }],
+          ['warn', { mode: 'legacy' }]
+        ],
+        after: [
+          ['error', { mode: 'strict' }],
+          ['off']
+        ]
+      }
+    ])
   })
 })

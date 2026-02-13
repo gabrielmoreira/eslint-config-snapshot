@@ -38,7 +38,7 @@ describe('snapshot', () => {
 
     expect(Object.fromEntries(result.entries())).toEqual({
       eqeqeq: ['error', 'always'],
-      'no-console': ['error']
+      'no-console': [['error'], ['warn']]
     })
   })
 
@@ -49,7 +49,10 @@ describe('snapshot', () => {
     ])
 
     expect(Object.fromEntries(result.entries())).toEqual({
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+      'no-unused-vars': [
+        ['error', { argsIgnorePattern: '^_' }],
+        ['warn', { args: 'none' }]
+      ]
     })
   })
 
@@ -60,7 +63,10 @@ describe('snapshot', () => {
     ])
 
     expect(Object.fromEntries(result.entries())).toEqual({
-      'no-restricted-imports': ['error', { paths: ['a'] }]
+      'no-restricted-imports': [
+        ['error', { paths: ['a'] }],
+        ['error', { paths: ['b'] }]
+      ]
     })
   })
 
@@ -71,7 +77,28 @@ describe('snapshot', () => {
     ])
 
     expect(Object.fromEntries(result.entries())).toEqual({
-      '@typescript-eslint/consistent-type-imports': ['warn', { fixStyle: 'inline-type-imports' }]
+      '@typescript-eslint/consistent-type-imports': [
+        ['warn', { fixStyle: 'inline-type-imports' }],
+        ['warn']
+      ]
+    })
+  })
+
+  it('keeps multiple severity and option combinations deterministically', () => {
+    const result = aggregateRules([
+      new Map([['sample/rule', ['warn', { b: 1 }] as const]]),
+      new Map([['sample/rule', ['error', { z: true }] as const]]),
+      new Map([['sample/rule', ['warn', { a: 1 }] as const]]),
+      new Map([['sample/rule', ['off'] as const]])
+    ])
+
+    expect(Object.fromEntries(result.entries())).toEqual({
+      'sample/rule': [
+        ['error', { z: true }],
+        ['warn', { a: 1 }],
+        ['warn', { b: 1 }],
+        ['off']
+      ]
     })
   })
 })

@@ -1651,3 +1651,33 @@ Result:
 - Added `packages/cli/test/output.unit.test.ts` and `packages/cli/test/runtime.unit.test.ts`.
 - Full quality gates pass after refactor:
   - `pnpm nx run-many -t build lint typecheck test`.
+
+## 2026-02-13 - Request 078
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Preserve all observed rule configuration combinations (`severity + options`) instead of keeping only one winning entry.
+- Complete the CLI refactor with clearer responsibility boundaries beyond the first split.
+
+Key decisions:
+
+- Updated API snapshot model to support per-rule variant arrays when multiple combinations are observed.
+- Kept compact single-entry encoding when only one combination exists, to avoid unnecessary verbosity.
+- Implemented deterministic variant uniqueness and ordering for stable snapshots and diffs.
+- Updated diff logic to compare variant sets and still keep existing off-rule intent handling.
+- Continued CLI decomposition by moving initialization flow to `packages/cli/src/init.ts` and runtime presentation/timing utilities to `packages/cli/src/ui.ts`.
+
+Result:
+
+- Snapshot output now preserves multiple runtime combinations per rule deterministically.
+- CLI architecture now has clearer module boundaries:
+  - `index.ts` command wiring/orchestration
+  - `runtime.ts` extraction/comparison orchestration
+  - `output.ts` formatting/render helpers
+  - `init.ts` init workflow
+  - `ui.ts` run header/progress/timing presentation
+- API and CLI tests were updated for the new snapshot encoding and now pass.
+- Full quality gates pass:
+  - `pnpm nx run-many -t build lint typecheck test`.

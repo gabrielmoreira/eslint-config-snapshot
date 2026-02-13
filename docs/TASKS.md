@@ -25,6 +25,8 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Preserve multiple observed `severity+options` rule combinations in snapshot output with deterministic variant ordering.
+- [x] Split additional CLI responsibilities into dedicated `init` and `ui` modules to reduce `index.ts` orchestration overload.
 - [x] Split CLI internals into `output` and `runtime` modules with dedicated unit tests while keeping command behavior stable.
 - [x] Clarify `init` default-group (`*`) meaning in CLI prompts and docs.
 - [x] Migrate init interactive flow to Inquirer select/checkbox prompts.
