@@ -380,3 +380,26 @@ Result:
 
 - First-run output now provides immediate context on what was detected before baseline confirmation.
 - CLI tests remain green after output contract updates.
+
+## 2026-02-13 - Request 019
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Keep console tip styling consistent by using the same subtle visual treatment for all `Tip:` lines.
+- Restrict baseline refresh reminder tip visibility to only two situations:
+  - when a new baseline is created
+  - when drift is detected
+
+Key decisions:
+
+- Reused the same subtle output path for update reminder tips (`dim` style when terminal supports it).
+- Removed update reminder tip from clean/no-change paths (`check` clean, `status clean`, `compare` clean).
+- Kept update reminder visible for drift and baseline-creation flows only.
+
+Result:
+
+- Tip styling is now consistent and low-noise.
+- Update reminder appears only in high-signal moments.
+- CLI output assertions were updated and tests pass.

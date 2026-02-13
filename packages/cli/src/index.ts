@@ -245,7 +245,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
         await writeSnapshots(cwd, currentSnapshots)
         const summary = summarizeSnapshots(currentSnapshots)
         process.stdout.write(`Baseline created: ${summary.groups} groups, ${summary.rules} rules.\n`)
-        process.stdout.write(UPDATE_HINT)
+        writeSubtleInfo(UPDATE_HINT)
         return 0
       }
     }
@@ -262,7 +262,8 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
       return 0
     }
 
-    process.stdout.write(`changes\n${UPDATE_HINT}`)
+    process.stdout.write('changes\n')
+    writeSubtleInfo(UPDATE_HINT)
     return 1
   }
 
@@ -275,7 +276,7 @@ async function executeCheck(cwd: string, format: CheckFormat, defaultInvocation 
     for (const change of changes) {
       process.stdout.write(`${formatDiff(change.groupId, change.diff)}\n`)
     }
-    process.stdout.write(UPDATE_HINT)
+    writeSubtleInfo(UPDATE_HINT)
 
     return 1
   }
@@ -662,7 +663,7 @@ function printWhatChanged(changes: Array<{ groupId: string; diff: SnapshotDiff }
     }
     process.stdout.write('\n')
   }
-  process.stdout.write(UPDATE_HINT)
+  writeSubtleInfo(UPDATE_HINT)
 
   return 1
 }
