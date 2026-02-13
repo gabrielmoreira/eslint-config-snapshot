@@ -1,4 +1,7 @@
 {
   "name": "ws-b",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eslint": "8.56.0"
+  }
 }

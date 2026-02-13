@@ -79,6 +79,7 @@ Thumbs.db
 # =========================
 .pnp.cjs
 .pnp.loader.mjs
+packages/cli/test/fixtures/npm-isolated-template/**/package-lock.json
 
 # =========================
 # Cache directories

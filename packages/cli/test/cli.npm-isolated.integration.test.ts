@@ -1,4 +1,4 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -39,11 +39,13 @@ describe('cli npm-isolated integration', () => {
     const wsA = path.join(fixtureRoot, 'packages/ws-a')
     const wsB = path.join(fixtureRoot, 'packages/ws-b')
 
-    const installA = run(npmCmd(), ['install', '--no-audit', '--no-fund', '../../tools/eslint-8.57.1'], wsA)
+    const installA = run(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsA)
     expect(installA.status, `${installA.stdout}\n${installA.stderr}`).toBe(0)
+    await access(path.join(wsA, 'node_modules/eslint/package.json'))
 
-    const installB = run(npmCmd(), ['install', '--no-audit', '--no-fund', '../../tools/eslint-8.56.0'], wsB)
+    const installB = run(npmCmd(), ['install', '--no-audit', '--no-fund', '--workspaces=false'], wsB)
     expect(installB.status, `${installB.stdout}\n${installB.stderr}`).toBe(0)
+    await access(path.join(wsB, 'node_modules/eslint/package.json'))
   }, 180000)
 
   afterAll(async () => {

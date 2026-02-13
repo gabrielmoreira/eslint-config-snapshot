@@ -5,7 +5,10 @@
     "packages/*"
   ],
   "eslint-config-snapshotter": {
-    "workspaceInput": { "mode": "discover" },
+    "workspaceInput": {
+      "mode": "manual",
+      "workspaces": ["packages/ws-a", "packages/ws-b"]
+    },
     "grouping": {
       "mode": "match",
       "groups": [{ "name": "default", "match": ["**/*"] }]
