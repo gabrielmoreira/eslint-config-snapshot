@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 0.11.0
+
+### Minor Changes
+
+- b3c8406: Automate root version synchronization during release versioning and improve token-hint sampling configuration clarity.
+
 ## 0.10.0
 
 ### Minor Changes
