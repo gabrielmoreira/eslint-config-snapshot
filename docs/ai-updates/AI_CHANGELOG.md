@@ -571,3 +571,25 @@ Result:
 
 - `init --help` now provides clearer onboarding and conflict-resolution guidance.
 - CLI help behavior is now validated by tests.
+
+## 2026-02-13 - Request 027
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Validate `SPEC.md` against implemented behavior via reverse engineering and update the spec where mismatches exist.
+
+Key decisions:
+
+- Updated `docs/SPEC.md` to reflect current shipped behavior in these areas:
+  - deterministic constrained `cosmiconfig` search behavior
+  - explicit `init` options (`--target`, `--preset`, `--force`, `--yes`)
+  - baseline reminder tip visibility only in high-signal contexts
+  - interactive baseline prompt scope for default/summary flows
+  - `init` conflict-prevention behavior and numbered interactive prompts
+
+Result:
+
+- `SPEC.md` now matches runtime and tested CLI behavior more closely.
+- The specification is clearer about current guardrails and UX contracts.

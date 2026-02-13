@@ -77,6 +77,7 @@ Supported configuration prefixes and entry points:
 - `package.json` field: `eslint-config-snapshot`
 
 Search order is `cosmiconfig` default behavior.
+Search is constrained for determinism through an explicit `searchPlaces` list and bounded root resolution.
 
 Config exports may be:
 
@@ -172,16 +173,31 @@ Options:
 - `-u, --update` for default invocation update flow
 - `check --format <summary|status|diff>`
 - `print --format <json|short>` and `print --short`
+- `init --target <file|package-json>`
+- `init --preset <minimal|full>`
+- `init -f, --force`
+- `init -y, --yes`
 
 Default-run behavior requirements:
 
 - If no explicit config is found, continue using built-in defaults and show a non-blocking tip about optional `init`.
 - If no baseline snapshot exists:
-  - interactive terminal: ask whether current state should be saved as baseline
+  - interactive terminal (default invocation or summary check): ask whether current state should be saved as baseline
   - non-interactive execution: exit non-zero with `--update` guidance
-- Check outputs should include a reminder that baseline refresh is done via `--update`.
+- Baseline refresh reminder tip (`--update`) should appear in high-signal contexts (drift detected, `status=changes`, or baseline creation), not in clean outputs.
 
 CLI parsing/help generation should be command-metadata driven (for example via `commander`) and avoid duplicated hardcoded help blocks.
+
+`init` conflict protection requirements:
+
+- If an existing config is detected and `--force` is not provided, `init` must fail before writing any files and explain potential config conflicts.
+- With `--force`, `init` may proceed with the selected target.
+
+`init` interactive UX requirements:
+
+- target selection should support numbered choices (`1) package-json`, `2) file`)
+- preset selection should support numbered choices (`1) minimal`, `2) full`)
+- interactive mode may accept equivalent text aliases
 
 ---
 
