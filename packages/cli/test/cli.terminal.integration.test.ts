@@ -275,21 +275,10 @@ no-debugger: off
 
     const packageJsonRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8')
     const parsed = JSON.parse(packageJsonRaw) as {
-      'eslint-config-snapshot'?: {
-        workspaceInput?: { mode?: string; workspaces?: string[] }
-        grouping?: { mode?: string; groups?: Array<{ name: string; match: string[] }> }
-        sampling?: unknown
-      }
+      'eslint-config-snapshot'?: Record<string, unknown>
     }
 
-    expect(parsed['eslint-config-snapshot']?.workspaceInput).toEqual({
-      mode: 'discover'
-    })
-    expect(parsed['eslint-config-snapshot']?.grouping).toEqual({
-      mode: 'match',
-      groups: [{ name: 'default', match: ['**/*'] }]
-    })
-    expect(parsed['eslint-config-snapshot']?.sampling).toBeUndefined()
+    expect(parsed['eslint-config-snapshot']).toEqual({})
   })
 
   it('init recommended --show-effective prints preview without explicit sampling block', async () => {
@@ -303,8 +292,9 @@ no-debugger: off
     const result = run(['init', '--yes', '--target', 'package-json', '--preset', 'recommended', '--show-effective'])
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Effective config preview:')
-    expect(result.stdout).toContain('"workspaceInput"')
-    expect(result.stdout).toContain('"grouping"')
+    expect(result.stdout).toContain('{}')
+    expect(result.stdout).not.toContain('"workspaceInput"')
+    expect(result.stdout).not.toContain('"grouping"')
     expect(result.stdout).not.toContain('"sampling"')
   })
 

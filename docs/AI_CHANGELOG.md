@@ -1035,3 +1035,27 @@ Result:
 
 - Eliminated cross-file fixture races that caused intermittent pre-push failures (`EBUSY` / `ENOENT`) on Windows.
 - Pre-push test gate now runs reliably with the updated integration setup.
+
+## 2026-02-13 - Request 049
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure recommended init does not persist workspace discovery configuration and keeps dynamic behavior as the default.
+- Generate static config only for explicit group overrides, with dynamic catch-all fallback for the rest.
+
+Key decisions:
+
+- Updated recommended config generation:
+  - no `workspaceInput` persisted
+  - no `sampling` persisted
+  - if no overrides are selected, output is `{}` (fully dynamic)
+  - if overrides exist, output contains only `grouping.mode=match` with ordered static `group-N` entries and trailing dynamic catch-all `default: ['**/*']`
+- Added direct tests for config generation logic to lock this behavior.
+- Updated terminal init assertions for `--yes --preset recommended` to expect `{}`.
+
+Result:
+
+- Recommended init now avoids duplicated workspace declarations and remains aligned with repository-native workspace resolution (npm/yarn/pnpm/etc.).
+- Static grouping is only introduced when users explicitly opt into exceptions.

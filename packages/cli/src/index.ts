@@ -765,15 +765,24 @@ async function buildRecommendedPresetObject(cwd: string, nonInteractive: boolean
   const workspaces = await discoverInitWorkspaces(cwd)
   const useInteractiveGrouping = !nonInteractive && process.stdin.isTTY && process.stdout.isTTY
   const assignments = useInteractiveGrouping ? await askRecommendedGroupAssignments(workspaces) : new Map<string, number>()
-  const groupNumbers = [...new Set(assignments.values())].sort((a, b) => a - b)
+  return buildRecommendedConfigFromAssignments(workspaces, assignments)
+}
 
-  const explicitGroups = groupNumbers.map((number) => {
-    const matched = workspaces.filter((workspace) => assignments.get(workspace) === number)
-    return { name: `group-${number}`, match: matched }
-  })
+export function buildRecommendedConfigFromAssignments(
+  workspaces: string[],
+  assignments: Map<string, number>
+): Record<string, unknown> {
+  const groupNumbers = [...new Set(assignments.values())].sort((a, b) => a - b)
+  if (groupNumbers.length === 0) {
+    return {}
+  }
+
+  const explicitGroups = groupNumbers.map((number) => ({
+    name: `group-${number}`,
+    match: workspaces.filter((workspace) => assignments.get(workspace) === number)
+  }))
 
   return {
-    workspaceInput: { mode: 'discover' },
     grouping: {
       mode: 'match',
       groups: [...explicitGroups, { name: 'default', match: ['**/*'] }]

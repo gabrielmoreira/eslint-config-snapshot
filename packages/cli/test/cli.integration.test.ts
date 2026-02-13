@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { parseInitPresetChoice, parseInitTargetChoice, runCli } from '../src/index.js'
+import { buildRecommendedConfigFromAssignments, parseInitPresetChoice, parseInitTargetChoice, runCli } from '../src/index.js'
 
 const fixtureTemplateRoot = path.resolve('test/fixtures/repo')
 let tmpDir = ''
@@ -64,6 +64,24 @@ describe.sequential('cli integration', () => {
     expect(parseInitPresetChoice('3')).toBe('full')
     expect(parseInitPresetChoice('full')).toBe('full')
     expect(parseInitPresetChoice('invalid')).toBeUndefined()
+  })
+
+  it('builds recommended config as dynamic-only when no static overrides are selected', () => {
+    const config = buildRecommendedConfigFromAssignments(['packages/ws-a', 'packages/ws-b'], new Map())
+    expect(config).toEqual({})
+  })
+
+  it('builds recommended config with static overrides plus dynamic catch-all', () => {
+    const config = buildRecommendedConfigFromAssignments(['packages/ws-a', 'packages/ws-b'], new Map([['packages/ws-b', 2]]))
+    expect(config).toEqual({
+      grouping: {
+        mode: 'match',
+        groups: [
+          { name: 'group-2', match: ['packages/ws-b'] },
+          { name: 'default', match: ['**/*'] }
+        ]
+      }
+    })
   })
 
   it('snapshot writes deterministic snapshot files', async () => {

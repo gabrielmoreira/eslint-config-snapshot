@@ -204,6 +204,7 @@ CLI parsing/help generation should be command-metadata driven (for example via `
 - recommended preset should support checkbox selection of non-default workspaces and numeric group assignment for those selections
 - recommended preset should keep a runtime-discovered default group (`**/*`) and place numbered static groups before it (first match wins)
 - recommended preset output should avoid writing explicit sampling config unless user chooses `full`
+- when no static overrides are selected in recommended preset, generated config should remain empty (`{}`) to preserve fully dynamic behavior
 
 ---
 
