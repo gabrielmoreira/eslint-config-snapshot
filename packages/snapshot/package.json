@@ -1,0 +1,19 @@
+{
+  "name": "@eslint-config-snapshotter/snapshot",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "dependencies": {
+    "@eslint-config-snapshotter/core": "workspace:*",
+    "@eslint-config-snapshotter/extract": "workspace:*"
+  }
+}

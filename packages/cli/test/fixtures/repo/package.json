@@ -1,0 +1,7 @@
+{
+  "name": "fixture-repo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

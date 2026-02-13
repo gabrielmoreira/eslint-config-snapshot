@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@eslint-config-snapshotter/core": ["packages/core/src/index.ts"],
+      "@eslint-config-snapshotter/workspace": ["packages/workspace/src/index.ts"],
+      "@eslint-config-snapshotter/sampling": ["packages/sampling/src/index.ts"],
+      "@eslint-config-snapshotter/extract": ["packages/extract/src/index.ts"],
+      "@eslint-config-snapshotter/snapshot": ["packages/snapshot/src/index.ts"],
+      "@eslint-config-snapshotter/diff": ["packages/diff/src/index.ts"],
+      "@eslint-config-snapshotter/config": ["packages/config/src/index.ts"],
+      "@eslint-config-snapshotter/api": ["packages/api/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

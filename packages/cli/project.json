@@ -1,0 +1,35 @@
+{
+  "name": "cli",
+  "sourceRoot": "packages/cli/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/cli",
+        "command": "pnpm tsup src/index.ts --format esm,cjs --out-dir dist --clean"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/cli",
+        "command": "pnpm tsc -p tsconfig.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/cli",
+        "command": "pnpm eslint ."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/cli",
+        "command": "pnpm vitest run"
+      }
+    }
+  }
+}
+
