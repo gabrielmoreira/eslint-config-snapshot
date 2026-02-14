@@ -121,10 +121,11 @@ describe.sequential('cli integration', () => {
     const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli('update', fixtureRoot)
     expect(code).toBe(0)
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Warning: skipped workspace packages/ws-b (group: default)'))
+    expect(writeSpy).toHaveBeenCalledWith(
+      expect.stringContaining('workspace(s) were skipped because ESLint auto-discovery could not extract an effective config')
+    )
     expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('excludeGlobs'))
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining("'packages/ws-b/**'"))
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Skipped workspaces total: 1'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('packages/your-workspace/**'))
 
     const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
     const snapshot = JSON.parse(snapshotRaw)
@@ -220,7 +221,7 @@ no-debugger: off
     const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli(undefined, fixtureRoot, ['--update'])
     expect(code).toBe(0)
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('✅ Baseline updated.'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('baseline was successfully created'))
   })
 
   it('supports canonical check and update commands', async () => {

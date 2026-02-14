@@ -81,7 +81,7 @@ describe('cli terminal invocation', () => {
   it('snapshot succeeds and compare returns clean result', () => {
     const snapshot = run(['snapshot'])
     expect(snapshot.status).toBe(0)
-    expect(snapshot.stdout).toContain('✅ Baseline updated.')
+    expect(snapshot.stdout).toContain('baseline was successfully created')
     expect(snapshot.stderr).toBe('')
 
     const compare = run(['compare'])
@@ -384,7 +384,7 @@ no-debugger: off
   it('updates snapshots with --update without command', () => {
     const result = run(['--update'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('✅ Baseline updated.')
+    expect(result.stdout).toContain('baseline was successfully created')
     expect(result.stderr).toBe('')
   })
 
@@ -403,7 +403,7 @@ no-debugger: off
   it('supports canonical check and update commands', () => {
     const update = run(['update'])
     expect(update.status).toBe(0)
-    expect(update.stdout).toContain('✅ Baseline updated.')
+    expect(update.stdout).toContain('baseline was successfully created')
 
     const check = run(['check'])
     expect(check.status).toBe(0)

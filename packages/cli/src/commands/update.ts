@@ -31,7 +31,6 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
       },
       onWorkspaceSkipped: (skipped) => {
         skippedWorkspaces.push(skipped)
-        writeSkippedWorkspaceWarning(terminal, cwd, skipped)
       }
     })
   } catch (error: unknown) {
@@ -54,7 +53,8 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
     const summary = summarizeSnapshots(currentSnapshots)
     const workspaceCount = countUniqueWorkspaces(currentSnapshots)
     const eslintVersionsByGroup = terminal.showProgress ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
-    terminal.success('✅ Baseline updated.\n')
+    const baselineAction = storedSnapshots.size === 0 ? 'created' : 'updated'
+    terminal.success(`✅ Great news: baseline was successfully ${baselineAction} for your project.\n`)
     terminal.section('📊 Summary')
     terminal.write(formatBaselineSummaryLines(summary, workspaceCount))
     writeEslintVersionSummary(terminal, eslintVersionsByGroup)
@@ -82,17 +82,10 @@ function writeSkippedWorkspaceSummary(
     return
   }
 
-  terminal.subtle(`Skipped workspaces total: ${skippedWorkspaces.length}\n`)
-  const suggestedExcludeGlobs = buildSuggestedExcludeGlobs(skippedWorkspaces)
-  terminal.subtle(formatScopedConfigHint(cwd, configPath, suggestedExcludeGlobs))
-}
-
-function writeSkippedWorkspaceWarning(terminal: TerminalIO, cwd: string, skippedWorkspace: SkippedWorkspace): void {
-  const compactReason = compactSkippedReason(skippedWorkspace.reason, cwd)
-  const shortenedReason = compactReason.length > 120 ? `${compactReason.slice(0, 117)}...` : compactReason
   terminal.warning(
-    `Warning: skipped workspace ${skippedWorkspace.workspaceRel} (group: ${skippedWorkspace.groupId}) due to extraction failure: ${shortenedReason}\n`
+    `Heads up: ${skippedWorkspaces.length} workspace(s) were skipped because ESLint auto-discovery could not extract an effective config for them.\n`
   )
+  terminal.subtle(formatScopedConfigHint(cwd, configPath))
 }
 
 function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {
@@ -104,22 +97,12 @@ function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: s
   terminal.subtle(`Auto-discovered workspaces (${workspacesRel.length}): ${workspacesRel.join(', ')}\n`)
 }
 
-function buildSuggestedExcludeGlobs(skippedWorkspaces: SkippedWorkspace[]): string[] {
-  const unique = new Set<string>()
-  for (const skippedWorkspace of skippedWorkspaces) {
-    const normalizedWorkspace = trimTrailingSlashes(skippedWorkspace.workspaceRel.replaceAll('\\', '/'))
-    unique.add(normalizedWorkspace === '' || normalizedWorkspace === '.' ? '**/*' : `${normalizedWorkspace}/**`)
-  }
-  return [...unique].sort((a, b) => a.localeCompare(b))
-}
-
-function formatScopedConfigHint(cwd: string, configPath: string | undefined, excludeGlobs: string[]): string {
-  const lines = excludeGlobs.map((glob) => `      '${glob}',`).join('\n')
+function formatScopedConfigHint(cwd: string, configPath: string | undefined): string {
   if (configPath && path.basename(configPath) === 'package.json') {
     return `Tip: if these workspaces are intentionally out of scope, add this under "eslint-config-snapshot" in package.json:\n{
   "sampling": {
     "excludeGlobs": [
-${lines}
+      "packages/your-workspace/**"
     ]
   }
 }\n`
@@ -130,7 +113,7 @@ ${lines}
     return `Tip: if these workspaces are intentionally out of scope, add this in ${relConfigPath}:\n{
   sampling: {
     excludeGlobs: [
-${lines}
+      'packages/your-workspace/**'
     ]
   }
 }\n`
@@ -139,23 +122,8 @@ ${lines}
   return `Tip: if these workspaces are intentionally out of scope, run \`eslint-config-snapshot init\` and add this config:\n{
   sampling: {
     excludeGlobs: [
-${lines}
+      'packages/your-workspace/**'
     ]
   }
 }\n`
-}
-
-function trimTrailingSlashes(value: string): string {
-  let result = value
-  while (result.endsWith('/')) {
-    result = result.slice(0, -1)
-  }
-  return result
-}
-
-function compactSkippedReason(reason: string, cwd: string): string {
-  const cwdAbs = path.resolve(cwd)
-  const cwdPosix = cwdAbs.replaceAll('\\', '/')
-  const cwdWin = cwdAbs.replaceAll('/', '\\')
-  return reason.replaceAll(cwdAbs, '.').replaceAll(cwdPosix, '.').replaceAll(cwdWin, '.')
 }
