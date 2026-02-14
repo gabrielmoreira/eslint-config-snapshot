@@ -1,25 +1,29 @@
-import { DEFAULT_CONFIG, findConfigPath, loadConfig, type SnapshotConfig } from '@eslint-config-snapshot/api'
+import { loadConfig } from '@eslint-config-snapshot/api'
 
 import { formatShortConfig, formatShortPrint } from '../formatters.js'
-import { writeRunContextHeader } from '../run-context.js'
-import { computeCurrentSnapshots, loadStoredSnapshots, resolveWorkspaceAssignments, type WorkspaceAssignments } from '../runtime.js'
+import { resolveWorkspaceAssignments, type WorkspaceAssignments } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
+import { prepareSnapshotExecution } from './snapshot-executor.js'
 
 export type PrintFormat = 'json' | 'short'
 
-export async function executePrint(cwd: string, terminal: TerminalIO, snapshotDir: string, format: PrintFormat): Promise<void> {
-  const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd, snapshotDir)
-  writeRunContextHeader(terminal, cwd, `print:${format}`, foundConfig?.path, storedSnapshots)
-  if (terminal.showProgress) {
-    terminal.subtle('🔎 Checking current ESLint configuration...\n')
+export async function executePrint(cwd: string, terminal: TerminalIO, snapshotDir: string, format: PrintFormat): Promise<number> {
+  const prepared = await prepareSnapshotExecution({
+    cwd,
+    snapshotDir,
+    terminal,
+    commandLabel: `print:${format}`,
+    progressMessage: '🔎 Checking current ESLint configuration...\n'
+  })
+  if (!prepared.ok) {
+    return prepared.exitCode
   }
-  const allowWorkspaceExtractionFailure = !foundConfig || isDefaultEquivalentConfig(foundConfig.config)
-  const currentSnapshots = await computeCurrentSnapshots(cwd, { allowWorkspaceExtractionFailure })
+
+  const { currentSnapshots } = prepared
 
   if (format === 'short') {
     terminal.write(formatShortPrint([...currentSnapshots.values()]))
-    return
+    return 0
   }
 
   const output = [...currentSnapshots.values()].map((snapshot) => ({
@@ -27,15 +31,22 @@ export async function executePrint(cwd: string, terminal: TerminalIO, snapshotDi
     rules: snapshot.rules
   }))
   terminal.write(`${JSON.stringify(output, null, 2)}\n`)
+  return 0
 }
 
-export async function executeConfig(cwd: string, terminal: TerminalIO, snapshotDir: string, format: PrintFormat): Promise<void> {
-  const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd, snapshotDir)
-  writeRunContextHeader(terminal, cwd, `config:${format}`, foundConfig?.path, storedSnapshots)
-  if (terminal.showProgress) {
-    terminal.subtle('⚙️ Resolving effective runtime configuration...\n')
+export async function executeConfig(cwd: string, terminal: TerminalIO, snapshotDir: string, format: PrintFormat): Promise<number> {
+  const prepared = await prepareSnapshotExecution({
+    cwd,
+    snapshotDir,
+    terminal,
+    commandLabel: `config:${format}`,
+    progressMessage: '⚙️ Resolving effective runtime configuration...\n'
+  })
+  if (!prepared.ok) {
+    return prepared.exitCode
   }
+
+  const { foundConfig } = prepared
   const config = await loadConfig(cwd)
   const resolved: WorkspaceAssignments = await resolveWorkspaceAssignments(cwd, config)
   const payload = {
@@ -52,12 +63,9 @@ export async function executeConfig(cwd: string, terminal: TerminalIO, snapshotD
 
   if (format === 'short') {
     terminal.write(formatShortConfig(payload))
-    return
+    return 0
   }
 
   terminal.write(`${JSON.stringify(payload, null, 2)}\n`)
-}
-
-function isDefaultEquivalentConfig(config: SnapshotConfig): boolean {
-  return JSON.stringify(config) === JSON.stringify(DEFAULT_CONFIG)
+  return 0
 }

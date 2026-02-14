@@ -2358,3 +2358,28 @@ Result:
 
 - Post-init equivalence validation can run on OSS repos with partial extraction failures without crashing `print`.
 - CLI command behavior is now consistent across `check`, `update`, and `print` for zero-config/default-equivalent cases.
+
+## 2026-02-14 - Request 110
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve CLI architecture and code reuse because repeated issues across commands/options indicated weak reuse boundaries.
+
+Key decisions:
+
+- Introduced a shared command executor module (`snapshot-executor`) to centralize:
+  - config/source discovery,
+  - run-context header/progress/tip handling,
+  - tolerant extraction policy resolution,
+  - current snapshot computation with discovered/skipped workspace capture,
+  - default-discovery failure handling.
+- Reused this executor in `check`, `update`, `print`, and `config`.
+- Consolidated discovered-workspaces summary writer in shared command helper.
+- Preserved existing user-facing behavior while removing duplicate logic branches that were diverging over time.
+
+Result:
+
+- Command behavior is now implemented through a single reusable preparation flow instead of repeated per-command variants.
+- Risk of future regressions caused by option/path inconsistencies across commands was reduced.

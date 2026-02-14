@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Centralize shared command execution flow (`check`, `update`, `print`, `config`) with a reusable snapshot-preparation executor to avoid behavior drift across options.
 - [x] Add explicit skipped-workspace reporting (with reason) in CLI logs for tolerant zero-config extraction mode.
 - [x] Make zero-config extraction tolerant to workspace-level ESLint failures and continue with healthy workspaces.
 - [x] Enforce explicit schedule safety guard so OSS nightly runs only execute on `main`.

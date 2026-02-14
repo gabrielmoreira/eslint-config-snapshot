@@ -141,8 +141,7 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .option('--short', 'Alias for --format short')
     .action(async (opts: { format: PrintFormat; short?: boolean }) => {
       const format: PrintFormat = opts.short ? 'short' : opts.format
-      await executePrint(cwd, terminal, SNAPSHOT_DIR, format)
-      onActionExit(0)
+      onActionExit(await executePrint(cwd, terminal, SNAPSHOT_DIR, format))
     })
 
   program
@@ -152,8 +151,7 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .option('--short', 'Alias for --format short')
     .action(async (opts: { format: PrintFormat; short?: boolean }) => {
       const format: PrintFormat = opts.short ? 'short' : opts.format
-      await executeConfig(cwd, terminal, SNAPSHOT_DIR, format)
-      onActionExit(0)
+      onActionExit(await executeConfig(cwd, terminal, SNAPSHOT_DIR, format))
     })
 
   program

@@ -1,5 +1,3 @@
-import { DEFAULT_CONFIG, findConfigPath, type SnapshotConfig } from '@eslint-config-snapshot/api'
-
 import {
   countUniqueWorkspaces,
   decorateDiffLine,
@@ -8,20 +6,18 @@ import {
   summarizeChanges,
   summarizeSnapshots
 } from '../formatters.js'
-import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
+import { writeEslintVersionSummary } from '../run-context.js'
 import {
   type BuiltSnapshot,
   compareSnapshotMaps,
-  computeCurrentSnapshots,
   type GroupEslintVersions,
-  loadStoredSnapshots,
   resolveGroupEslintVersions,
-  type SkippedWorkspace,
   type SnapshotDiff,
   writeSnapshots
 } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
-import { writeSkippedWorkspaceSummary } from './skipped-workspaces.js'
+import { writeDiscoveredWorkspacesSummary, writeSkippedWorkspaceSummary } from './skipped-workspaces.js'
+import { prepareSnapshotExecution } from './snapshot-executor.js'
 
 export type CheckFormat = 'summary' | 'status' | 'diff'
 
@@ -34,50 +30,27 @@ export async function executeCheck(
   snapshotDir: string,
   defaultInvocation = false
 ): Promise<number> {
-  const foundConfig = await findConfigPath(cwd)
-  const storedSnapshots = await loadStoredSnapshots(cwd, snapshotDir)
-
-  if (format !== 'status') {
-    writeRunContextHeader(terminal, cwd, defaultInvocation ? 'check' : `check:${format}`, foundConfig?.path, storedSnapshots)
-    if (terminal.showProgress) {
-      terminal.subtle('🔎 Checking current ESLint configuration...\n')
-    }
+  const isStatusFormat = format === 'status'
+  const commandLabel = defaultInvocation ? 'check' : `check:${format}`
+  const prepared = await prepareSnapshotExecution({
+    cwd,
+    snapshotDir,
+    terminal,
+    commandLabel: isStatusFormat ? 'check:status' : commandLabel,
+    progressMessage: isStatusFormat ? '' : '🔎 Checking current ESLint configuration...\n',
+    showContext: isStatusFormat === false
+  })
+  if (prepared.ok === false) {
+    return prepared.exitCode
   }
 
-  if (!foundConfig) {
-    terminal.subtle(
-      'Tip: no explicit config found. Using safe built-in defaults. Run `eslint-config-snapshot init` to customize when needed.\n'
-    )
-  }
-
-  let currentSnapshots: Map<string, BuiltSnapshot>
-  const skippedWorkspaces: SkippedWorkspace[] = []
-  let discoveredWorkspaces: string[] = []
-  const allowWorkspaceExtractionFailure = !foundConfig || isDefaultEquivalentConfig(foundConfig.config)
-  try {
-    currentSnapshots = await computeCurrentSnapshots(cwd, {
-      allowWorkspaceExtractionFailure,
-      onWorkspacesDiscovered: (workspacesRel) => {
-        discoveredWorkspaces = workspacesRel
-      },
-      onWorkspaceSkipped: (skipped) => {
-        skippedWorkspaces.push(skipped)
-      }
-    })
-  } catch (error: unknown) {
-    if (!foundConfig && isWorkspaceDiscoveryDefaultsError(error)) {
-      terminal.write(
-        'Automatic workspace discovery could not complete with defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
-      )
-      return 1
-    }
-
-    throw error
-  }
-  if (!foundConfig) {
+  const { foundConfig, storedSnapshots, currentSnapshots, discoveredWorkspaces, skippedWorkspaces } = prepared
+  if (foundConfig === null && isStatusFormat === false) {
     writeDiscoveredWorkspacesSummary(terminal, discoveredWorkspaces)
   }
-  writeSkippedWorkspaceSummary(terminal, cwd, foundConfig?.path, skippedWorkspaces)
+  if (isStatusFormat === false) {
+    writeSkippedWorkspaceSummary(terminal, cwd, foundConfig?.path, skippedWorkspaces)
+  }
   if (storedSnapshots.size === 0) {
     const summary = summarizeSnapshots(currentSnapshots)
     terminal.write(
@@ -176,26 +149,4 @@ function printWhatChanged(
   terminal.subtle(UPDATE_HINT)
 
   return 1
-}
-
-function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error)
-  return (
-    message.includes('Unable to discover workspaces') ||
-    message.includes('Unmatched workspaces') ||
-    message.includes('zero-config mode')
-  )
-}
-
-function isDefaultEquivalentConfig(config: SnapshotConfig): boolean {
-  return JSON.stringify(config) === JSON.stringify(DEFAULT_CONFIG)
-}
-
-function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {
-  if (workspacesRel.length === 0) {
-    terminal.subtle('Auto-discovered workspaces: none\n')
-    return
-  }
-
-  terminal.subtle(`Auto-discovered workspaces (${workspacesRel.length}): ${workspacesRel.join(', ')}\n`)
 }

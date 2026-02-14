@@ -3,6 +3,15 @@ import path from 'node:path'
 import { type SkippedWorkspace } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
 
+export function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {
+  if (workspacesRel.length === 0) {
+    terminal.subtle('Auto-discovered workspaces: none\n')
+    return
+  }
+
+  terminal.subtle(`Auto-discovered workspaces (${workspacesRel.length}): ${workspacesRel.join(', ')}\n`)
+}
+
 export function writeSkippedWorkspaceSummary(
   terminal: TerminalIO,
   cwd: string,
