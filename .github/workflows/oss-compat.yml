@@ -137,6 +137,24 @@ jobs:
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
 
+      - name: Init config (non-interactive) and verify equivalent post-init state
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
+            export DEBUG="eslint-config-snapshot:*"
+          fi
+
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-before-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" init --yes --target package-json --preset recommended 2>&1 | tee "${RUNNER_TEMP}/snapshot-init.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary 2>&1 | tee "${RUNNER_TEMP}/snapshot-check-after-init.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-after-init.json"
+
+          diff -u "${RUNNER_TEMP}/snapshot-print-before-init.json" "${RUNNER_TEMP}/snapshot-print-after-init.json"
+        working-directory: ext
+        env:
+          OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
+
       - name: Print discovered snapshots (summary + raw)
         if: always()
         shell: bash
@@ -181,3 +199,7 @@ jobs:
           path: |
             ${{ runner.temp }}/snapshot-update.log
             ${{ runner.temp }}/snapshot-check.log
+            ${{ runner.temp }}/snapshot-init.log
+            ${{ runner.temp }}/snapshot-check-after-init.log
+            ${{ runner.temp }}/snapshot-print-before-init.json
+            ${{ runner.temp }}/snapshot-print-after-init.json

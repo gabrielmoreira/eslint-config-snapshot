@@ -2314,3 +2314,26 @@ Result:
 
 - Workflow now avoids the Windows long-path checkout failure mode observed in `next.js`.
 - OSS compatibility jobs remain equivalent in behavior while being more robust on `windows-latest`.
+
+## 2026-02-14 - Request 108
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Extend OSS compatibility workflow with an additional post-check validation that runs non-interactive `init` and verifies equivalent drift state afterward.
+
+Key decisions:
+
+- Added a new workflow step after baseline `check` to:
+  - capture deterministic rules output before init (`print --format json`),
+  - run `init --yes --target package-json --preset recommended`,
+  - run `check --format summary` again,
+  - capture deterministic rules output after init and compare both snapshots.
+- Used deterministic JSON comparison (`diff -u`) instead of comparing human-readable summary text.
+- Uploaded additional logs/artifacts for init and post-init validation to simplify troubleshooting.
+
+Result:
+
+- OSS smoke now validates that applying default recommended init does not change effective evaluated rule output.
+- Regressions between zero-config behavior and generated config behavior are detected automatically in CI.
