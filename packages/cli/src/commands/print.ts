@@ -1,4 +1,4 @@
-import { findConfigPath, loadConfig } from '@eslint-config-snapshot/api'
+import { DEFAULT_CONFIG, findConfigPath, loadConfig, type SnapshotConfig } from '@eslint-config-snapshot/api'
 
 import { formatShortConfig, formatShortPrint } from '../formatters.js'
 import { writeRunContextHeader } from '../run-context.js'
@@ -14,7 +14,8 @@ export async function executePrint(cwd: string, terminal: TerminalIO, snapshotDi
   if (terminal.showProgress) {
     terminal.subtle('🔎 Checking current ESLint configuration...\n')
   }
-  const currentSnapshots = await computeCurrentSnapshots(cwd)
+  const allowWorkspaceExtractionFailure = !foundConfig || isDefaultEquivalentConfig(foundConfig.config)
+  const currentSnapshots = await computeCurrentSnapshots(cwd, { allowWorkspaceExtractionFailure })
 
   if (format === 'short') {
     terminal.write(formatShortPrint([...currentSnapshots.values()]))
@@ -55,4 +56,8 @@ export async function executeConfig(cwd: string, terminal: TerminalIO, snapshotD
   }
 
   terminal.write(`${JSON.stringify(payload, null, 2)}\n`)
+}
+
+function isDefaultEquivalentConfig(config: SnapshotConfig): boolean {
+  return JSON.stringify(config) === JSON.stringify(DEFAULT_CONFIG)
 }

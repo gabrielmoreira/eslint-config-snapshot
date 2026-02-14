@@ -2337,3 +2337,24 @@ Result:
 
 - OSS smoke now validates that applying default recommended init does not change effective evaluated rule output.
 - Regressions between zero-config behavior and generated config behavior are detected automatically in CI.
+
+## 2026-02-14 - Request 109
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Follow OSS pipeline failures, inspect logs, and fix the new post-init equivalence step.
+
+Key decisions:
+
+- Identified failure source: `print --format json` still used strict extraction mode and failed on `next/core-web-vitals` in zero/default-equivalent mode.
+- Updated `executePrint` to use the same tolerance rule as `check` and `update`:
+  - tolerant when no explicit config exists,
+  - tolerant when explicit config is default-equivalent.
+- Kept strict mode for explicitly customized non-default configs.
+
+Result:
+
+- Post-init equivalence validation can run on OSS repos with partial extraction failures without crashing `print`.
+- CLI command behavior is now consistent across `check`, `update`, and `print` for zero-config/default-equivalent cases.
