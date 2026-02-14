@@ -1,6 +1,9 @@
 name: OSS Compatibility
 
 on:
+  push:
+    branches:
+      - chore/oss-compat-nextjs-smoke
   workflow_dispatch:
   schedule:
     - cron: '0 7 * * 1'
