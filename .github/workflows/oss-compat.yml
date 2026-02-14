@@ -55,9 +55,22 @@ jobs:
         working-directory: external-repo
 
       - name: Snapshot update (zero-config)
-        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update
+        env:
+          DEBUG: eslint-config-snapshot:*
+        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
         working-directory: external-repo
 
       - name: Snapshot check (zero-config)
-        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status
+        env:
+          DEBUG: eslint-config-snapshot:*
+        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
         working-directory: external-repo
+
+      - name: Upload OSS smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oss-smoke-${{ matrix.name }}-logs
+          path: |
+            ${{ runner.temp }}/snapshot-update.log
+            ${{ runner.temp }}/snapshot-check.log

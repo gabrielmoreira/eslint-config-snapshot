@@ -25,6 +25,8 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Enable DEBUG mode and artifact log capture in OSS compatibility workflow for faster failure diagnosis.
+- [x] Harden discover-mode workspace resolution with package.json workspaces fallback and root fallback for zero-config OSS monorepos.
 - [x] Add dedicated OSS compatibility workflow to validate zero-config behavior against complex external repositories (starting with next.js).
 - [x] Add GitHub coverage visualization upgrades (Codecov upload, HTML coverage artifacts, and job summary table).
 - [x] Add CI npm-drift detection that dispatches publish workflow automatically instead of embedding publish logic in CI.

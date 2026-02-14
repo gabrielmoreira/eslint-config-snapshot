@@ -1,4 +1,6 @@
 import { getPackages } from '@manypkg/get-packages'
+import fg from 'fast-glob'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import picomatch from 'picomatch'
 
@@ -44,15 +46,116 @@ export async function discoverWorkspaces(options?: {
     }
   }
 
-  const { rootDir, packages } = await getPackages(cwd)
-  const workspacesAbs = packages.map((pkg) => pkg.dir)
-  const rootAbs = rootDir ? path.resolve(rootDir) : lowestCommonAncestor(workspacesAbs)
-  const workspacesRel = sortUnique(workspacesAbs.map((entry) => normalizePath(path.relative(rootAbs, entry))))
+  try {
+    const { rootDir, packages } = await getPackages(cwd)
+    const workspacesAbs = packages.map((pkg) => pkg.dir)
+    const rootAbs = rootDir ? path.resolve(rootDir) : lowestCommonAncestor(workspacesAbs)
+    const workspacesRel = sortUnique(workspacesAbs.map((entry) => normalizePath(path.relative(rootAbs, entry))))
+    if (workspacesRel.length > 1 || (workspacesRel.length === 1 && workspacesRel[0] !== '.')) {
+      return {
+        rootAbs,
+        workspacesRel
+      }
+    }
+
+    const packageJsonFallback = await discoverWorkspacesFromPackageJson(cwd)
+    if (packageJsonFallback && packageJsonFallback.workspacesRel.length > 0) {
+      return packageJsonFallback
+    }
+
+    if (workspacesRel.length > 0) {
+      return {
+        rootAbs,
+        workspacesRel
+      }
+    }
+  } catch {
+    // Fallback to package.json workspace patterns when package manager metadata is unavailable.
+  }
+
+  const packageJsonFallback = await discoverWorkspacesFromPackageJson(cwd)
+  if (packageJsonFallback) {
+    return packageJsonFallback
+  }
 
   return {
-    rootAbs,
+    rootAbs: cwd,
+    workspacesRel: ['.']
+  }
+}
+
+async function discoverWorkspacesFromPackageJson(cwd: string): Promise<WorkspaceDiscovery | null> {
+  const packageJsonPath = path.join(cwd, 'package.json')
+  const packageJsonRaw = await safeReadFile(packageJsonPath)
+  if (!packageJsonRaw) {
+    return null
+  }
+
+  const parsed = safeJsonParse(packageJsonRaw)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return null
+  }
+
+  const workspaceGlobs = extractWorkspaceGlobs(parsed)
+  if (workspaceGlobs.length === 0) {
+    return null
+  }
+
+  const workspacePackageJsonGlobs = workspaceGlobs.map((entry) => normalizePath(path.posix.join(entry, 'package.json')))
+  const foundPackageJsonFiles = await fg(workspacePackageJsonGlobs, {
+    cwd,
+    onlyFiles: true,
+    dot: true,
+    unique: true,
+    ignore: ['**/node_modules/**']
+  })
+
+  const workspacesRel = sortUnique(foundPackageJsonFiles.map((entry) => normalizePath(path.posix.dirname(entry))))
+  if (workspacesRel.length === 0) {
+    return {
+      rootAbs: cwd,
+      workspacesRel: ['.']
+    }
+  }
+
+  return {
+    rootAbs: cwd,
     workspacesRel
   }
+}
+
+async function safeReadFile(filePath: string): Promise<string | null> {
+  try {
+    return await readFile(filePath, 'utf8')
+  } catch {
+    return null
+  }
+}
+
+function safeJsonParse(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function extractWorkspaceGlobs(packageJson: Record<string, unknown>): string[] {
+  const workspaces = packageJson.workspaces
+  if (Array.isArray(workspaces)) {
+    return workspaces.filter((entry): entry is string => typeof entry === 'string')
+  }
+
+  if (!workspaces || typeof workspaces !== 'object' || Array.isArray(workspaces)) {
+    return []
+  }
+
+  const packages = (workspaces as { packages?: unknown }).packages
+  if (Array.isArray(packages)) {
+    return packages.filter((entry): entry is string => typeof entry === 'string')
+  }
+
+  return []
 }
 
 export function assignGroupsByMatch(workspacesRel: readonly string[], groups: readonly GroupDefinition[]): GroupAssignment[] {

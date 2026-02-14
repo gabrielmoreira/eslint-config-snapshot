@@ -2087,3 +2087,43 @@ Key decisions:
 Result:
 
 - Repository now has a dedicated compatibility pipeline to detect real-world zero-config regressions on complex OSS structures.
+
+## 2026-02-14 - Request 097
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Run the new OSS compatibility pipeline against next.js, inspect failures, and fix root causes while keeping changes isolated in a dedicated branch.
+
+Key decisions:
+
+- Executed the `OSS Compatibility` workflow against `vercel/next.js` (`canary`) and inspected failed job logs.
+- Identified failure at zero-config workspace discovery stage (before ESLint extraction).
+- Hardened `discoverWorkspaces` to handle real-world monorepos better:
+  - if `@manypkg/get-packages` resolves to only root (`.`), try expanding via `package.json.workspaces` patterns,
+  - fallback to root workspace (`.`) when discovery cannot produce explicit workspace matches.
+- Added API tests for fallback behavior and updated workflow branch trigger for branch-level smoke iteration.
+
+Result:
+
+- Discovery is now more robust for zero-config OSS repositories where package-manager metadata may be incomplete or root-only.
+- Compatibility workflow can be rerun on the same branch to validate the fix end-to-end.
+
+## 2026-02-14 - Request 098
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure CI compatibility workflow runs our tooling in DEBUG mode to speed up diagnosis of OSS failures.
+
+Key decisions:
+
+- Enabled `DEBUG=eslint-config-snapshot:*` for both update and check steps in `oss-compat.yml`.
+- Captured command output to dedicated log files and uploaded them as workflow artifacts on every run (`if: always()`).
+
+Result:
+
+- OSS compatibility runs now provide detailed extraction/workspace/timing traces by default.
+- Debug logs are preserved as artifacts even when the job fails.
