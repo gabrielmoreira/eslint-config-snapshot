@@ -45,6 +45,11 @@ jobs:
             ref: main
             package_manager: yarn
             debug_default: false
+          - name: aws-sdk-js
+            repo: https://github.com/aws/aws-sdk-js.git
+            ref: master
+            package_manager: npm
+            debug_default: false
 
     steps:
       - name: Checkout snapshot repository
@@ -83,6 +88,11 @@ jobs:
           corepack enable
           yarn --version
           yarn install --frozen-lockfile
+        working-directory: external-repo
+
+      - name: Install OSS repository dependencies (npm)
+        if: ${{ matrix.package_manager == 'npm' }}
+        run: npm install --no-audit --no-fund
         working-directory: external-repo
 
       - name: Snapshot update (zero-config)
