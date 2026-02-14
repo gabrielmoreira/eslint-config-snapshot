@@ -2188,3 +2188,21 @@ Result:
 
 - OSS compatibility workflow is simpler and easier to reason about.
 - `main` execution now happens only by nightly schedule (or manual dispatch), as requested.
+
+## 2026-02-14 - Request 102
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Confirm and enforce that scheduled OSS compatibility runs happen only on `main` for safety.
+
+Key decisions:
+
+- Kept schedule trigger as-is (GitHub default-branch behavior).
+- Added explicit job guard:
+  - `if: github.event_name != 'schedule' || github.ref == 'refs/heads/main'`
+
+Result:
+
+- Nightly OSS smoke is now explicitly constrained to `main` even if repository settings change in the future.

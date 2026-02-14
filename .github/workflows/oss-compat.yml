@@ -14,6 +14,7 @@ permissions:
 jobs:
   smoke:
     name: smoke (${{ matrix.name }})
+    if: ${{ github.event_name != 'schedule' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:

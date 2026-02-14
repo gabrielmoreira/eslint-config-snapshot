@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Enforce explicit schedule safety guard so OSS nightly runs only execute on `main`.
 - [x] Simplify OSS compatibility triggers by removing main-push gating logic and relying on nightly schedule for `main`.
 - [x] Superseded: temporary `main` push gating by changed workflow file (removed to keep workflow simpler).
 - [x] Fix OSS compatibility workflow shell piping to preserve non-zero CLI exit codes (`set -o pipefail` with tee logging).
