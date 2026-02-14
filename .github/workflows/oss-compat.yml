@@ -89,7 +89,7 @@ jobs:
           if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
             export DEBUG="eslint-config-snapshot:*"
           fi
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
         working-directory: external-repo
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
