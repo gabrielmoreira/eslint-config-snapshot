@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 1.1.0
+
+### Minor Changes
+
+- Minor release: improve skipped workspace messaging and OSS compatibility documentation.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
