@@ -5,6 +5,15 @@ on:
     branches:
       - chore/oss-compat-nextjs-smoke
   workflow_dispatch:
+    inputs:
+      debug_logs:
+        description: 'Enable verbose DEBUG logs for eslint-config-snapshot'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
   schedule:
     - cron: '0 7 * * *'
 
@@ -25,10 +34,12 @@ jobs:
             repo: https://github.com/vercel/next.js.git
             ref: canary
             package_manager: pnpm
+            debug_default: false
           - name: nx
             repo: https://github.com/nrwl/nx.git
             ref: master
             package_manager: pnpm
+            debug_default: false
 
     steps:
       - name: Checkout snapshot repository
@@ -60,22 +71,57 @@ jobs:
         working-directory: external-repo
 
       - name: Snapshot update (zero-config)
-        env:
-          DEBUG: eslint-config-snapshot:*
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
+            export DEBUG="eslint-config-snapshot:*"
+          fi
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
         working-directory: external-repo
+        env:
+          OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
 
       - name: Snapshot check (zero-config)
-        env:
-          DEBUG: eslint-config-snapshot:*
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
+            export DEBUG="eslint-config-snapshot:*"
+          fi
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
         working-directory: external-repo
+        env:
+          OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
+
+      - name: Print discovered snapshot rules
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir="external-repo/.eslint-config-snapshot"
+          if [[ ! -d "${snapshot_dir}" ]]; then
+            echo "No snapshot directory found at ${snapshot_dir}"
+            exit 0
+          fi
+
+          shopt -s nullglob
+          files=("${snapshot_dir}"/*.json)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No snapshot files found in ${snapshot_dir}"
+            exit 0
+          fi
+
+          for file in "${files[@]}"; do
+            echo "::group::Snapshot $(basename "${file}")"
+            jq '{
+              groupId,
+              workspaceCount: (.workspaces | length),
+              ruleCount: (.rules | length),
+              rules: (.rules | keys)
+            }' "${file}"
+            echo "::endgroup::"
+          done
 
       - name: Upload OSS smoke logs
         if: always()
