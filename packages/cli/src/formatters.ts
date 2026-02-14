@@ -213,6 +213,13 @@ export function formatStoredSnapshotSummary(storedSnapshots: Map<string, Snapsho
   return `${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off)`
 }
 
+export function formatBaselineSummaryLines(
+  summary: { groups: number; rules: number; error: number; warn: number; off: number },
+  workspaceCount: number
+): string {
+  return `- 📦 baseline: ${summary.groups} groups, ${summary.rules} rules\n- 🗂️ workspaces scanned: ${workspaceCount}\n- 🎚️ severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off\n`
+}
+
 export function countRuleSeverities(ruleObjects: RuleObject[]) {
   let rules = 0
   let error = 0

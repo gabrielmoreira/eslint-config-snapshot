@@ -1,7 +1,7 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
 import path from 'node:path'
 
-import { countUniqueWorkspaces, summarizeSnapshots } from '../formatters.js'
+import { countUniqueWorkspaces, formatBaselineSummaryLines, summarizeSnapshots } from '../formatters.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
 import { computeCurrentSnapshots, loadStoredSnapshots, resolveGroupEslintVersions, type SkippedWorkspace, writeSnapshots } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
@@ -54,10 +54,9 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
     const summary = summarizeSnapshots(currentSnapshots)
     const workspaceCount = countUniqueWorkspaces(currentSnapshots)
     const eslintVersionsByGroup = terminal.showProgress ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
+    terminal.success('✅ Baseline updated.\n')
     terminal.section('📊 Summary')
-    terminal.write(
-      `Baseline updated: ${summary.groups} groups, ${summary.rules} rules.\nWorkspaces scanned: ${workspaceCount}.\nSeverity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off.\n`
-    )
+    terminal.write(formatBaselineSummaryLines(summary, workspaceCount))
     writeEslintVersionSummary(terminal, eslintVersionsByGroup)
   }
 

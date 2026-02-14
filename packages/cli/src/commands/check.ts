@@ -1,7 +1,14 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
 import path from 'node:path'
 
-import { countUniqueWorkspaces, decorateDiffLine, formatDiff, summarizeChanges, summarizeSnapshots } from '../formatters.js'
+import {
+  countUniqueWorkspaces,
+  decorateDiffLine,
+  formatBaselineSummaryLines,
+  formatDiff,
+  summarizeChanges,
+  summarizeSnapshots
+} from '../formatters.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
 import {
   type BuiltSnapshot,
@@ -143,9 +150,7 @@ function printWhatChanged(
   if (changes.length === 0) {
     terminal.write(color.green('✅ Great news: no snapshot drift detected.\n'))
     terminal.section('📊 Summary')
-    terminal.write(
-      `- 📦 baseline: ${currentSummary.groups} groups, ${currentSummary.rules} rules\n- 🗂️ workspaces scanned: ${workspaceCount}\n- 🎚️ severity mix: ${currentSummary.error} errors, ${currentSummary.warn} warnings, ${currentSummary.off} off\n`
-    )
+    terminal.write(formatBaselineSummaryLines(currentSummary, workspaceCount))
     writeEslintVersionSummary(terminal, eslintVersionsByGroup)
     return 0
   }

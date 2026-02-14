@@ -220,7 +220,7 @@ no-debugger: off
     const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli(undefined, fixtureRoot, ['--update'])
     expect(code).toBe(0)
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Baseline updated:'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('✅ Baseline updated.'))
   })
 
   it('supports canonical check and update commands', async () => {
