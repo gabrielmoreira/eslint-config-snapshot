@@ -57,13 +57,19 @@ jobs:
       - name: Snapshot update (zero-config)
         env:
           DEBUG: eslint-config-snapshot:*
-        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
         working-directory: external-repo
 
       - name: Snapshot check (zero-config)
         env:
           DEBUG: eslint-config-snapshot:*
-        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
         working-directory: external-repo
 
       - name: Upload OSS smoke logs

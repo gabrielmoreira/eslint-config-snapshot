@@ -2127,3 +2127,23 @@ Result:
 
 - OSS compatibility runs now provide detailed extraction/workspace/timing traces by default.
 - Debug logs are preserved as artifacts even when the job fails.
+
+## 2026-02-14 - Request 099
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate why OSS compatibility step appeared successful despite CLI failure when output was piped to `tee`.
+
+Key decisions:
+
+- Identified shell pipeline masking behavior: with `command | tee ...`, step status followed `tee` without `pipefail`.
+- Updated both snapshot steps in `oss-compat.yml` to use:
+  - `shell: bash`
+  - `set -euo pipefail`
+- Kept tee-based log capture unchanged.
+
+Result:
+
+- Workflow now fails correctly when CLI exits non-zero, while still preserving logs in artifacts.
