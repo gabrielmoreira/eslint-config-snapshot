@@ -40,6 +40,11 @@ jobs:
             ref: master
             package_manager: pnpm
             debug_default: false
+          - name: react-native
+            repo: https://github.com/facebook/react-native.git
+            ref: main
+            package_manager: yarn
+            debug_default: false
 
     steps:
       - name: Checkout snapshot repository
@@ -68,6 +73,16 @@ jobs:
       - name: Install OSS repository dependencies (pnpm)
         if: ${{ matrix.package_manager == 'pnpm' }}
         run: pnpm install --frozen-lockfile
+        working-directory: external-repo
+
+      - name: Install OSS repository dependencies (yarn)
+        if: ${{ matrix.package_manager == 'yarn' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          yarn --version
+          yarn install --frozen-lockfile
         working-directory: external-repo
 
       - name: Snapshot update (zero-config)
