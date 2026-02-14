@@ -19,6 +19,7 @@ beforeEach(async () => {
 
   await mkdir(path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
   await mkdir(path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/bin'), { recursive: true })
+  await mkdir(path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha'), { recursive: true })
 
   await writeFile(
     path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
@@ -36,6 +37,19 @@ beforeEach(async () => {
   await writeFile(
     path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/package.json'),
     JSON.stringify({ name: 'eslint', version: '9.0.0' }, null, 2)
+  )
+
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/use-at-your-own-risk.js'),
+    "module.exports = { builtinRules: new Map([['no-console', {}], ['no-alert', {}], ['eqeqeq', {}]]) }\n"
+  )
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha/package.json'),
+    JSON.stringify({ name: 'eslint-plugin-alpha', version: '1.0.0', main: 'index.js' }, null, 2)
+  )
+  await writeFile(
+    path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha/index.js'),
+    "module.exports = { rules: { 'only-in-catalog': {}, observed: {} } }\n"
   )
 })
 
@@ -199,6 +213,36 @@ rules (3): error 2, warn 0, off 1
 eqeqeq: error "always"
 no-console: [["error"],["warn"]]
 no-debugger: off
+`
+    )
+  })
+
+  it('catalog emits available and missing rules in json output', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('catalog', fixtureRoot, ['--missing'])
+    expect(code).toBe(0)
+    const finalWrite = writeSpy.mock.calls.at(-1)?.[0]
+    expect(typeof finalWrite).toBe('string')
+    expect(finalWrite).toContain('"missingRules": [')
+    expect(finalWrite).toContain('"alpha/observed"')
+    expect(finalWrite).toContain('"alpha/only-in-catalog"')
+    expect(finalWrite).toContain('"no-alert"')
+  })
+
+  it('catalog --short prints compact catalog summary', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('catalog', fixtureRoot, ['--short', '--missing'])
+    expect(code).toBe(0)
+    expect(writeSpy.mock.calls.at(-1)?.[0]).toBe(
+      `group: default
+available rules: 5 (core 3, plugin 2)
+observed rules: 3
+missing rules: 3
+plugin prefixes (1): alpha/
+missing list (3):
+  - alpha/observed
+  - alpha/only-in-catalog
+  - no-alert
 `
     )
   })

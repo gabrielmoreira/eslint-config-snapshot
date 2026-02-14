@@ -3,6 +3,7 @@ import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import createDebug from 'debug'
 import path from 'node:path'
 
+import { type CatalogFormat, executeCatalog } from './commands/catalog.js'
 import { type CheckFormat, executeCheck } from './commands/check.js'
 import { executeConfig, executePrint, type PrintFormat } from './commands/print.js'
 import { executeUpdate } from './commands/update.js'
@@ -142,6 +143,17 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .action(async (opts: { format: PrintFormat; short?: boolean }) => {
       const format: PrintFormat = opts.short ? 'short' : opts.format
       onActionExit(await executePrint(cwd, terminal, SNAPSHOT_DIR, format))
+    })
+
+  program
+    .command('catalog')
+    .description('Print discovered rule catalog and missing rules')
+    .option('--format <format>', 'Output format: json|short', parsePrintFormat, 'json')
+    .option('--short', 'Alias for --format short')
+    .option('--missing', 'Only print rules that are available but not observed in current snapshots')
+    .action(async (opts: { format: CatalogFormat; short?: boolean; missing?: boolean }) => {
+      const format: CatalogFormat = opts.short ? 'short' : opts.format
+      onActionExit(await executeCatalog(cwd, terminal, SNAPSHOT_DIR, format, Boolean(opts.missing)))
     })
 
   program

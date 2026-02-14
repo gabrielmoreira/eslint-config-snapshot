@@ -30,6 +30,7 @@ beforeEach(async () => {
   await cp(fixtureRoot, repoRoot, { recursive: true })
   await mkdir(path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin'), { recursive: true })
   await mkdir(path.join(repoRoot, 'packages/ws-b/node_modules/eslint/bin'), { recursive: true })
+  await mkdir(path.join(repoRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha'), { recursive: true })
 
   await writeFile(
     path.join(repoRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
@@ -47,6 +48,18 @@ beforeEach(async () => {
   await writeFile(
     path.join(repoRoot, 'packages/ws-b/node_modules/eslint/package.json'),
     JSON.stringify({ name: 'eslint', version: '9.0.0' }, null, 2)
+  )
+  await writeFile(
+    path.join(repoRoot, 'packages/ws-a/node_modules/eslint/use-at-your-own-risk.js'),
+    "module.exports = { builtinRules: new Map([['no-console', {}], ['no-alert', {}], ['eqeqeq', {}]]) }\n"
+  )
+  await writeFile(
+    path.join(repoRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha/package.json'),
+    JSON.stringify({ name: 'eslint-plugin-alpha', version: '1.0.0', main: 'index.js' }, null, 2)
+  )
+  await writeFile(
+    path.join(repoRoot, 'packages/ws-a/node_modules/eslint-plugin-alpha/index.js'),
+    "module.exports = { rules: { 'only-in-catalog': {}, observed: {} } }\n"
   )
 })
 
@@ -66,6 +79,7 @@ describe('cli terminal invocation', () => {
     expect(result.stdout).toContain('check [options]')
     expect(result.stdout).toContain('update|snapshot')
     expect(result.stdout).toContain('print [options]')
+    expect(result.stdout).toContain('catalog [options]')
     expect(result.stdout).toContain('config [options]')
     expect(result.stdout).toContain('init')
     expect(result.stderr).toBe('')
@@ -213,6 +227,43 @@ rules (3): error 2, warn 0, off 1
 eqeqeq: error "always"
 no-console: [["error"],["warn"]]
 no-debugger: off
+`
+    )
+    expect(result.stderr).toBe('')
+  })
+
+  it('catalog --missing returns deterministic json output', () => {
+    const result = run(['catalog', '--missing'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toBe(
+      `[
+  {
+    "groupId": "default",
+    "missingRules": [
+      "alpha/observed",
+      "alpha/only-in-catalog",
+      "no-alert"
+    ]
+  }
+]
+`
+    )
+    expect(result.stderr).toBe('')
+  })
+
+  it('catalog --short --missing returns compact output', () => {
+    const result = run(['catalog', '--short', '--missing'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toBe(
+      `group: default
+available rules: 5 (core 3, plugin 2)
+observed rules: 3
+missing rules: 3
+plugin prefixes (1): alpha/
+missing list (3):
+  - alpha/observed
+  - alpha/only-in-catalog
+  - no-alert
 `
     )
     expect(result.stderr).toBe('')

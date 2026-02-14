@@ -8,6 +8,14 @@ export type SnapshotLike = {
   workspaces: string[]
   rules: RuleObject
 }
+export type RuleCatalogLike = {
+  groupId: string
+  availableRules: string[]
+  coreRules: string[]
+  pluginRulesByPrefix: Record<string, string[]>
+  observedRules: string[]
+  missingRules: string[]
+}
 
 export function formatDiff(groupId: string, diff: SnapshotDiff): string {
   const lines = [`group: ${groupId}`]
@@ -165,6 +173,29 @@ export function formatShortConfig(payload: {
   return `${lines.join('\n')}\n`
 }
 
+export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boolean): string {
+  const lines: string[] = []
+  const sorted = [...catalogs].sort((a, b) => a.groupId.localeCompare(b.groupId))
+  for (const catalog of sorted) {
+    const prefixes = Object.keys(catalog.pluginRulesByPrefix).sort((a, b) => a.localeCompare(b))
+    lines.push(
+      `group: ${catalog.groupId}`,
+      `available rules: ${catalog.availableRules.length} (core ${catalog.coreRules.length}, plugin ${catalog.availableRules.length - catalog.coreRules.length})`,
+      `observed rules: ${catalog.observedRules.length}`,
+      `missing rules: ${catalog.missingRules.length}`,
+      `plugin prefixes (${prefixes.length}): ${prefixes.length > 0 ? prefixes.join(', ') : '(none)'}`
+    )
+
+    const detailRules = missingOnly ? catalog.missingRules : catalog.availableRules
+    lines.push(`${missingOnly ? 'missing list' : 'available list'} (${detailRules.length}):`)
+    for (const ruleName of detailRules) {
+      lines.push(`  - ${ruleName}`)
+    }
+  }
+
+  return `${lines.join('\n')}\n`
+}
+
 export function formatCommandDisplayLabel(commandLabel: string): string {
   switch (commandLabel) {
     case 'check':
@@ -191,6 +222,12 @@ export function formatCommandDisplayLabel(commandLabel: string): string {
     }
     case 'config:short': {
       return 'Show effective runtime config (short view)'
+    }
+    case 'catalog:json': {
+      return 'Show discovered rule catalog (JSON)'
+    }
+    case 'catalog:short': {
+      return 'Show discovered rule catalog (short view)'
     }
     case 'init': {
       return 'Initialize local configuration'

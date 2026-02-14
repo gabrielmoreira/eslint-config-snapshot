@@ -16,15 +16,19 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
 - [ ] Add coverage threshold enforcement for both packages in CI.
+- [ ] Evaluate promotion of staged `catalog` command from `SPEC_ENHANCED.md` into `SPEC.md` after additional OSS validation.
 
 ## Backlog (Exploration)
 
 - [ ] Add advanced config-suggestion command with deep per-project ESLint inspection (current recommended flow already provides a partial v0 workspace grouping assist).
-- [ ] Add optional full-availability baseline mode that tracks available plugin rules (not only configured runtime state).
+- [ ] Add optional full-availability baseline mode that persists catalog snapshots and diffs (beyond runtime observed-rule snapshots).
 - [ ] Evaluate replacing current prompt logic with a lightweight selection UI library if complexity grows.
 
 ## Recently Completed
 
+- [x] Add staged rule-catalog discovery path (`catalog` command) with deterministic available/missing rule output in JSON and short formats.
+- [x] Add API discovery primitive for workspace rule catalog (`coreRules`, plugin rule prefixes, aggregated `allRules`).
+- [x] Add API/CLI test coverage for catalog discovery behavior and command outputs.
 - [x] Centralize shared command execution flow (`check`, `update`, `print`, `config`) with a reusable snapshot-preparation executor to avoid behavior drift across options.
 - [x] Add explicit skipped-workspace reporting (with reason) in CLI logs for tolerant zero-config extraction mode.
 - [x] Make zero-config extraction tolerant to workspace-level ESLint failures and continue with healthy workspaces.

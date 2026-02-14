@@ -109,6 +109,7 @@ pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --p
 - `check`
 - `update`
 - `print`
+- `catalog`
 - `config`
 - `init`
 
@@ -142,8 +143,9 @@ No timestamps, hashes, absolute paths, sampled files, or env noise.
 ## Scope Boundary
 
 `eslint-config-snapshot` captures the effective rule runtime for your current project configuration.
+It can also inspect installed ESLint runtime/plugin packages via `catalog`, but that is still a best-effort discovery path.
 
-It does **not** try to enumerate every rule that could exist across every installed ESLint plugin.
+It does **not** guarantee exhaustive enumeration of every possible rule across all plugin packaging styles and module export shapes.
 
 If you need a full rule catalog/inspection workflow, use ESLint inspector tooling directly (for example `eslint --inspect-config` and related inspector UI workflows).
 

@@ -73,6 +73,7 @@ Current module intent:
 - `src/commands/check.ts`: check execution flow and output policy.
 - `src/commands/update.ts`: baseline update flow.
 - `src/commands/print.ts`: print/config command flows.
+- `src/commands/catalog.ts`: catalog/missing-rules command flow.
 - `src/init.ts`: init command workflow (interactive and non-interactive).
 - `src/runtime.ts`: orchestration helpers around API execution and snapshot loading/writing.
 - `src/terminal.ts`: semantic terminal I/O wrapper (write/error/prompt/colors/timing).

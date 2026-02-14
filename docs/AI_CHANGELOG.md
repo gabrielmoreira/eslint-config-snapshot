@@ -2383,3 +2383,29 @@ Result:
 
 - Command behavior is now implemented through a single reusable preparation flow instead of repeated per-command variants.
 - Risk of future regressions caused by option/path inconsistencies across commands was reduced.
+
+## 2026-02-14 - Request 111
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Run autonomous research for full rule availability discovery, validate technical viability first, and implement a staged path for surfacing installed-but-not-observed ESLint rules.
+
+Key decisions:
+
+- Introduced a staged enhancement (kept in `SPEC_ENHANCED.md`) instead of immediate promotion to main spec.
+- Added API-level rule catalog discovery per workspace:
+  - ESLint core builtin rules via `eslint/use-at-your-own-risk`,
+  - plugin rule exports discovered from workspace/root `node_modules` plus dependency metadata.
+- Added group-level catalog aggregation in CLI runtime.
+- Added a new `catalog` command:
+  - `catalog --format json|short`
+  - `catalog --short`
+  - `catalog --missing` (available but not observed in current snapshots).
+- Preserved deterministic ordering in catalog output and added test coverage in API and CLI integration suites.
+
+Result:
+
+- Research branch now includes a working staged implementation for rule catalog discovery and missing-rule visibility.
+- Users can inspect effective drift (`check`) and availability gaps (`catalog`) without changing baseline snapshot semantics.

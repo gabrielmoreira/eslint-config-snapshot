@@ -3,6 +3,7 @@ import {
   assignGroupsByMatch,
   buildSnapshot,
   diffSnapshots,
+  discoverWorkspaceRuleCatalog,
   discoverWorkspaces,
   extractRulesForWorkspaceSamples,
   type GroupAssignment,
@@ -32,6 +33,12 @@ export type WorkspaceAssignments = {
   discovery: WorkspaceDiscovery
   assignments: GroupAssignment[]
 }
+export type GroupRuleCatalog = {
+  coreRules: string[]
+  pluginRulesByPrefix: Record<string, string[]>
+  allRules: string[]
+}
+export type GroupRuleCatalogs = Map<string, GroupRuleCatalog>
 export type SkippedWorkspace = {
   groupId: string
   workspaceRel: string
@@ -273,6 +280,44 @@ export async function resolveGroupEslintVersions(cwd: string): Promise<GroupEsli
       versions.add(resolveEslintVersionForWorkspace(workspaceAbs))
     }
     result.set(group.name, [...versions].sort((a, b) => a.localeCompare(b)))
+  }
+
+  return result
+}
+
+export async function resolveGroupRuleCatalogs(cwd: string): Promise<GroupRuleCatalogs> {
+  const config = await loadConfig(cwd)
+  const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
+  const result: GroupRuleCatalogs = new Map()
+
+  for (const group of assignments) {
+    const coreRules = new Set<string>()
+    const allRules = new Set<string>()
+    const pluginRulesByPrefix: Record<string, string[]> = {}
+
+    for (const workspaceRel of group.workspaces) {
+      const workspaceAbs = path.resolve(discovery.rootAbs, workspaceRel)
+      const catalog = await discoverWorkspaceRuleCatalog(workspaceAbs)
+      for (const ruleName of catalog.coreRules) {
+        coreRules.add(ruleName)
+      }
+      for (const ruleName of catalog.allRules) {
+        allRules.add(ruleName)
+      }
+      for (const [prefix, rules] of Object.entries(catalog.pluginRulesByPrefix)) {
+        const current = pluginRulesByPrefix[prefix] ?? []
+        current.push(...rules)
+        pluginRulesByPrefix[prefix] = [...new Set(current)].sort((a, b) => a.localeCompare(b))
+      }
+    }
+
+    result.set(group.name, {
+      coreRules: [...coreRules].sort((a, b) => a.localeCompare(b)),
+      pluginRulesByPrefix: Object.fromEntries(
+        Object.entries(pluginRulesByPrefix).sort((a, b) => a[0].localeCompare(b[0]))
+      ),
+      allRules: [...allRules].sort((a, b) => a.localeCompare(b))
+    })
   }
 
   return result

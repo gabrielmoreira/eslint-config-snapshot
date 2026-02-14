@@ -23,3 +23,6 @@ export type { RuleOptionChange, RuleSeverityChange, SnapshotDiff, WorkspaceMembe
 
 export { DEFAULT_CONFIG, findConfigPath, getConfigScaffold, loadConfig } from './config.js'
 export type { ConfigPreset, SnapshotConfig } from './config.js'
+
+export { discoverWorkspaceRuleCatalog } from './catalog.js'
+export type { WorkspaceRuleCatalog } from './catalog.js'
