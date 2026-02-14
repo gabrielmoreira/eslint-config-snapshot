@@ -25,6 +25,10 @@ jobs:
             repo: https://github.com/vercel/next.js.git
             ref: canary
             package_manager: pnpm
+          - name: nx
+            repo: https://github.com/nrwl/nx.git
+            ref: master
+            package_manager: pnpm
 
     steps:
       - name: Checkout snapshot repository
