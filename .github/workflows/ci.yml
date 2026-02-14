@@ -80,11 +80,11 @@ jobs:
         run: pnpm nx run-many -t build
 
       - name: Test API with coverage + JUnit
-        run: pnpm vitest run --coverage.enabled --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
+        run: pnpm vitest run --coverage.enabled --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --coverage.reporter=html --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
         working-directory: packages/api
 
       - name: Test CLI with coverage + JUnit
-        run: pnpm vitest run --coverage.enabled --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
+        run: pnpm vitest run --coverage.enabled --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --coverage.reporter=html --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
         working-directory: packages/cli
 
       - name: Publish unit test report
@@ -106,6 +106,45 @@ jobs:
           fail_below_min: false
           format: markdown
           output: both
+
+      - name: Publish coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: packages/api/coverage/cobertura-coverage.xml,packages/cli/coverage/cobertura-coverage.xml
+          flags: api,cli
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Coverage quick summary
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+
+          function readSummary(filePath) {
+            const raw = fs.readFileSync(filePath, 'utf8')
+            return JSON.parse(raw).total
+          }
+
+          function fmt(value) {
+            return `${Number(value).toFixed(2)}%`
+          }
+
+          const api = readSummary(path.join(process.cwd(), 'packages/api/coverage/coverage-summary.json'))
+          const cli = readSummary(path.join(process.cwd(), 'packages/cli/coverage/coverage-summary.json'))
+          const lines = [
+            '### Coverage Overview',
+            '',
+            '| Package | Lines | Statements | Functions | Branches |',
+            '|---|---:|---:|---:|---:|',
+            `| api | ${fmt(api.lines.pct)} | ${fmt(api.statements.pct)} | ${fmt(api.functions.pct)} | ${fmt(api.branches.pct)} |`,
+            `| cli | ${fmt(cli.lines.pct)} | ${fmt(cli.statements.pct)} | ${fmt(cli.functions.pct)} | ${fmt(cli.branches.pct)} |`
+          ]
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`)
+          NODE
 
       - name: Upload test and coverage artifacts
         if: always()

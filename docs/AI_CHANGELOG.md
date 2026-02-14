@@ -2042,3 +2042,25 @@ Key decisions:
 Result:
 
 - Repository versioning is now aligned for `1.0.0` release readiness and push to `main`.
+
+## 2026-02-13 - Request 095
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve GitHub pipeline coverage visibility similarly to Azure-like reporting expectations.
+
+Key decisions:
+
+- Kept Vitest JUnit test report flow unchanged (already visible in pipeline checks).
+- Extended coverage generation to include HTML reports for both packages.
+- Added Codecov upload step using Cobertura XML outputs from API and CLI packages.
+- Added a GitHub Job Summary coverage table using `coverage-summary.json` for quick in-run visibility.
+
+Result:
+
+- Coverage is now available in three places:
+  - GitHub job summary table,
+  - downloadable HTML coverage artifacts,
+  - Codecov dashboard integration.
