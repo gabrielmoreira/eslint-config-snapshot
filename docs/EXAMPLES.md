@@ -117,3 +117,37 @@ When to use:
 - You want to bias representative file-role diversity through token priorities.
 
 Note: `tokenHints` are naming/path tokens (not globs). They influence candidate priority; final sampling remains deterministic with regional fallback.
+
+## 7. Enable experimental catalog hook in config
+
+```js
+// eslint-config-snapshot.config.mjs
+export default {
+  experimentalWithCatalog: true
+}
+```
+
+When to use:
+
+- You want catalog baseline checks to run automatically with your normal `check`/`update` flow.
+- You do not want to pass `--experimental-with-catalog` every time.
+
+Equivalent CLI-only mode:
+
+```bash
+eslint-config-snapshot check --experimental-with-catalog
+eslint-config-snapshot update --experimental-with-catalog
+```
+
+## 8. Catalog baseline lifecycle
+
+```bash
+eslint-config-snapshot catalog-update
+eslint-config-snapshot catalog-check
+eslint-config-snapshot catalog --short --missing
+```
+
+When to use:
+
+- You want explicit catalog baseline control separate from rule snapshot baseline.
+- You want to track "available but not currently observed" rules over time.

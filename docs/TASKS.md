@@ -16,7 +16,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 - [ ] Reduce CLI noise by auditing message consistency across `check`, `compare`, and `status`.
 - [ ] Add coverage threshold enforcement for both packages in CI.
-- [ ] Evaluate promotion of staged `catalog` command from `SPEC_ENHANCED.md` into `SPEC.md` after additional OSS validation.
+- [ ] Decide promotion of staged catalog features from `SPEC_ENHANCED.md` into `SPEC.md` (validation is complete).
 
 ## Backlog (Exploration)
 
@@ -26,6 +26,11 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Validate staged catalog flow end-to-end in OSS matrix (Linux/Windows where configured), including:
+  - `--experimental-with-catalog` on update/check,
+  - `catalog-update`/`catalog-check`,
+  - post-init equivalence checks with normalized JSON capture.
+- [x] Add config-level catalog hook toggle (`experimentalWithCatalog: true`) and validate combined check/update behavior in integration tests.
 - [x] Add staged rule-catalog discovery path (`catalog` command) with deterministic available/missing rule output in JSON and short formats.
 - [x] Add API discovery primitive for workspace rule catalog (`coreRules`, plugin rule prefixes, aggregated `allRules`).
 - [x] Add API/CLI test coverage for catalog discovery behavior and command outputs.

@@ -10,6 +10,7 @@ This file tracks active technical findings only: risks, limitations, and deferre
 
 ## Resolved Findings
 
+- OSS compatibility init-equivalence failures caused by non-JSON prefix lines in zero-config `print/catalog` capture were fixed by normalizing captured JSON in workflow steps.
 - Command-flow duplication across CLI commands was reduced by introducing a shared snapshot-preparation executor used by `check`, `update`, `print`, and `config`.
 - Init prompt clarity for default group `*` is now explicit in CLI and docs.
 - Numbered init prompt flow was fully removed in favor of Inquirer select/checkbox prompts.

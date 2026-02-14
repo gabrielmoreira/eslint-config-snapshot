@@ -2409,3 +2409,43 @@ Result:
 
 - Research branch now includes a working staged implementation for rule catalog discovery and missing-rule visibility.
 - Users can inspect effective drift (`check`) and availability gaps (`catalog`) without changing baseline snapshot semantics.
+
+## 2026-02-14 - Request 112
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Fix all OSS pipeline errors, then review implementation/test sufficiency.
+- Document the staged catalog integration comprehensively in `SPEC_ENHANCED.md`, plus user-facing docs (`README`, examples), and keep project tracking files updated.
+
+Key decisions:
+
+- Investigated failing OSS run (`22011280196`) and identified the real failure cause:
+  - post-init equivalence step used raw `print/catalog --format json` output,
+  - zero-config tip lines were captured before JSON payload, causing false `diff -u` failures.
+- Updated `oss-compat.yml` to normalize captured JSON with:
+  - `sed -n '/^\\[/,$p'` for `print` and `catalog` before/after init snapshots.
+- Kept strict equivalence check itself (`diff -u`) to preserve regression sensitivity.
+- Expanded staged documentation for catalog enhancements:
+  - added `catalog-check`/`catalog-update`,
+  - documented `--experimental-with-catalog` hook behavior,
+  - documented config-level opt-in `experimentalWithCatalog: true`,
+  - documented severity breakdown and group-aware output expectations.
+
+Implementation result:
+
+- OSS compatibility matrix now passes completely on the research branch (`22011364014`):
+  - `vercel/next.js` (Linux + Windows)
+  - `nrwl/nx`
+  - `facebook/react-native`
+  - `aws/aws-sdk-js`
+  - `oss-serverless/serverless`
+- Local quality gates were revalidated:
+  - `pnpm nx run-many -t build lint typecheck test` passed.
+- `README.md` and `docs/EXAMPLES.md` now include practical usage for experimental catalog hook and catalog baseline commands.
+- `docs/TASKS.md` and `docs/FINDINGS.md` were updated to reflect completed validation/fixes and current remaining work.
+
+Follow-up notes:
+
+- Catalog behavior remains staged in `SPEC_ENHANCED.md` pending explicit promotion decision into `SPEC.md`.

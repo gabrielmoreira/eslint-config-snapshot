@@ -29,6 +29,8 @@ The zero-config workflow is continuously smoke-tested against large, complex ope
 - `aws/aws-sdk-js`
 - `oss-serverless/serverless`
 
+These OSS smoke runs exercise both snapshot drift and catalog drift flows.
+
 This is not a formal guarantee for every repository shape, but it gives strong practical confidence that `eslint-config-snapshot` works out of the box on real-world monorepos.
 
 ## Runtime Requirements
@@ -110,6 +112,8 @@ pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --p
 - `update`
 - `print`
 - `catalog`
+- `catalog-check`
+- `catalog-update`
 - `config`
 - `init`
 
@@ -119,6 +123,30 @@ Compatibility aliases:
 - `compare` => `check --format diff`
 - `status` => `check --format status`
 - `what-changed` => `check --format summary`
+
+### Experimental Catalog Hook
+
+You can make `check`/`update` run catalog checks automatically:
+
+```bash
+eslint-config-snapshot check --experimental-with-catalog
+eslint-config-snapshot update --experimental-with-catalog
+eslint-config-snapshot --experimental-with-catalog
+eslint-config-snapshot --update --experimental-with-catalog
+```
+
+Or enable it in config (so no CLI flag is required):
+
+```js
+export default {
+  experimentalWithCatalog: true
+}
+```
+
+When enabled:
+
+- check flow = snapshot check + catalog check
+- update flow = snapshot update + catalog update
 
 ## Snapshot Model
 
