@@ -1,0 +1,60 @@
+name: OSS Compatibility
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: next.js
+            repo: https://github.com/vercel/next.js.git
+            ref: canary
+            package_manager: pnpm
+
+    steps:
+      - name: Checkout snapshot repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install snapshot dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CLI
+        run: pnpm nx run cli:build
+
+      - name: Clone OSS target repository
+        run: git clone --depth 1 --branch "${{ matrix.ref }}" "${{ matrix.repo }}" external-repo
+
+      - name: Install OSS repository dependencies (pnpm)
+        if: ${{ matrix.package_manager == 'pnpm' }}
+        run: pnpm install --frozen-lockfile
+        working-directory: external-repo
+
+      - name: Snapshot update (zero-config)
+        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update
+        working-directory: external-repo
+
+      - name: Snapshot check (zero-config)
+        run: node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format status
+        working-directory: external-repo

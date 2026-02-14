@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Add dedicated OSS compatibility workflow to validate zero-config behavior against complex external repositories (starting with next.js).
 - [x] Add GitHub coverage visualization upgrades (Codecov upload, HTML coverage artifacts, and job summary table).
 - [x] Add CI npm-drift detection that dispatches publish workflow automatically instead of embedding publish logic in CI.
 - [x] Add dynamic publish workflow run naming with version/ref label and serialize runs via workflow concurrency.

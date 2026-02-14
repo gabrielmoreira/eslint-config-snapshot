@@ -2064,3 +2064,26 @@ Result:
   - GitHub job summary table,
   - downloadable HTML coverage artifacts,
   - Codecov dashboard integration.
+
+## 2026-02-13 - Request 096
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add an extra pipeline dedicated to validating zero-config behavior against difficult open-source repositories (for example next.js).
+
+Key decisions:
+
+- Added a separate workflow `oss-compat.yml` instead of extending the main CI workflow.
+- Kept scope focused on smoke validation:
+  - clone OSS target repository,
+  - install dependencies,
+  - run snapshot `--update` with zero config,
+  - run `check --format status`.
+- Started with `next.js` (`canary`) as the first matrix target.
+- Scheduled weekly execution and enabled manual dispatch.
+
+Result:
+
+- Repository now has a dedicated compatibility pipeline to detect real-world zero-config regressions on complex OSS structures.

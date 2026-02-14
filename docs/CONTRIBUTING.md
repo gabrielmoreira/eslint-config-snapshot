@@ -26,6 +26,18 @@ pnpm nx run-many -t typecheck
 pnpm nx run-many -t test
 ```
 
+## OSS Compatibility Smoke
+
+A dedicated GitHub Actions workflow (`OSS Compatibility`) validates zero-config behavior against complex open-source repositories.
+
+- Trigger manually from Actions UI (`workflow_dispatch`), or rely on weekly schedule.
+- Current target matrix starts with `vercel/next.js` (`canary`).
+- The workflow performs:
+  - local CLI build from this repository,
+  - target repository clone + install,
+  - `eslint-config-snapshot --update` (zero-config),
+  - `eslint-config-snapshot check --format status`.
+
 CLI from source:
 
 ```bash
