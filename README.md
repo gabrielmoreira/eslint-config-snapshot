@@ -19,6 +19,18 @@ The common pain:
 
 This tool gives you a deterministic baseline and a fast answer to: "what changed in our lint policy?"
 
+## Proven On Large OSS Repos
+
+The zero-config workflow is continuously smoke-tested against large, complex open-source repositories in CI:
+
+- `vercel/next.js`
+- `nrwl/nx`
+- `facebook/react-native`
+- `aws/aws-sdk-js`
+- `oss-serverless/serverless`
+
+This is not a formal guarantee for every repository shape, but it gives strong practical confidence that `eslint-config-snapshot` works out of the box on real-world monorepos.
+
 ## Runtime Requirements
 
 - Node.js `>=20`

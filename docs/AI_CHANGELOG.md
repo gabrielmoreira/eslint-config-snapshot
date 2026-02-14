@@ -2248,3 +2248,27 @@ Key decisions:
 Result:
 
 - Users now get actionable visibility for each skipped workspace instead of only aggregate behavior.
+
+## 2026-02-14 - Request 105
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure AI changelog captures recent OSS compatibility work and promote this capability in README as a clear project value proposition.
+
+Key decisions:
+
+- Recorded the OSS compatibility scope explicitly, including the repositories currently covered in CI smoke:
+  - `vercel/next.js`
+  - `nrwl/nx`
+  - `facebook/react-native`
+  - `aws/aws-sdk-js`
+  - `oss-serverless/serverless`
+- Documented the compatibility intent as zero-config resilience with iterative bug fixes for real-world monorepo shapes.
+- Added a dedicated README section to highlight out-of-the-box behavior on large OSS projects while preserving clear limitation language.
+
+Result:
+
+- Project history now reflects the full OSS compatibility effort in one place.
+- README now communicates this strength more explicitly for end users evaluating adoption.
