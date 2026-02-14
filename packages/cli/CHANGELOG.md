@@ -1,5 +1,13 @@
 # @eslint-config-snapshot/cli
 
+## 1.1.1
+
+### Patch Changes
+
+- Patch release: improve OSS compatibility workflow checks and align CLI zero-config print tolerance.
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes
