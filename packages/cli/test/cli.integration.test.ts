@@ -118,8 +118,13 @@ describe.sequential('cli integration', () => {
       "console.error('Failed to load config \"next/core-web-vitals\" to extend from.'); process.exit(1)\n"
     )
 
+    const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli('update', fixtureRoot)
     expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Warning: skipped workspace packages/ws-b (group: default)'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('excludeGlobs'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining("'packages/ws-b/**'"))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Skipped workspaces total: 1'))
 
     const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
     const snapshot = JSON.parse(snapshotRaw)

@@ -32,14 +32,21 @@ export type WorkspaceAssignments = {
   discovery: WorkspaceDiscovery
   assignments: GroupAssignment[]
 }
+export type SkippedWorkspace = {
+  groupId: string
+  workspaceRel: string
+  reason: string
+}
 
 export async function computeCurrentSnapshots(
   cwd: string,
   options?: {
     allowWorkspaceExtractionFailure?: boolean
+    onWorkspaceSkipped?: (skipped: SkippedWorkspace) => void
   }
 ): Promise<Map<string, BuiltSnapshot>> {
   const allowWorkspaceExtractionFailure = options?.allowWorkspaceExtractionFailure ?? false
+  const onWorkspaceSkipped = options?.onWorkspaceSkipped
   const computeStartedAt = Date.now()
   const configStartedAt = Date.now()
   const config = await loadConfig(cwd)
@@ -103,6 +110,11 @@ export async function computeCurrentSnapshots(
       if (extractedCount === 0) {
         const context = lastExtractionError ? ` Last error: ${lastExtractionError}` : ''
         if (allowWorkspaceExtractionFailure && isSkippableWorkspaceExtractionFailure(lastExtractionError)) {
+          onWorkspaceSkipped?.({
+            groupId: group.name,
+            workspaceRel,
+            reason: lastExtractionError ?? 'unknown extraction failure'
+          })
           debugWorkspace(
             'group=%s workspace=%s skipped=true reason=%s',
             group.name,

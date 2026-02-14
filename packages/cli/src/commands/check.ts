@@ -9,6 +9,7 @@ import {
   type GroupEslintVersions,
   loadStoredSnapshots,
   resolveGroupEslintVersions,
+  type SkippedWorkspace,
   type SnapshotDiff,
   writeSnapshots
 } from '../runtime.js'
@@ -42,9 +43,14 @@ export async function executeCheck(
   }
 
   let currentSnapshots: Map<string, BuiltSnapshot>
+  const skippedWorkspaces: SkippedWorkspace[] = []
   try {
     currentSnapshots = await computeCurrentSnapshots(cwd, {
-      allowWorkspaceExtractionFailure: !foundConfig
+      allowWorkspaceExtractionFailure: !foundConfig,
+      onWorkspaceSkipped: (skipped) => {
+        skippedWorkspaces.push(skipped)
+        writeSkippedWorkspaceWarning(terminal, skipped)
+      }
     })
   } catch (error: unknown) {
     if (!foundConfig && isWorkspaceDiscoveryDefaultsError(error)) {
@@ -56,6 +62,7 @@ export async function executeCheck(
 
     throw error
   }
+  writeSkippedWorkspaceSummary(terminal, skippedWorkspaces)
   if (storedSnapshots.size === 0) {
     const summary = summarizeSnapshots(currentSnapshots)
     terminal.write(
@@ -165,4 +172,53 @@ function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
     message.includes('Unmatched workspaces') ||
     message.includes('zero-config mode')
   )
+}
+
+function writeSkippedWorkspaceSummary(terminal: TerminalIO, skippedWorkspaces: SkippedWorkspace[]): void {
+  if (skippedWorkspaces.length === 0) {
+    return
+  }
+
+  terminal.subtle(`Skipped workspaces total: ${skippedWorkspaces.length}\n`)
+  const suggestedExcludeGlobs = buildSuggestedExcludeGlobs(skippedWorkspaces)
+  terminal.subtle(
+    `Tip: if these workspaces are intentionally out of scope, consider adding this config:\n${formatSamplingExcludeHint(
+      suggestedExcludeGlobs
+    )}`
+  )
+}
+
+function writeSkippedWorkspaceWarning(terminal: TerminalIO, skippedWorkspace: SkippedWorkspace): void {
+  const shortenedReason = skippedWorkspace.reason.length > 120 ? `${skippedWorkspace.reason.slice(0, 117)}...` : skippedWorkspace.reason
+  terminal.warning(
+    `Warning: skipped workspace ${skippedWorkspace.workspaceRel} (group: ${skippedWorkspace.groupId}) due to extraction failure: ${shortenedReason}\n`
+  )
+}
+
+function buildSuggestedExcludeGlobs(skippedWorkspaces: SkippedWorkspace[]): string[] {
+  const unique = new Set<string>()
+  for (const skippedWorkspace of skippedWorkspaces) {
+    const normalizedWorkspace = trimTrailingSlashes(skippedWorkspace.workspaceRel.replaceAll('\\', '/'))
+    unique.add(normalizedWorkspace === '' || normalizedWorkspace === '.' ? '**/*' : `${normalizedWorkspace}/**`)
+  }
+  return [...unique].sort((a, b) => a.localeCompare(b))
+}
+
+function formatSamplingExcludeHint(excludeGlobs: string[]): string {
+  const lines = excludeGlobs.map((glob) => `      '${glob}',`).join('\n')
+  return `{
+  sampling: {
+    excludeGlobs: [
+${lines}
+    ]
+  }
+}\n`
+}
+
+function trimTrailingSlashes(value: string): string {
+  let result = value
+  while (result.endsWith('/')) {
+    result = result.slice(0, -1)
+  }
+  return result
 }

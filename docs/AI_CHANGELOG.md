@@ -2228,3 +2228,23 @@ Result:
 
 - Out-of-box runs on complex OSS monorepos are now more resilient.
 - Pipeline now reflects real failures correctly and runtime can progress when only a subset of workspaces is extractable.
+
+## 2026-02-14 - Request 104
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve skipped-workspace observability by warning per skipped workspace and suggesting explicit config skip when desired.
+
+Key decisions:
+
+- Added per-workspace warning output at skip time in `check` and `update` tolerant zero-config mode.
+- Included workspace id, group id, and summarized failure reason.
+- Added guidance tip after each warning pointing to explicit skip configuration (`sampling.excludeGlobs`).
+- Kept a compact total line (`Skipped workspaces total: N`) for quick scan.
+- Added integration assertions validating warning + tip output.
+
+Result:
+
+- Users now get actionable visibility for each skipped workspace instead of only aggregate behavior.

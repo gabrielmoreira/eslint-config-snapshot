@@ -2,7 +2,7 @@ import { findConfigPath } from '@eslint-config-snapshot/api'
 
 import { countUniqueWorkspaces, summarizeSnapshots } from '../formatters.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
-import { computeCurrentSnapshots, loadStoredSnapshots, resolveGroupEslintVersions, writeSnapshots } from '../runtime.js'
+import { computeCurrentSnapshots, loadStoredSnapshots, resolveGroupEslintVersions, type SkippedWorkspace, writeSnapshots } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
 
 export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotDir: string, printSummary: boolean): Promise<number> {
@@ -20,9 +20,14 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
   }
 
   let currentSnapshots
+  const skippedWorkspaces: SkippedWorkspace[] = []
   try {
     currentSnapshots = await computeCurrentSnapshots(cwd, {
-      allowWorkspaceExtractionFailure: !foundConfig
+      allowWorkspaceExtractionFailure: !foundConfig,
+      onWorkspaceSkipped: (skipped) => {
+        skippedWorkspaces.push(skipped)
+        writeSkippedWorkspaceWarning(terminal, skipped)
+      }
     })
   } catch (error: unknown) {
     if (!foundConfig && isWorkspaceDiscoveryDefaultsError(error)) {
@@ -34,6 +39,7 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
 
     throw error
   }
+  writeSkippedWorkspaceSummary(terminal, skippedWorkspaces)
   await writeSnapshots(cwd, snapshotDir, currentSnapshots)
 
   if (printSummary) {
@@ -57,4 +63,53 @@ function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
     message.includes('Unmatched workspaces') ||
     message.includes('zero-config mode')
   )
+}
+
+function writeSkippedWorkspaceSummary(terminal: TerminalIO, skippedWorkspaces: SkippedWorkspace[]): void {
+  if (skippedWorkspaces.length === 0) {
+    return
+  }
+
+  terminal.subtle(`Skipped workspaces total: ${skippedWorkspaces.length}\n`)
+  const suggestedExcludeGlobs = buildSuggestedExcludeGlobs(skippedWorkspaces)
+  terminal.subtle(
+    `Tip: if these workspaces are intentionally out of scope, consider adding this config:\n${formatSamplingExcludeHint(
+      suggestedExcludeGlobs
+    )}`
+  )
+}
+
+function writeSkippedWorkspaceWarning(terminal: TerminalIO, skippedWorkspace: SkippedWorkspace): void {
+  const shortenedReason = skippedWorkspace.reason.length > 120 ? `${skippedWorkspace.reason.slice(0, 117)}...` : skippedWorkspace.reason
+  terminal.warning(
+    `Warning: skipped workspace ${skippedWorkspace.workspaceRel} (group: ${skippedWorkspace.groupId}) due to extraction failure: ${shortenedReason}\n`
+  )
+}
+
+function buildSuggestedExcludeGlobs(skippedWorkspaces: SkippedWorkspace[]): string[] {
+  const unique = new Set<string>()
+  for (const skippedWorkspace of skippedWorkspaces) {
+    const normalizedWorkspace = trimTrailingSlashes(skippedWorkspace.workspaceRel.replaceAll('\\', '/'))
+    unique.add(normalizedWorkspace === '' || normalizedWorkspace === '.' ? '**/*' : `${normalizedWorkspace}/**`)
+  }
+  return [...unique].sort((a, b) => a.localeCompare(b))
+}
+
+function formatSamplingExcludeHint(excludeGlobs: string[]): string {
+  const lines = excludeGlobs.map((glob) => `      '${glob}',`).join('\n')
+  return `{
+  sampling: {
+    excludeGlobs: [
+${lines}
+    ]
+  }
+}\n`
+}
+
+function trimTrailingSlashes(value: string): string {
+  let result = value
+  while (result.endsWith('/')) {
+    result = result.slice(0, -1)
+  }
+  return result
 }
