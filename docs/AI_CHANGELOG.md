@@ -2168,3 +2168,23 @@ Result:
 
 - Compatibility smoke remains easy to iterate on branch.
 - `main` avoids unnecessary heavy OSS runs unless workflow behavior changed or nightly schedule triggers.
+
+## 2026-02-14 - Request 101
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Remove the `main` push-gating logic because it made the workflow too complex; keep `main` coverage only through nightly schedule.
+
+Key decisions:
+
+- Removed the `precheck` gating job from `oss-compat.yml`.
+- Removed `main` from push trigger.
+- Kept branch push trigger for smoke iteration (`chore/oss-compat-nextjs-smoke`).
+- Kept daily nightly schedule and manual dispatch.
+
+Result:
+
+- OSS compatibility workflow is simpler and easier to reason about.
+- `main` execution now happens only by nightly schedule (or manual dispatch), as requested.
