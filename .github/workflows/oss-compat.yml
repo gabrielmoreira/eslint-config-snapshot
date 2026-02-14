@@ -146,12 +146,12 @@ jobs:
             export DEBUG="eslint-config-snapshot:*"
           fi
 
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-before-init.json"
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json > "${RUNNER_TEMP}/snapshot-catalog-before-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json | sed -n '/^\[/,$p' > "${RUNNER_TEMP}/snapshot-print-before-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json | sed -n '/^\[/,$p' > "${RUNNER_TEMP}/snapshot-catalog-before-init.json"
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" init --yes --target package-json --preset recommended 2>&1 | tee "${RUNNER_TEMP}/snapshot-init.log"
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary --experimental-with-catalog 2>&1 | tee "${RUNNER_TEMP}/snapshot-check-after-init.log"
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-after-init.json"
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json > "${RUNNER_TEMP}/snapshot-catalog-after-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json | sed -n '/^\[/,$p' > "${RUNNER_TEMP}/snapshot-print-after-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json | sed -n '/^\[/,$p' > "${RUNNER_TEMP}/snapshot-catalog-after-init.json"
 
           diff -u "${RUNNER_TEMP}/snapshot-print-before-init.json" "${RUNNER_TEMP}/snapshot-print-after-init.json"
           diff -u "${RUNNER_TEMP}/snapshot-catalog-before-init.json" "${RUNNER_TEMP}/snapshot-catalog-after-init.json"
