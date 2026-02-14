@@ -2005,3 +2005,40 @@ Result:
 
 - Release flow is now automated after successful CI when versions are publishable.
 - Publish responsibilities remain isolated in `publish-npm.yml`.
+
+## 2026-02-13 - Request 093
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Document project limitations in README, especially around non-exhaustive rule discovery and sampling behavior.
+
+Key decisions:
+
+- Added a dedicated `Known Limitations` section to README.
+- Clarified that snapshots reflect runtime-observed sampled rules, not the full theoretical plugin rule universe.
+- Documented potential sampling variability and baseline drift when repository files evolve.
+- Documented explicit sampling configuration as the mitigation path for stronger determinism.
+
+Result:
+
+- README now sets clear expectations about scope, sampling tradeoffs, and practical stability guidance.
+
+## 2026-02-13 - Request 094
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Prepare and publish stable `1.0.0` release line.
+
+Key decisions:
+
+- Kept Changesets as the single source for version progression.
+- Applied a major bump for both publishable packages and synchronized root version.
+- Preserved the automated CI drift gate + dedicated publish workflow separation.
+
+Result:
+
+- Repository versioning is now aligned for `1.0.0` release readiness and push to `main`.

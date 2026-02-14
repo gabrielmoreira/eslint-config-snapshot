@@ -135,6 +135,15 @@ It does **not** try to enumerate every rule that could exist across every instal
 
 If you need a full rule catalog/inspection workflow, use ESLint inspector tooling directly (for example `eslint --inspect-config` and related inspector UI workflows).
 
+## Known Limitations
+
+- The tool snapshots only rules that are effectively observed at runtime from sampled files.
+- It does not build a complete catalog of all rules that could potentially be enabled across installed plugins.
+- Sampling is deterministic but still heuristic-based by default, so very small or low-variance samples may miss config variability.
+- As files evolve, sampled coverage can expose additional rule variants that were not represented in earlier baselines.
+- For higher stability, define sampling rules explicitly in config (workspace grouping, include/exclude globs, and sampling settings).
+- The default heuristic is intended to be a practical baseline for most repositories, but it is not exhaustive.
+
 ## Troubleshooting
 
 - You run without config and see workspace discovery failure:
