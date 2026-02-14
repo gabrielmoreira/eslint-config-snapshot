@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 1.2.0
+
+### Minor Changes
+
+- Minor release: centralize shared command execution flow with reusable snapshot preparation executor.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.2.0
+
 ## 1.1.1
 
 ### Patch Changes
