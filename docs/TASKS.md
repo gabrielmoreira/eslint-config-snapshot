@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Restrict OSS compatibility execution on `main` to workflow-file changes, while keeping branch smoke runs and daily nightly schedule.
 - [x] Fix OSS compatibility workflow shell piping to preserve non-zero CLI exit codes (`set -o pipefail` with tee logging).
 - [x] Enable DEBUG mode and artifact log capture in OSS compatibility workflow for faster failure diagnosis.
 - [x] Harden discover-mode workspace resolution with package.json workspaces fallback and root fallback for zero-config OSS monorepos.

@@ -2147,3 +2147,24 @@ Key decisions:
 Result:
 
 - Workflow now fails correctly when CLI exits non-zero, while still preserving logs in artifacts.
+
+## 2026-02-14 - Request 100
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Ensure OSS compatibility pipeline can run on branch and main, but on `main` only when the OSS workflow file changes (plus nightly schedule).
+
+Key decisions:
+
+- Added `main` to push trigger and changed schedule from weekly to daily nightly.
+- Introduced a lightweight `precheck` job to gate execution:
+  - always run on branch pushes, scheduled runs, and manual dispatch,
+  - on `main` push, run smoke only when `.github/workflows/oss-compat.yml` changed in the pushed range.
+- Kept the heavy smoke job unchanged and dependent on precheck output.
+
+Result:
+
+- Compatibility smoke remains easy to iterate on branch.
+- `main` avoids unnecessary heavy OSS runs unless workflow behavior changed or nightly schedule triggers.
