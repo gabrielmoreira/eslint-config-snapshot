@@ -2206,3 +2206,25 @@ Key decisions:
 Result:
 
 - Nightly OSS smoke is now explicitly constrained to `main` even if repository settings change in the future.
+
+## 2026-02-14 - Request 103
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate OSS compatibility failures end-to-end, create tests, and fix runtime behavior instead of only adjusting pipeline wrappers.
+
+Key decisions:
+
+- Implemented tolerant zero-config extraction mode in CLI runtime:
+  - continue when individual workspaces fail ESLint extraction,
+  - skip failed workspaces and keep successful ones in snapshot aggregation.
+- Kept strict behavior for explicit user config mode.
+- Narrowed default-mode fallback messaging logic so workspace extraction failures are not misclassified as generic discovery failures.
+- Added integration coverage for zero-config workspace skip behavior in `cli.integration.test.ts`.
+
+Result:
+
+- Out-of-box runs on complex OSS monorepos are now more resilient.
+- Pipeline now reflects real failures correctly and runtime can progress when only a subset of workspaces is extractable.

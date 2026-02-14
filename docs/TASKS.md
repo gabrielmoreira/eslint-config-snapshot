@@ -25,6 +25,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Make zero-config extraction tolerant to workspace-level ESLint failures and continue with healthy workspaces.
 - [x] Enforce explicit schedule safety guard so OSS nightly runs only execute on `main`.
 - [x] Simplify OSS compatibility triggers by removing main-push gating logic and relying on nightly schedule for `main`.
 - [x] Superseded: temporary `main` push gating by changed workflow file (removed to keep workflow simpler).

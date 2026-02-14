@@ -33,7 +33,13 @@ export type WorkspaceAssignments = {
   assignments: GroupAssignment[]
 }
 
-export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, BuiltSnapshot>> {
+export async function computeCurrentSnapshots(
+  cwd: string,
+  options?: {
+    allowWorkspaceExtractionFailure?: boolean
+  }
+): Promise<Map<string, BuiltSnapshot>> {
+  const allowWorkspaceExtractionFailure = options?.allowWorkspaceExtractionFailure ?? false
   const computeStartedAt = Date.now()
   const configStartedAt = Date.now()
   const config = await loadConfig(cwd)
@@ -49,6 +55,7 @@ export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, 
   for (const group of assignments) {
     const groupStartedAt = Date.now()
     const extractedForGroup = []
+    const extractedWorkspaces: string[] = []
     debugWorkspace('group=%s workspaces=%o', group.name, group.workspaces)
 
     for (const workspaceRel of group.workspaces) {
@@ -85,7 +92,7 @@ export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, 
         }
 
         const message = result.error instanceof Error ? result.error.message : String(result.error)
-        if (isRecoverableExtractionError(message)) {
+        if (isRecoverableExtractionError(message) || allowWorkspaceExtractionFailure) {
           lastExtractionError = message
           continue
         }
@@ -95,10 +102,19 @@ export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, 
 
       if (extractedCount === 0) {
         const context = lastExtractionError ? ` Last error: ${lastExtractionError}` : ''
-        throw new Error(
-          `Unable to extract ESLint config for workspace ${workspaceRel}. All sampled files were ignored or produced non-JSON output.${context}`
-        )
+        if (allowWorkspaceExtractionFailure && isSkippableWorkspaceExtractionFailure(lastExtractionError)) {
+          debugWorkspace(
+            'group=%s workspace=%s skipped=true reason=%s',
+            group.name,
+            workspaceRel,
+            lastExtractionError ?? 'unknown extraction failure'
+          )
+          continue
+        }
+
+        throw new Error(`Unable to extract ESLint config for workspace ${workspaceRel}.${context}`)
       }
+      extractedWorkspaces.push(workspaceRel)
 
       debugWorkspace(
         'group=%s workspace=%s extracted=%d failed=%d',
@@ -109,8 +125,16 @@ export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, 
       )
     }
 
+    if (extractedForGroup.length === 0) {
+      if (allowWorkspaceExtractionFailure) {
+        debugWorkspace('group=%s skipped=true reason=no-extracted-workspaces', group.name)
+        continue
+      }
+      throw new Error(`Unable to extract ESLint config for group ${group.name}: no workspace produced a valid config`)
+    }
+
     const aggregated = aggregateRules(extractedForGroup)
-    snapshots.set(group.name, buildSnapshot(group.name, group.workspaces, aggregated))
+    snapshots.set(group.name, buildSnapshot(group.name, extractedWorkspaces, aggregated))
     debugWorkspace(
       'group=%s aggregatedRules=%d groupElapsedMs=%d',
       group.name,
@@ -120,6 +144,9 @@ export async function computeCurrentSnapshots(cwd: string): Promise<Map<string, 
   }
 
   debugTiming('phase=computeCurrentSnapshots elapsedMs=%d', Date.now() - computeStartedAt)
+  if (snapshots.size === 0) {
+    throw new Error('Unable to extract ESLint config from discovered workspaces in zero-config mode')
+  }
   return snapshots
 }
 
@@ -129,6 +156,19 @@ function isRecoverableExtractionError(message: string): boolean {
     message.startsWith('Empty ESLint print-config output') ||
     message.includes('File ignored because of a matching ignore pattern') ||
     message.includes('File ignored by default')
+  )
+}
+
+function isSkippableWorkspaceExtractionFailure(message: string | undefined): boolean {
+  if (!message) {
+    return true
+  }
+
+  return (
+    isRecoverableExtractionError(message) ||
+    message.startsWith('Failed to load config') ||
+    message.startsWith('Failed to run eslint --print-config') ||
+    message.startsWith('Unable to resolve eslint from workspace')
   )
 }
 

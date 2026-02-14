@@ -105,6 +105,36 @@ describe.sequential('cli integration', () => {
     expect(code).toBe(1)
   })
 
+  it('update in zero-config mode skips workspaces with unrecoverable eslint extraction failures', async () => {
+    await rm(path.join(fixtureRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
+    const packageJsonPath = path.join(fixtureRoot, 'package.json')
+    const packageJsonRaw = await readFile(packageJsonPath, 'utf8')
+    const packageJson = JSON.parse(packageJsonRaw) as Record<string, unknown>
+    delete packageJson['eslint-config-snapshot']
+    await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+
+    await writeFile(
+      path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/bin/eslint.js'),
+      "console.error('Failed to load config \"next/core-web-vitals\" to extend from.'); process.exit(1)\n"
+    )
+
+    const code = await runCli('update', fixtureRoot)
+    expect(code).toBe(0)
+
+    const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
+    const snapshot = JSON.parse(snapshotRaw)
+
+    expect(snapshot).toEqual({
+      formatVersion: 1,
+      groupId: 'default',
+      workspaces: ['packages/ws-a'],
+      rules: {
+        eqeqeq: ['error', 'always'],
+        'no-console': ['warn']
+      }
+    })
+  })
+
   it('status is minimal and exits 0 when clean', async () => {
     await runCli('snapshot', fixtureRoot)
 

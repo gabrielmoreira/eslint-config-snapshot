@@ -43,9 +43,11 @@ export async function executeCheck(
 
   let currentSnapshots: Map<string, BuiltSnapshot>
   try {
-    currentSnapshots = await computeCurrentSnapshots(cwd)
+    currentSnapshots = await computeCurrentSnapshots(cwd, {
+      allowWorkspaceExtractionFailure: !foundConfig
+    })
   } catch (error: unknown) {
-    if (!foundConfig) {
+    if (!foundConfig && isWorkspaceDiscoveryDefaultsError(error)) {
       terminal.write(
         'Automatic workspace discovery could not complete with defaults.\nRun `eslint-config-snapshot init` to configure workspaces, then run `eslint-config-snapshot --update`.\n'
       )
@@ -154,4 +156,13 @@ function printWhatChanged(
   terminal.subtle(UPDATE_HINT)
 
   return 1
+}
+
+function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message.includes('Unable to discover workspaces') ||
+    message.includes('Unmatched workspaces') ||
+    message.includes('zero-config mode')
+  )
 }
