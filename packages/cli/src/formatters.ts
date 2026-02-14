@@ -15,6 +15,21 @@ export type RuleCatalogLike = {
   pluginRulesByPrefix: Record<string, string[]>
   observedRules: string[]
   missingRules: string[]
+  observedOffRules: string[]
+  observedActiveRules: string[]
+  totalStats: UsageStats & { observedOutsideCatalog: number }
+  coreStats: UsageStats
+  pluginStats: Array<{ pluginId: string } & UsageStats>
+}
+
+export type UsageStats = {
+  totalAvailable: number
+  inUse: number
+  active: number
+  inactive: number
+  missing: number
+  inUsePct: number
+  activePctOfInUse: number
 }
 
 export function formatDiff(groupId: string, diff: SnapshotDiff): string {
@@ -177,23 +192,28 @@ export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boo
   const lines: string[] = []
   const sorted = [...catalogs].sort((a, b) => a.groupId.localeCompare(b.groupId))
   for (const catalog of sorted) {
-    const prefixes = Object.keys(catalog.pluginRulesByPrefix).sort((a, b) => a.localeCompare(b))
     lines.push(
-      `group: ${catalog.groupId}`,
-      `available rules: ${catalog.availableRules.length} (core ${catalog.coreRules.length}, plugin ${catalog.availableRules.length - catalog.coreRules.length})`,
-      `observed rules: ${catalog.observedRules.length}`,
-      `missing rules: ${catalog.missingRules.length}`,
-      `plugin prefixes (${prefixes.length}): ${prefixes.length > 0 ? prefixes.join(', ') : '(none)'}`
+      `🧭 group: ${catalog.groupId}`,
+      `📦 total: ${formatUsageLine(catalog.totalStats)} | outside catalog observed: ${catalog.totalStats.observedOutsideCatalog}`,
+      `🧱 core: ${formatUsageLine(catalog.coreStats)}`,
+      `🔌 plugins tracked: ${catalog.pluginStats.length}`
     )
+    for (const plugin of catalog.pluginStats) {
+      lines.push(`  - ${plugin.pluginId}: ${formatUsageLine(plugin)}`)
+    }
 
     const detailRules = missingOnly ? catalog.missingRules : catalog.availableRules
-    lines.push(`${missingOnly ? 'missing list' : 'available list'} (${detailRules.length}):`)
+    lines.push(`${missingOnly ? '🕳️ missing list' : '📚 available list'} (${detailRules.length}):`)
     for (const ruleName of detailRules) {
       lines.push(`  - ${ruleName}`)
     }
   }
 
   return `${lines.join('\n')}\n`
+}
+
+function formatUsageLine(stats: UsageStats): string {
+  return `${stats.inUse}/${stats.totalAvailable} in use (${stats.inUsePct}%) | active ${stats.active} | off ${stats.inactive} | not used ${stats.missing}`
 }
 
 export function formatCommandDisplayLabel(commandLabel: string): string {

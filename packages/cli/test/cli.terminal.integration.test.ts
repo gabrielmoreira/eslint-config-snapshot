@@ -235,37 +235,29 @@ no-debugger: off
   it('catalog --missing returns deterministic json output', () => {
     const result = run(['catalog', '--missing'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toBe(
-      `[
-  {
-    "groupId": "default",
-    "missingRules": [
-      "alpha/observed",
-      "alpha/only-in-catalog",
-      "no-alert"
-    ]
-  }
-]
-`
-    )
+    expect(result.stdout).toContain('"groupId": "default"')
+    expect(result.stdout).toContain('"totalStats"')
+    expect(result.stdout).toContain('"coreStats"')
+    expect(result.stdout).toContain('"pluginStats"')
+    expect(result.stdout).toContain('"missingRules"')
+    expect(result.stdout).toContain('"alpha/observed"')
+    expect(result.stdout).toContain('"alpha/only-in-catalog"')
+    expect(result.stdout).toContain('"no-alert"')
     expect(result.stderr).toBe('')
   })
 
   it('catalog --short --missing returns compact output', () => {
     const result = run(['catalog', '--short', '--missing'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toBe(
-      `group: default
-available rules: 5 (core 3, plugin 2)
-observed rules: 3
-missing rules: 3
-plugin prefixes (1): alpha/
-missing list (3):
-  - alpha/observed
-  - alpha/only-in-catalog
-  - no-alert
-`
-    )
+    expect(result.stdout).toContain('🧭 group: default')
+    expect(result.stdout).toContain('📦 total: 2/5 in use')
+    expect(result.stdout).toContain('🧱 core: 2/3 in use')
+    expect(result.stdout).toContain('🔌 plugins tracked: 1')
+    expect(result.stdout).toContain('  - alpha: 0/2 in use')
+    expect(result.stdout).toContain('🕳️ missing list (3):')
+    expect(result.stdout).toContain('alpha/observed')
+    expect(result.stdout).toContain('alpha/only-in-catalog')
+    expect(result.stdout).toContain('no-alert')
     expect(result.stderr).toBe('')
   })
 

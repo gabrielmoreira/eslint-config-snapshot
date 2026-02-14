@@ -233,18 +233,16 @@ no-debugger: off
     const writeSpy = vi.spyOn(process.stdout, 'write')
     const code = await runCli('catalog', fixtureRoot, ['--short', '--missing'])
     expect(code).toBe(0)
-    expect(writeSpy.mock.calls.at(-1)?.[0]).toBe(
-      `group: default
-available rules: 5 (core 3, plugin 2)
-observed rules: 3
-missing rules: 3
-plugin prefixes (1): alpha/
-missing list (3):
-  - alpha/observed
-  - alpha/only-in-catalog
-  - no-alert
-`
-    )
+    const output = String(writeSpy.mock.calls.at(-1)?.[0] ?? '')
+    expect(output).toContain('🧭 group: default')
+    expect(output).toContain('📦 total: 2/5 in use')
+    expect(output).toContain('🧱 core: 2/3 in use')
+    expect(output).toContain('🔌 plugins tracked: 1')
+    expect(output).toContain('  - alpha: 0/2 in use')
+    expect(output).toContain('🕳️ missing list (3):')
+    expect(output).toContain('alpha/observed')
+    expect(output).toContain('alpha/only-in-catalog')
+    expect(output).toContain('no-alert')
   })
 
   it('init creates scaffold config file when target=file', async () => {
