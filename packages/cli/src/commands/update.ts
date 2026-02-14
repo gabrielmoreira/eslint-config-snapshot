@@ -1,4 +1,4 @@
-import { findConfigPath } from '@eslint-config-snapshot/api'
+import { DEFAULT_CONFIG, findConfigPath, type SnapshotConfig } from '@eslint-config-snapshot/api'
 
 import { countUniqueWorkspaces, formatBaselineSummaryLines, summarizeSnapshots } from '../formatters.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
@@ -23,9 +23,10 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
   let currentSnapshots
   const skippedWorkspaces: SkippedWorkspace[] = []
   let discoveredWorkspaces: string[] = []
+  const allowWorkspaceExtractionFailure = !foundConfig || isDefaultEquivalentConfig(foundConfig.config)
   try {
     currentSnapshots = await computeCurrentSnapshots(cwd, {
-      allowWorkspaceExtractionFailure: !foundConfig,
+      allowWorkspaceExtractionFailure,
       onWorkspacesDiscovered: (workspacesRel) => {
         discoveredWorkspaces = workspacesRel
       },
@@ -70,6 +71,10 @@ function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
     message.includes('Unmatched workspaces') ||
     message.includes('zero-config mode')
   )
+}
+
+function isDefaultEquivalentConfig(config: SnapshotConfig): boolean {
+  return JSON.stringify(config) === JSON.stringify(DEFAULT_CONFIG)
 }
 
 function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {

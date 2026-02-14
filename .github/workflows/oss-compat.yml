@@ -24,7 +24,7 @@ jobs:
   smoke:
     name: smoke (${{ matrix.name }})
     if: ${{ github.event_name != 'schedule' || github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -34,6 +34,13 @@ jobs:
             repo: https://github.com/vercel/next.js.git
             ref: canary
             package_manager: pnpm
+            os: ubuntu-latest
+            debug_default: false
+          - name: next.js-windows
+            repo: https://github.com/vercel/next.js.git
+            ref: canary
+            package_manager: pnpm
+            os: windows-latest
             debug_default: false
           - name: nx
             repo: https://github.com/nrwl/nx.git

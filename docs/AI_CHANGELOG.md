@@ -2272,3 +2272,24 @@ Result:
 
 - Project history now reflects the full OSS compatibility effort in one place.
 - README now communicates this strength more explicitly for end users evaluating adoption.
+
+## 2026-02-14 - Request 106
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Add Windows coverage for `next.js` in OSS compatibility CI and address local Windows zero-config failure behavior.
+
+Key decisions:
+
+- Expanded OSS compatibility matrix with a dedicated `next.js-windows` target running on `windows-latest`.
+- Kept existing Linux `next.js` target and all other OSS targets unchanged.
+- Updated CLI extraction tolerance decision:
+  - keep strict behavior for explicit custom configs,
+  - but treat explicit configs that are effectively default-equivalent as zero-config tolerant mode.
+
+Result:
+
+- OSS smoke now validates `next.js` on both Linux and Windows.
+- Common case of an explicit empty/default config no longer forces strict failure mode during workspace extraction.
