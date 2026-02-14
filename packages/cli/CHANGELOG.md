@@ -1,5 +1,13 @@
 # @eslint-config-snapshot/cli
 
+## 1.3.2
+
+### Patch Changes
+
+- Refine catalog output defaults with optional detailed grouped rule states and semantic colorized labels.
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.3.2
+
 ## 1.3.1
 
 ### Patch Changes
