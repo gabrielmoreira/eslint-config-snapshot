@@ -388,6 +388,17 @@ no-debugger: off
     expect(result.stderr).toBe('')
   })
 
+  it('prints updated message when baseline already exists', () => {
+    const first = run(['--update'])
+    expect(first.status).toBe(0)
+    expect(first.stdout).toContain('baseline was successfully created')
+
+    const second = run(['--update'])
+    expect(second.status).toBe(0)
+    expect(second.stdout).toContain('baseline was successfully updated')
+    expect(second.stderr).toBe('')
+  })
+
   it('prints init help with select-prompt and force guidance', () => {
     const result = run(['init', '--help'])
     expect(result.status).toBe(0)
