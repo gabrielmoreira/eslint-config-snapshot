@@ -2476,3 +2476,36 @@ Implementation result:
 
 - Baseline counters no longer overcount duplicated rule names across groups.
 - Catalog output is easier to interpret in both stable and drift states, with consistent plugin/group percentages visible.
+
+## 2026-02-14 - Request 114
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve catalog UX:
+  - detailed rule lists should only appear when explicitly requested,
+  - replace generic "available list" with grouped states (`error`, `warn`, `off`, `unused`) and semantic coloring,
+  - keep positive summary visible even when catalog drift exists.
+
+Key decisions:
+
+- Added `--detailed` option to `catalog`.
+- Changed short catalog rendering defaults:
+  - default short output now shows summary-only (no per-rule list),
+  - detailed state lists render only with `--detailed`.
+- Replaced generic list output with grouped rule states:
+  - `error` and `warn` as in-use/positive groups,
+  - `off` as disabled/opt-out group,
+  - `unused` as discovery attention group.
+- Added semantic terminal colors for grouped labels:
+  - `error` and `warn`: green,
+  - `off`: cyan/blue-family,
+  - `unused`: yellow.
+- Preserved catalog summary in both clean and drift flows (`catalog-check`), with drift block still highlighted afterward.
+
+Implementation result:
+
+- Catalog output is now less noisy by default and explicitly detailed only when requested.
+- State-group visibility is clearer for adoption decisions (strictness vs disabled vs not yet used).
+- Test suite updated to validate `--detailed` behavior and new grouped output.

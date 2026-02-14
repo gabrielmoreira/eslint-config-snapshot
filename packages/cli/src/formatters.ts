@@ -14,12 +14,18 @@ export type RuleCatalogLike = {
   coreRules: string[]
   pluginRulesByPrefix: Record<string, string[]>
   observedRules: string[]
+  observedRuleLevels: Record<string, 'error' | 'warn' | 'off'>
   missingRules: string[]
   observedOffRules: string[]
   observedActiveRules: string[]
   totalStats: UsageStats & { observedOutsideCatalog: number }
   coreStats: UsageStats
   pluginStats: Array<{ pluginId: string } & UsageStats>
+}
+type CatalogColorizer = {
+  green: (text: string) => string
+  yellow: (text: string) => string
+  cyan: (text: string) => string
 }
 
 export type UsageStats = {
@@ -211,7 +217,11 @@ export function formatShortConfig(payload: {
   return `${lines.join('\n')}\n`
 }
 
-export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boolean): string {
+export function formatShortCatalog(
+  catalogs: RuleCatalogLike[],
+  options: { missingOnly: boolean; detailed: boolean; color?: CatalogColorizer }
+): string {
+  const { missingOnly, detailed, color } = options
   const lines: string[] = []
   const sorted = [...catalogs].sort((a, b) => a.groupId.localeCompare(b.groupId))
   const showGroupHeader = sorted.length > 1 || sorted.some((catalog) => catalog.groupId !== 'default')
@@ -228,10 +238,8 @@ export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boo
       lines.push(`  - ${plugin.pluginId}: ${formatUsageLine(plugin)}`)
     }
 
-    const detailRules = missingOnly ? catalog.missingRules : catalog.availableRules
-    lines.push(`${missingOnly ? '🕳️ missing list' : '📚 available list'} (${detailRules.length}):`)
-    for (const ruleName of detailRules) {
-      lines.push(`  - ${ruleName}`)
+    if (detailed) {
+      appendRuleStateGroups(lines, catalog, missingOnly, color)
     }
     if (showGroupHeader) {
       lines.push('')
@@ -245,6 +253,54 @@ export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boo
 
 function formatUsageLine(stats: UsageStats): string {
   return `${stats.inUse}/${stats.totalAvailable} in use (${stats.inUsePct}%) | error ${stats.error} | warn ${stats.warn} | off ${stats.off} | not used ${stats.missing}`
+}
+
+function appendRuleStateGroups(
+  lines: string[],
+  catalog: RuleCatalogLike,
+  missingOnly: boolean,
+  color?: CatalogColorizer
+): void {
+  if (missingOnly) {
+    appendRuleList(lines, color?.yellow('🟡 unused') ?? '🟡 unused', catalog.missingRules)
+    return
+  }
+
+  const observedRuleSet = new Set(catalog.observedRules)
+  const errorRules: string[] = []
+  const warnRules: string[] = []
+  const offRules: string[] = []
+  const unusedRules: string[] = []
+
+  for (const ruleName of catalog.availableRules) {
+    if (!observedRuleSet.has(ruleName)) {
+      unusedRules.push(ruleName)
+      continue
+    }
+    const level = catalog.observedRuleLevels[ruleName]
+    if (level === 'off') {
+      offRules.push(ruleName)
+      continue
+    }
+    if (level === 'error') {
+      errorRules.push(ruleName)
+      continue
+    }
+    warnRules.push(ruleName)
+  }
+
+  appendRuleList(lines, color?.green('🟢 error') ?? '🟢 error', errorRules)
+  appendRuleList(lines, color?.green('🟢 warn') ?? '🟢 warn', warnRules)
+  appendRuleList(lines, color?.cyan('🔵 off') ?? '🔵 off', offRules)
+  appendRuleList(lines, color?.yellow('🟡 unused') ?? '🟡 unused', unusedRules)
+}
+
+function appendRuleList(lines: string[], label: string, rules: string[]): void {
+  lines.push(`${label} (${rules.length}):`)
+  const sortedRules = [...rules].sort((a, b) => a.localeCompare(b))
+  for (const ruleName of sortedRules) {
+    lines.push(`  - ${ruleName}`)
+  }
 }
 
 export function formatCommandDisplayLabel(commandLabel: string): string {

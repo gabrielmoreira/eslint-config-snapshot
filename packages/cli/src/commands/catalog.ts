@@ -18,6 +18,7 @@ type CatalogRow = {
   coreRules: string[]
   pluginRulesByPrefix: Record<string, string[]>
   observedRules: string[]
+  observedRuleLevels: Record<string, 'error' | 'warn' | 'off'>
   missingRules: string[]
   observedOffRules: string[]
   observedActiveRules: string[]
@@ -55,12 +56,13 @@ export async function executeCatalog(
   terminal: TerminalIO,
   snapshotDir: string,
   format: CatalogFormat,
-  missingOnly: boolean
+  missingOnly: boolean,
+  detailed: boolean
 ): Promise<number> {
   const rows = await computeCatalogRows(cwd, terminal, snapshotDir, `catalog:${format}`, true)
 
   if (format === 'short') {
-    terminal.write(formatShortCatalog(rows, missingOnly))
+    terminal.write(formatShortCatalog(rows, { missingOnly, detailed, color: terminal.colors }))
     return 0
   }
 
@@ -91,7 +93,7 @@ export async function executeCatalogUpdate(cwd: string, terminal: TerminalIO, sn
   const inUse = countUniqueRules(rows.map((row) => row.observedRules.filter((ruleName) => row.availableRules.includes(ruleName))))
   terminal.write(`🧪 Catalog baseline updated: ${groups} groups, ${available} available rules, ${inUse} currently in use.\n`)
   terminal.section('📊 Catalog summary')
-  terminal.write(formatShortCatalog(rows, false))
+  terminal.write(formatShortCatalog(rows, { missingOnly: false, detailed: false, color: terminal.colors }))
   return 0
 }
 
@@ -110,12 +112,12 @@ export async function executeCatalogCheck(cwd: string, terminal: TerminalIO, sna
   if (diffs.length === 0) {
     terminal.write('Great news: no catalog drift detected.\n')
     terminal.section('📊 Catalog summary')
-    terminal.write(formatShortCatalog(rows, false))
+    terminal.write(formatShortCatalog(rows, { missingOnly: false, detailed: false, color: terminal.colors }))
     return 0
   }
 
   terminal.section('📊 Catalog summary')
-  terminal.write(formatShortCatalog(rows, false))
+  terminal.write(formatShortCatalog(rows, { missingOnly: false, detailed: false, color: terminal.colors }))
   terminal.write(`⚠️ Heads up: catalog drift detected in ${diffs.length} groups.\n`)
   for (const diff of diffs) {
     terminal.write(
@@ -169,6 +171,9 @@ async function computeCatalogRows(
       const availableRules = catalog?.allRules ?? []
       const availableRuleSet = new Set(availableRules)
       const missingRules = availableRules.filter((ruleName) => !snapshot.rules[ruleName])
+      const observedRuleLevels = Object.fromEntries(
+        observedRules.map((ruleName) => [ruleName, getPrimarySeverity(snapshot.rules[ruleName])])
+      ) as Record<string, 'error' | 'warn' | 'off'>
       const observedOffRules = observedRules.filter((ruleName) => isRuleOffOnly(snapshot.rules[ruleName]))
       const observedActiveRules = observedRules.filter((ruleName) => !isRuleOffOnly(snapshot.rules[ruleName]))
       const observedOutsideCatalog = observedRules.filter((ruleName) => !availableRuleSet.has(ruleName)).length
@@ -194,6 +199,7 @@ async function computeCatalogRows(
         coreRules,
         pluginRulesByPrefix,
         observedRules,
+        observedRuleLevels,
         missingRules,
         observedOffRules,
         observedActiveRules,

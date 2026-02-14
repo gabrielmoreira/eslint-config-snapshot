@@ -181,10 +181,11 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .description('Print discovered rule catalog and missing rules')
     .option('--format <format>', 'Output format: json|short', parsePrintFormat, 'json')
     .option('--short', 'Alias for --format short')
+    .option('--detailed', 'Show detailed rule lists grouped by error, warn, off, and unused')
     .option('--missing', 'Only print rules that are available but not observed in current snapshots')
-    .action(async (opts: { format: CatalogFormat; short?: boolean; missing?: boolean }) => {
+    .action(async (opts: { format: CatalogFormat; short?: boolean; missing?: boolean; detailed?: boolean }) => {
       const format: CatalogFormat = opts.short ? 'short' : opts.format
-      onActionExit(await executeCatalog(cwd, terminal, SNAPSHOT_DIR, format, Boolean(opts.missing)))
+      onActionExit(await executeCatalog(cwd, terminal, SNAPSHOT_DIR, format, Boolean(opts.missing), Boolean(opts.detailed)))
     })
 
   program

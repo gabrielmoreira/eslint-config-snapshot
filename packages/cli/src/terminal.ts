@@ -3,6 +3,7 @@ import { createInterface } from 'node:readline'
 type Colorizer = {
   green: (text: string) => string
   yellow: (text: string) => string
+  cyan: (text: string) => string
   red: (text: string) => string
   bold: (text: string) => string
   dim: (text: string) => string
@@ -171,6 +172,7 @@ function createColorizer(): Colorizer {
   return {
     green: (text: string) => wrap('32', text),
     yellow: (text: string) => wrap('33', text),
+    cyan: (text: string) => wrap('36', text),
     red: (text: string) => wrap('31', text),
     bold: (text: string) => wrap('1', text),
     dim: (text: string) => wrap('2', text)

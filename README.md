@@ -114,6 +114,8 @@ pnpm dlx @eslint-config-snapshot/cli@latest init --yes --target package-json --p
 - `catalog`
 - `catalog-check`
 - `catalog-update`
+
+`catalog --short` shows compact stats by default. Use `catalog --short --detailed` for per-rule state groups (`error`, `warn`, `off`, `unused`).
 - `config`
 - `init`
 

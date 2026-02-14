@@ -255,10 +255,18 @@ no-debugger: off
     expect(result.stdout).toContain('🧱 core: 2/3 in use')
     expect(result.stdout).toContain('🔌 plugins tracked: 1')
     expect(result.stdout).toContain('  - alpha: 0/2 in use')
-    expect(result.stdout).toContain('🕳️ missing list (3):')
-    expect(result.stdout).toContain('alpha/observed')
+    expect(result.stdout).not.toContain('🟡 unused')
+    expect(result.stderr).toBe('')
+  })
+
+  it('catalog --short --detailed returns grouped state lists', () => {
+    const result = run(['catalog', '--short', '--detailed'])
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('🟢 error')
+    expect(result.stdout).toContain('🟢 warn')
+    expect(result.stdout).toContain('🔵 off')
+    expect(result.stdout).toContain('🟡 unused')
     expect(result.stdout).toContain('alpha/only-in-catalog')
-    expect(result.stdout).toContain('no-alert')
     expect(result.stderr).toBe('')
   })
 

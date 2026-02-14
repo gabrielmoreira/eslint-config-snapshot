@@ -238,10 +238,19 @@ no-debugger: off
     expect(output).toContain('🧱 core: 2/3 in use')
     expect(output).toContain('🔌 plugins tracked: 1')
     expect(output).toContain('  - alpha: 0/2 in use')
-    expect(output).toContain('🕳️ missing list (3):')
-    expect(output).toContain('alpha/observed')
+    expect(output).not.toContain('🟡 unused')
+  })
+
+  it('catalog --short --detailed prints grouped detailed lists', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('catalog', fixtureRoot, ['--short', '--detailed'])
+    expect(code).toBe(0)
+    const output = String(writeSpy.mock.calls.at(-1)?.[0] ?? '')
+    expect(output).toContain('🟢 error')
+    expect(output).toContain('🟢 warn')
+    expect(output).toContain('🔵 off')
+    expect(output).toContain('🟡 unused')
     expect(output).toContain('alpha/only-in-catalog')
-    expect(output).toContain('no-alert')
   })
 
   it('init creates scaffold config file when target=file', async () => {

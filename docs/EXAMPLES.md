@@ -145,6 +145,7 @@ eslint-config-snapshot update --experimental-with-catalog
 eslint-config-snapshot catalog-update
 eslint-config-snapshot catalog-check
 eslint-config-snapshot catalog --short --missing
+eslint-config-snapshot catalog --short --detailed
 ```
 
 When to use:
