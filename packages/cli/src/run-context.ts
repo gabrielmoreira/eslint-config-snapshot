@@ -70,10 +70,9 @@ function readCliVersion(): string {
     return cachedCliVersion
   }
 
-  const envPackageName = process.env.npm_package_name
-  const envPackageVersion = process.env.npm_package_version
-  if (isCliPackageName(envPackageName) && typeof envPackageVersion === 'string' && envPackageVersion.length > 0) {
-    cachedCliVersion = envPackageVersion
+  const fromEnv = readVersionFromNpmEnv()
+  if (fromEnv) {
+    cachedCliVersion = fromEnv
     return cachedCliVersion
   }
 
@@ -83,39 +82,45 @@ function readCliVersion(): string {
     return cachedCliVersion
   }
 
+  const fromResolvedPackage = readVersionFromResolvedCli(scriptPath)
+  if (fromResolvedPackage) {
+    cachedCliVersion = fromResolvedPackage
+    return cachedCliVersion
+  }
+
+  cachedCliVersion = readNearestVersionFallback(scriptPath) ?? 'unknown'
+  return cachedCliVersion
+}
+
+function readVersionFromNpmEnv(): string | undefined {
+  const envPackageName = process.env.npm_package_name
+  const envPackageVersion = process.env.npm_package_version
+  if (isCliPackageName(envPackageName) && typeof envPackageVersion === 'string' && envPackageVersion.length > 0) {
+    return envPackageVersion
+  }
+  return undefined
+}
+
+function readVersionFromResolvedCli(scriptPath: string): string | undefined {
   try {
     const req = createRequire(path.resolve(scriptPath))
     const resolvedCliEntry = req.resolve('@eslint-config-snapshot/cli')
-    const resolvedVersion = readVersionFromResolvedEntry(resolvedCliEntry)
-    if (resolvedVersion !== undefined) {
-      cachedCliVersion = resolvedVersion
-      return cachedCliVersion
-    }
+    return readVersionFromResolvedEntry(resolvedCliEntry)
   } catch {
-    // continue to path-walk fallback
+    return undefined
   }
+}
 
+function readNearestVersionFallback(scriptPath: string): string | undefined {
   let current = path.resolve(path.dirname(scriptPath))
   let fallbackVersion: string | undefined
   while (true) {
-    const packageJsonPath = path.join(current, 'package.json')
-    if (existsSync(packageJsonPath)) {
-      try {
-        const raw = readFileSync(packageJsonPath, 'utf8')
-        const parsed = JSON.parse(raw) as { name?: string; version?: string }
-        if (typeof parsed.version === 'string' && parsed.version.length > 0) {
-          if (isCliPackageName(parsed.name)) {
-            cachedCliVersion = parsed.version
-            return cachedCliVersion
-          }
-
-          if (fallbackVersion === undefined) {
-            fallbackVersion = parsed.version
-          }
-        }
-      } catch {
-        // continue walking up
-      }
+    const version = readVersionFromPackageJson(current)
+    if (version?.isCliVersion) {
+      return version.value
+    }
+    if (!fallbackVersion && version?.value) {
+      fallbackVersion = version.value
     }
 
     const parent = path.dirname(current)
@@ -124,9 +129,24 @@ function readCliVersion(): string {
     }
     current = parent
   }
+  return fallbackVersion
+}
 
-  cachedCliVersion = fallbackVersion ?? 'unknown'
-  return cachedCliVersion
+function readVersionFromPackageJson(directory: string): { value?: string; isCliVersion: boolean } | undefined {
+  const packageJsonPath = path.join(directory, 'package.json')
+  if (!existsSync(packageJsonPath)) {
+    return undefined
+  }
+  try {
+    const raw = readFileSync(packageJsonPath, 'utf8')
+    const parsed = JSON.parse(raw) as { name?: string; version?: string }
+    if (typeof parsed.version !== 'string' || parsed.version.length === 0) {
+      return undefined
+    }
+    return { value: parsed.version, isCliVersion: isCliPackageName(parsed.name) }
+  } catch {
+    return undefined
+  }
 }
 
 function isCliPackageName(value: string | undefined): boolean {

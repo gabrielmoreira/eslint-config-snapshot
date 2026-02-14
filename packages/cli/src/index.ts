@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { loadConfig } from '@eslint-config-snapshot/api'
 import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import createDebug from 'debug'
 import path from 'node:path'
@@ -98,7 +99,8 @@ async function runDefaultInvocation(argv: string[], cwd: string, terminal: Termi
 
   if (argv.includes('-u') || argv.includes('--update')) {
     const updateCode = await executeUpdate(cwd, terminal, SNAPSHOT_DIR, true)
-    if (!argv.includes('--experimental-with-catalog')) {
+    const withCatalog = argv.includes('--experimental-with-catalog') || (await isCatalogHookEnabled(cwd))
+    if (!withCatalog) {
       return updateCode
     }
     const catalogCode = await executeCatalogUpdate(cwd, terminal, SNAPSHOT_DIR)
@@ -106,7 +108,8 @@ async function runDefaultInvocation(argv: string[], cwd: string, terminal: Termi
   }
 
   const checkCode = await executeCheck(cwd, 'summary', terminal, SNAPSHOT_DIR, true)
-  if (!argv.includes('--experimental-with-catalog')) {
+  const withCatalog = argv.includes('--experimental-with-catalog') || (await isCatalogHookEnabled(cwd))
+  if (!withCatalog) {
     return checkCode
   }
   const catalogCode = await executeCatalogCheck(cwd, terminal, SNAPSHOT_DIR)
@@ -136,7 +139,8 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .option('--experimental-with-catalog', 'Also run catalog baseline check after regular check')
     .action(async (opts: { format: CheckFormat; experimentalWithCatalog?: boolean }) => {
       const checkCode = await executeCheck(cwd, opts.format, terminal, SNAPSHOT_DIR)
-      if (!opts.experimentalWithCatalog) {
+      const withCatalog = opts.experimentalWithCatalog === true || (await isCatalogHookEnabled(cwd))
+      if (!withCatalog) {
         onActionExit(checkCode)
         return
       }
@@ -152,7 +156,8 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .option('--experimental-with-catalog', 'Also update catalog baseline after regular update')
     .action(async (opts: { experimentalWithCatalog?: boolean }) => {
       const updateCode = await executeUpdate(cwd, terminal, SNAPSHOT_DIR, true)
-      if (!opts.experimentalWithCatalog) {
+      const withCatalog = opts.experimentalWithCatalog === true || (await isCatalogHookEnabled(cwd))
+      if (!withCatalog) {
         onActionExit(updateCode)
         return
       }
@@ -295,6 +300,11 @@ function parseInitPreset(value: string): InitPreset {
   }
 
   throw new InvalidArgumentError('Expected one of: recommended, minimal, full')
+}
+
+async function isCatalogHookEnabled(cwd: string): Promise<boolean> {
+  const config = await loadConfig(cwd)
+  return config.experimentalWithCatalog === true
 }
 
 export async function main(): Promise<void> {

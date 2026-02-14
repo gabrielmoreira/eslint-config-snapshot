@@ -331,6 +331,27 @@ no-debugger: off
     expect(await runCli('catalog-check', fixtureRoot)).toBe(1)
   })
 
+  it('uses experimentalWithCatalog from config without CLI flag', async () => {
+    await writeFile(
+      path.join(fixtureRoot, 'eslint-config-snapshot.config.mjs'),
+      `export default {
+  experimentalWithCatalog: true,
+  workspaceInput: { mode: 'manual', workspaces: ['packages/ws-a', 'packages/ws-b'] },
+  grouping: { mode: 'match', groups: [{ name: 'default', match: ['**/*'] }] },
+  sampling: { maxFilesPerWorkspace: 8, includeGlobs: ['**/*.ts'], excludeGlobs: ['**/node_modules/**'] }
+}
+`
+    )
+
+    expect(await runCli(undefined, fixtureRoot, ['--update'])).toBe(0)
+    const catalogRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.catalog.json'), 'utf8')
+    const catalog = JSON.parse(catalogRaw) as { formatVersion: number; groupId: string }
+    expect(catalog.formatVersion).toBe(1)
+    expect(catalog.groupId).toBe('default')
+
+    expect(await runCli(undefined, fixtureRoot, [])).toBe(0)
+  })
+
   it('supports ordered multi-group matching with first match wins', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'snapshot-cli-grouped-'))
     await cp(fixtureRoot, tmp, { recursive: true })

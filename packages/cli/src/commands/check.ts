@@ -52,61 +52,83 @@ export async function executeCheck(
     writeSkippedWorkspaceSummary(terminal, cwd, foundConfig?.path, skippedWorkspaces)
   }
   if (storedSnapshots.size === 0) {
-    const summary = summarizeSnapshots(currentSnapshots)
-    terminal.write(
-      `Rules found in this analysis: ${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off).\n`
-    )
-
-    const canPromptBaseline = defaultInvocation || format === 'summary'
-    if (canPromptBaseline && terminal.isInteractive) {
-      const shouldCreateBaseline = await terminal.askYesNo(
-        'No baseline yet. Do you want to save this analyzed rule state as your baseline now? [Y/n] ',
-        true
-      )
-      if (shouldCreateBaseline) {
-        await writeSnapshots(cwd, snapshotDir, currentSnapshots)
-        const createdSummary = summarizeSnapshots(currentSnapshots)
-        terminal.write(`Great start: baseline created with ${createdSummary.groups} groups and ${createdSummary.rules} rules.\n`)
-        terminal.subtle(UPDATE_HINT)
-        return 0
-      }
-    }
-
-    terminal.write('You are almost set: no baseline snapshot found yet.\n')
-    terminal.write('Run `eslint-config-snapshot --update` to create your first baseline.\n')
-    return 1
+    return handleMissingBaseline(cwd, format, defaultInvocation, terminal, snapshotDir, currentSnapshots)
   }
 
   const changes = compareSnapshotMaps(storedSnapshots, currentSnapshots)
   const eslintVersionsByGroup = terminal.showProgress ? await resolveGroupEslintVersions(cwd) : new Map<string, string[]>()
 
   if (format === 'status') {
-    if (changes.length === 0) {
-      terminal.write('clean\n')
-      return 0
-    }
-
-    terminal.write('changes\n')
-    terminal.subtle(UPDATE_HINT)
-    return 1
+    return handleStatusFormat(terminal, changes.length > 0)
   }
 
   if (format === 'diff') {
-    if (changes.length === 0) {
-      terminal.write('Great news: no snapshot changes detected.\n')
-      writeEslintVersionSummary(terminal, eslintVersionsByGroup)
-      return 0
-    }
-
-    for (const change of changes) {
-      terminal.write(`${formatDiff(change.groupId, change.diff)}\n`)
-    }
-    terminal.subtle(UPDATE_HINT)
-
-    return 1
+    return handleDiffFormat(terminal, changes, eslintVersionsByGroup)
   }
 
   return printWhatChanged(terminal, changes, currentSnapshots, eslintVersionsByGroup)
+}
+
+async function handleMissingBaseline(
+  cwd: string,
+  format: CheckFormat,
+  defaultInvocation: boolean,
+  terminal: TerminalIO,
+  snapshotDir: string,
+  currentSnapshots: Map<string, BuiltSnapshot>
+): Promise<number> {
+  const summary = summarizeSnapshots(currentSnapshots)
+  terminal.write(
+    `Rules found in this analysis: ${summary.groups} groups, ${summary.rules} rules (severity mix: ${summary.error} errors, ${summary.warn} warnings, ${summary.off} off).\n`
+  )
+
+  const canPromptBaseline = defaultInvocation || format === 'summary'
+  if (canPromptBaseline && terminal.isInteractive) {
+    const shouldCreateBaseline = await terminal.askYesNo(
+      'No baseline yet. Do you want to save this analyzed rule state as your baseline now? [Y/n] ',
+      true
+    )
+    if (shouldCreateBaseline) {
+      await writeSnapshots(cwd, snapshotDir, currentSnapshots)
+      const createdSummary = summarizeSnapshots(currentSnapshots)
+      terminal.write(`Great start: baseline created with ${createdSummary.groups} groups and ${createdSummary.rules} rules.\n`)
+      terminal.subtle(UPDATE_HINT)
+      return 0
+    }
+  }
+
+  terminal.write('You are almost set: no baseline snapshot found yet.\n')
+  terminal.write('Run `eslint-config-snapshot --update` to create your first baseline.\n')
+  return 1
+}
+
+function handleStatusFormat(terminal: TerminalIO, hasChanges: boolean): number {
+  if (!hasChanges) {
+    terminal.write('clean\n')
+    return 0
+  }
+
+  terminal.write('changes\n')
+  terminal.subtle(UPDATE_HINT)
+  return 1
+}
+
+function handleDiffFormat(
+  terminal: TerminalIO,
+  changes: Array<{ groupId: string; diff: SnapshotDiff }>,
+  eslintVersionsByGroup: GroupEslintVersions
+): number {
+  if (changes.length === 0) {
+    terminal.write('Great news: no snapshot changes detected.\n')
+    writeEslintVersionSummary(terminal, eslintVersionsByGroup)
+    return 0
+  }
+
+  for (const change of changes) {
+    terminal.write(`${formatDiff(change.groupId, change.diff)}\n`)
+  }
+  terminal.subtle(UPDATE_HINT)
+  return 1
 }
 
 function printWhatChanged(

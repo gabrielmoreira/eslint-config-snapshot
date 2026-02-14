@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - chore/oss-compat-*
+      - research/*
   workflow_dispatch:
     inputs:
       debug_logs:
@@ -120,7 +121,7 @@ jobs:
           if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
             export DEBUG="eslint-config-snapshot:*"
           fi
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update --experimental-with-catalog 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
         working-directory: ext
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
@@ -132,7 +133,7 @@ jobs:
           if [[ "${OSS_COMPAT_DEBUG}" == "true" ]]; then
             export DEBUG="eslint-config-snapshot:*"
           fi
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary --experimental-with-catalog 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
         working-directory: ext
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
@@ -146,11 +147,14 @@ jobs:
           fi
 
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-before-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json > "${RUNNER_TEMP}/snapshot-catalog-before-init.json"
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" init --yes --target package-json --preset recommended 2>&1 | tee "${RUNNER_TEMP}/snapshot-init.log"
-          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary 2>&1 | tee "${RUNNER_TEMP}/snapshot-check-after-init.log"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary --experimental-with-catalog 2>&1 | tee "${RUNNER_TEMP}/snapshot-check-after-init.log"
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" print --format json > "${RUNNER_TEMP}/snapshot-print-after-init.json"
+          node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" catalog --format json > "${RUNNER_TEMP}/snapshot-catalog-after-init.json"
 
           diff -u "${RUNNER_TEMP}/snapshot-print-before-init.json" "${RUNNER_TEMP}/snapshot-print-after-init.json"
+          diff -u "${RUNNER_TEMP}/snapshot-catalog-before-init.json" "${RUNNER_TEMP}/snapshot-catalog-after-init.json"
         working-directory: ext
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
@@ -174,6 +178,9 @@ jobs:
           fi
 
           for file in "${files[@]}"; do
+            if [[ "${file}" == *.catalog.json ]]; then
+              continue
+            fi
             name="$(basename "${file}")"
 
             echo "::group::Snapshot summary ${name}"
@@ -191,6 +198,45 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Print discovered catalogs (summary + raw)
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          catalog_dir="ext/.eslint-config-snapshot"
+          if [[ ! -d "${catalog_dir}" ]]; then
+            echo "No snapshot directory found at ${catalog_dir}"
+            exit 0
+          fi
+
+          shopt -s nullglob
+          files=("${catalog_dir}"/*.catalog.json)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No catalog files found in ${catalog_dir}"
+            exit 0
+          fi
+
+          for file in "${files[@]}"; do
+            name="$(basename "${file}")"
+
+            echo "::group::Catalog summary ${name}"
+            jq '{
+              groupId,
+              availableCount: (.availableRules | length),
+              coreCount: (.coreRules | length),
+              pluginCount: (.pluginRulesByPrefix | keys | length),
+              observedCount: (.observedRules | length),
+              missingCount: (.missingRules | length),
+              observedOffCount: (.observedOffRules | length),
+              observedActiveCount: (.observedActiveRules | length)
+            }' "${file}"
+            echo "::endgroup::"
+
+            echo "::group::Catalog raw ${name}"
+            cat "${file}"
+            echo "::endgroup::"
+          done
+
       - name: Upload OSS smoke logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -203,3 +249,5 @@ jobs:
             ${{ runner.temp }}/snapshot-check-after-init.log
             ${{ runner.temp }}/snapshot-print-before-init.json
             ${{ runner.temp }}/snapshot-print-after-init.json
+            ${{ runner.temp }}/snapshot-catalog-before-init.json
+            ${{ runner.temp }}/snapshot-catalog-after-init.json

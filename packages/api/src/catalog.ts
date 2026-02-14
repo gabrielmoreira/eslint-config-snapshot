@@ -162,7 +162,7 @@ async function readPluginPackagesFromNodeModules(nodeModulesDirectory: string): 
         continue
       }
 
-      if (entry.name.startsWith('eslint-plugin-')) {
+      if (isRootPluginDirectory(entry.name)) {
         results.push(entry.name)
         continue
       }
@@ -171,22 +171,37 @@ async function readPluginPackagesFromNodeModules(nodeModulesDirectory: string): 
         continue
       }
 
-      const scopeDirectory = path.join(nodeModulesDirectory, entry.name)
-      const scopedEntries = await readdir(scopeDirectory, { withFileTypes: true })
-      for (const scopedEntry of scopedEntries) {
-        if (!scopedEntry.isDirectory()) {
-          continue
-        }
-        if (scopedEntry.name === 'eslint-plugin' || scopedEntry.name.startsWith('eslint-plugin-')) {
-          results.push(`${entry.name}/${scopedEntry.name}`)
-        }
-      }
+      const scopedPackages = await readScopedPluginPackages(nodeModulesDirectory, entry.name)
+      results.push(...scopedPackages)
     }
 
     return results
   } catch {
     return []
   }
+}
+
+function isRootPluginDirectory(name: string): boolean {
+  return name.startsWith('eslint-plugin-')
+}
+
+async function readScopedPluginPackages(nodeModulesDirectory: string, scopeName: string): Promise<string[]> {
+  const scopeDirectory = path.join(nodeModulesDirectory, scopeName)
+  const scopedEntries = await readdir(scopeDirectory, { withFileTypes: true })
+  const packages: string[] = []
+  for (const scopedEntry of scopedEntries) {
+    if (!scopedEntry.isDirectory()) {
+      continue
+    }
+    if (isScopedPluginDirectory(scopedEntry.name)) {
+      packages.push(`${scopeName}/${scopedEntry.name}`)
+    }
+  }
+  return packages
+}
+
+function isScopedPluginDirectory(name: string): boolean {
+  return name === 'eslint-plugin' || name.startsWith('eslint-plugin-')
 }
 
 async function readPluginPackageNamesFromPackageJson(packageJsonPath: string): Promise<string[]> {

@@ -77,6 +77,20 @@ function selectDistributed(files: string[], count: number, tokenHints?: string[]
 }
 
 function pickUniformly(files: string[], count: number): string[] {
+  const early = pickUniformlyEarlyReturn(files, count)
+  if (early) {
+    return early
+  }
+
+  const picked: string[] = []
+  const usedIndices = new Set<number>()
+  appendAnchors(files, count, picked, usedIndices)
+  appendDistributed(files, count, picked, usedIndices)
+  appendSequentialFallback(files, count, picked, usedIndices)
+  return picked
+}
+
+function pickUniformlyEarlyReturn(files: string[], count: number): string[] | undefined {
   if (count <= 0 || files.length === 0) {
     return []
   }
@@ -84,30 +98,33 @@ function pickUniformly(files: string[], count: number): string[] {
     return files
   }
   if (count === 1) {
-    return [files[0]]
+    return [files[0]].filter((entry): entry is string => entry !== undefined)
+  }
+  return undefined
+}
+
+function appendAnchors(files: string[], count: number, picked: string[], usedIndices: Set<number>): void {
+  if (count < 3) {
+    return
   }
 
-  const picked: string[] = []
-  const usedIndices = new Set<number>()
-
-  // Ensure regional coverage when possible: top, middle, bottom.
-  if (count >= 3) {
-    const anchorIndices = [0, Math.floor((files.length - 1) / 2), files.length - 1]
-    for (const anchorIndex of anchorIndices) {
-      if (picked.length >= count || usedIndices.has(anchorIndex)) {
-        continue
-      }
-      usedIndices.add(anchorIndex)
-      const anchored = files[anchorIndex]
-      if (anchored !== undefined) {
-        picked.push(anchored)
-      }
+  const anchorIndices = [0, Math.floor((files.length - 1) / 2), files.length - 1]
+  for (const anchorIndex of anchorIndices) {
+    if (picked.length >= count || usedIndices.has(anchorIndex)) {
+      continue
+    }
+    usedIndices.add(anchorIndex)
+    const anchored = files[anchorIndex]
+    if (anchored !== undefined) {
+      picked.push(anchored)
     }
   }
+}
 
+function appendDistributed(files: string[], count: number, picked: string[], usedIndices: Set<number>): void {
   for (const candidate of buildDistributedCandidates(files.length, count)) {
     if (picked.length >= count) {
-      break
+      return
     }
     const safeIndex = nextFreeIndex(candidate, usedIndices, files.length)
     if (usedIndices.has(safeIndex)) {
@@ -119,21 +136,23 @@ function pickUniformly(files: string[], count: number): string[] {
       picked.push(selected)
     }
   }
+}
 
-  if (picked.length < count) {
-    for (let index = 0; index < files.length && picked.length < count; index += 1) {
-      if (usedIndices.has(index)) {
-        continue
-      }
-      usedIndices.add(index)
-      const fallback = files[index]
-      if (fallback !== undefined) {
-        picked.push(fallback)
-      }
-    }
+function appendSequentialFallback(files: string[], count: number, picked: string[], usedIndices: Set<number>): void {
+  if (picked.length >= count) {
+    return
   }
 
-  return picked
+  for (let index = 0; index < files.length && picked.length < count; index += 1) {
+    if (usedIndices.has(index)) {
+      continue
+    }
+    usedIndices.add(index)
+    const fallback = files[index]
+    if (fallback !== undefined) {
+      picked.push(fallback)
+    }
+  }
 }
 
 function buildDistributedCandidates(length: number, count: number): number[] {

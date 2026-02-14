@@ -63,37 +63,12 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
       continue
     }
 
-    const oldIsOnlyOff = oldVariants.every((entry) => entry[0] === 'off')
-    const newIsOnlyOff = newVariants.every((entry) => entry[0] === 'off')
-    if (oldIsOnlyOff || newIsOnlyOff) {
-      // Treat off->off option removal/addition as removed/introduced config intent.
-      if (oldIsOnlyOff && newIsOnlyOff) {
-        const oldHasOptions = oldVariants.some((variant) => variant.length > 1)
-        const newHasOptions = newVariants.some((variant) => variant.length > 1)
-        if (oldHasOptions && !newHasOptions) {
-          removedRules.push(name)
-        } else if (!oldHasOptions && newHasOptions) {
-          introducedRules.push(name)
-        } else if (oldVariants.length > newVariants.length) {
-          removedRules.push(name)
-        } else if (oldVariants.length < newVariants.length) {
-          introducedRules.push(name)
-        } else {
-          optionChanges.push({
-            rule: name,
-            before: oldVariants,
-            after: newVariants
-          })
-        }
-      }
+    if (hasOffOnlyVariants(oldVariants) || hasOffOnlyVariants(newVariants)) {
+      applyOffOnlyVariantDiff(name, oldVariants, newVariants, introducedRules, removedRules, optionChanges)
       continue
     }
 
-    optionChanges.push({
-      rule: name,
-      before: oldVariants,
-      after: newVariants
-    })
+    pushOptionChange(optionChanges, name, oldVariants, newVariants)
   }
 
   const beforeWorkspaces = sortUnique(before.workspaces)
@@ -109,6 +84,59 @@ export function diffSnapshots(before: SnapshotFile, after: SnapshotFile): Snapsh
       removed: beforeWorkspaces.filter((ws) => !afterWorkspaces.includes(ws))
     }
   }
+}
+
+function hasOffOnlyVariants(variants: NormalizedRuleEntry[]): boolean {
+  return variants.every((entry) => entry[0] === 'off')
+}
+
+function applyOffOnlyVariantDiff(
+  ruleName: string,
+  oldVariants: NormalizedRuleEntry[],
+  newVariants: NormalizedRuleEntry[],
+  introducedRules: string[],
+  removedRules: string[],
+  optionChanges: RuleOptionChange[]
+): void {
+  const oldIsOnlyOff = hasOffOnlyVariants(oldVariants)
+  const newIsOnlyOff = hasOffOnlyVariants(newVariants)
+  if (!oldIsOnlyOff || !newIsOnlyOff) {
+    return
+  }
+
+  const oldHasOptions = hasAnyVariantOptions(oldVariants)
+  const newHasOptions = hasAnyVariantOptions(newVariants)
+  if (oldHasOptions && !newHasOptions) {
+    removedRules.push(ruleName)
+    return
+  }
+  if (!oldHasOptions && newHasOptions) {
+    introducedRules.push(ruleName)
+    return
+  }
+  if (oldVariants.length > newVariants.length) {
+    removedRules.push(ruleName)
+    return
+  }
+  if (oldVariants.length < newVariants.length) {
+    introducedRules.push(ruleName)
+    return
+  }
+
+  pushOptionChange(optionChanges, ruleName, oldVariants, newVariants)
+}
+
+function hasAnyVariantOptions(variants: NormalizedRuleEntry[]): boolean {
+  return variants.some((variant) => variant.length > 1)
+}
+
+function pushOptionChange(
+  optionChanges: RuleOptionChange[],
+  rule: string,
+  before: NormalizedRuleEntry[],
+  after: NormalizedRuleEntry[]
+): void {
+  optionChanges.push({ rule, before, after })
 }
 
 function toVariants(entry: SnapshotRuleEntry): NormalizedRuleEntry[] {

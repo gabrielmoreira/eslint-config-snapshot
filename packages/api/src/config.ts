@@ -3,6 +3,7 @@ import path from 'node:path'
 
 
 export type SnapshotConfig = {
+  experimentalWithCatalog?: boolean
   workspaceInput:
     | {
         mode: 'discover'
@@ -29,6 +30,7 @@ export type SnapshotConfig = {
 }
 
 export const DEFAULT_CONFIG: SnapshotConfig = {
+  experimentalWithCatalog: false,
   workspaceInput: { mode: 'discover' },
   grouping: {
     mode: 'match',
@@ -123,6 +125,7 @@ export function getConfigScaffold(preset: ConfigPreset = 'minimal'): string {
   }
 
   return `export default {
+  experimentalWithCatalog: false,
   workspaceInput: { mode: 'discover' },
   grouping: {
     mode: 'match',

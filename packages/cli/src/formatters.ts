@@ -136,40 +136,60 @@ export function formatShortPrint(snapshots: SnapshotLike[]): string {
   const sorted = [...snapshots].sort((a, b) => a.groupId.localeCompare(b.groupId))
 
   for (const snapshot of sorted) {
-    const ruleNames = Object.keys(snapshot.rules).sort()
-    const severityCounts = { error: 0, warn: 0, off: 0 }
-
-    for (const name of ruleNames) {
-      const severity = getPrimarySeverity(snapshot.rules[name])
-      if (severity) {
-        severityCounts[severity] += 1
-      }
-    }
-
-    lines.push(
-      `group: ${snapshot.groupId}`,
-      `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`,
-      `rules (${ruleNames.length}): error ${severityCounts.error}, warn ${severityCounts.warn}, off ${severityCounts.off}`
-    )
-
-    for (const ruleName of ruleNames) {
-      const entry = snapshot.rules[ruleName]
-      if (!entry) {
-        continue
-      }
-      if (!Array.isArray(entry[0])) {
-        const singleEntry = entry as RuleEntry
-        const suffix = singleEntry.length > 1 ? ` ${JSON.stringify(singleEntry[1])}` : ''
-        lines.push(`${ruleName}: ${singleEntry[0]}${suffix}`)
-        continue
-      }
-
-      const variants = entry as RuleEntry[]
-      lines.push(`${ruleName}: ${JSON.stringify(variants)}`)
-    }
+    appendShortSnapshotSection(lines, snapshot)
   }
 
   return `${lines.join('\n')}\n`
+}
+
+function appendShortSnapshotSection(lines: string[], snapshot: SnapshotLike): void {
+  const ruleNames = Object.keys(snapshot.rules).sort()
+  const severityCounts = countRuleNameSeverities(ruleNames, snapshot.rules)
+  lines.push(
+    `group: ${snapshot.groupId}`,
+    `workspaces (${snapshot.workspaces.length}): ${snapshot.workspaces.length > 0 ? snapshot.workspaces.join(', ') : '(none)'}`,
+    `rules (${ruleNames.length}): error ${severityCounts.error}, warn ${severityCounts.warn}, off ${severityCounts.off}`
+  )
+
+  for (const ruleName of ruleNames) {
+    const line = formatShortRuleLine(ruleName, snapshot.rules[ruleName])
+    if (line) {
+      lines.push(line)
+    }
+  }
+}
+
+function countRuleNameSeverities(
+  ruleNames: string[],
+  rules: RuleObject
+): {
+  error: number
+  warn: number
+  off: number
+} {
+  const counts = { error: 0, warn: 0, off: 0 }
+  for (const name of ruleNames) {
+    const severity = getPrimarySeverity(rules[name])
+    if (severity) {
+      counts[severity] += 1
+    }
+  }
+  return counts
+}
+
+function formatShortRuleLine(ruleName: string, entry: SnapshotRuleEntry | undefined): string | undefined {
+  if (!entry) {
+    return undefined
+  }
+
+  if (!Array.isArray(entry[0])) {
+    const singleEntry = entry as RuleEntry
+    const suffix = singleEntry.length > 1 ? ` ${JSON.stringify(singleEntry[1])}` : ''
+    return `${ruleName}: ${singleEntry[0]}${suffix}`
+  }
+
+  const variants = entry as RuleEntry[]
+  return `${ruleName}: ${JSON.stringify(variants)}`
 }
 
 export function formatShortConfig(payload: {
