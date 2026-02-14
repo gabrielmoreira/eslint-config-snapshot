@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 1.0.0
+
+### Major Changes
+
+- Promote the project to stable 1.0.0 release.
+
 ## 0.14.1
 
 ### Patch Changes

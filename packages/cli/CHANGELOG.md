@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 1.0.0
+
+### Major Changes
+
+- Promote the project to stable 1.0.0 release.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.0.0
+
 ## 0.14.1
 
 ### Patch Changes
