@@ -3,7 +3,7 @@ name: OSS Compatibility
 on:
   push:
     branches:
-      - chore/oss-compat-nextjs-smoke
+      - chore/oss-compat-*
   workflow_dispatch:
     inputs:
       debug_logs:
