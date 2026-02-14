@@ -1,5 +1,16 @@
 # @eslint-config-snapshot/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- Promote catalog baseline hooks and OSS compatibility hardening with improved docs.
+
+### Patch Changes
+
+- Updated dependencies
+  - @eslint-config-snapshot/api@1.3.0
+
 ## 1.2.0
 
 ### Minor Changes

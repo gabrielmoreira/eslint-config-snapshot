@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 1.3.0
+
+### Minor Changes
+
+- Promote catalog baseline hooks and OSS compatibility hardening with improved docs.
+
 ## 1.2.0
 
 ### Minor Changes
