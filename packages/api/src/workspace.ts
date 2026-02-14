@@ -92,7 +92,7 @@ async function discoverWorkspacesFromPackageJson(cwd: string): Promise<Workspace
   }
 
   const parsed = safeJsonParse(packageJsonRaw)
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+  if (!isObjectRecord(parsed) || Array.isArray(parsed)) {
     return null
   }
 
@@ -138,6 +138,10 @@ function safeJsonParse(raw: string): unknown {
   } catch {
     return null
   }
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
 }
 
 function extractWorkspaceGlobs(packageJson: Record<string, unknown>): string[] {
