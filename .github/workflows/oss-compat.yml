@@ -50,6 +50,11 @@ jobs:
             ref: master
             package_manager: npm
             debug_default: false
+          - name: serverless
+            repo: https://github.com/oss-serverless/serverless.git
+            ref: main
+            package_manager: npm
+            debug_default: false
 
     steps:
       - name: Checkout snapshot repository
