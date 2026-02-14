@@ -1,5 +1,11 @@
 # @eslint-config-snapshot/api
 
+## 1.3.1
+
+### Patch Changes
+
+- Improve catalog check/update summaries and dedupe baseline totals across groups.
+
 ## 1.3.0
 
 ### Minor Changes
