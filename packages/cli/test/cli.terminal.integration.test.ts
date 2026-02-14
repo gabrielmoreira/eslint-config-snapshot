@@ -80,6 +80,8 @@ describe('cli terminal invocation', () => {
     expect(result.stdout).toContain('update|snapshot')
     expect(result.stdout).toContain('print [options]')
     expect(result.stdout).toContain('catalog [options]')
+    expect(result.stdout).toContain('catalog-check')
+    expect(result.stdout).toContain('catalog-update')
     expect(result.stdout).toContain('config [options]')
     expect(result.stdout).toContain('init')
     expect(result.stderr).toBe('')
@@ -249,7 +251,6 @@ no-debugger: off
   it('catalog --short --missing returns compact output', () => {
     const result = run(['catalog', '--short', '--missing'])
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('🧭 group: default')
     expect(result.stdout).toContain('📦 total: 2/5 in use')
     expect(result.stdout).toContain('🧱 core: 2/3 in use')
     expect(result.stdout).toContain('🔌 plugins tracked: 1')
@@ -259,6 +260,32 @@ no-debugger: off
     expect(result.stdout).toContain('alpha/only-in-catalog')
     expect(result.stdout).toContain('no-alert')
     expect(result.stderr).toBe('')
+  })
+
+  it('catalog-update writes baseline and catalog-check returns clean', () => {
+    const update = run(['catalog-update'])
+    expect(update.status).toBe(0)
+    expect(update.stdout).toContain('Catalog baseline updated:')
+    expect(update.stderr).toBe('')
+
+    const check = run(['catalog-check'])
+    expect(check.status).toBe(0)
+    expect(check.stdout).toBe('Great news: no catalog drift detected.\n')
+    expect(check.stderr).toBe('')
+  })
+
+  it('default experimental mode updates and checks catalog baseline', () => {
+    const update = run(['--update', '--experimental-with-catalog'])
+    expect(update.status).toBe(0)
+    expect(update.stdout).toContain('baseline was successfully created')
+    expect(update.stdout).toContain('Catalog baseline updated:')
+    expect(update.stderr).toBe('')
+
+    const check = run(['--experimental-with-catalog'])
+    expect(check.status).toBe(0)
+    expect(check.stdout).toContain('Great news: no snapshot drift detected.')
+    expect(check.stdout).toContain('Great news: no catalog drift detected.')
+    expect(check.stderr).toBe('')
   })
 
   it('init handles success and existing-file error paths', async () => {

@@ -3,7 +3,7 @@ import { Command, CommanderError, InvalidArgumentError } from 'commander'
 import createDebug from 'debug'
 import path from 'node:path'
 
-import { type CatalogFormat, executeCatalog } from './commands/catalog.js'
+import { type CatalogFormat, executeCatalog, executeCatalogCheck, executeCatalogUpdate } from './commands/catalog.js'
 import { type CheckFormat, executeCheck } from './commands/check.js'
 import { executeConfig, executePrint, type PrintFormat } from './commands/print.js'
 import { executeUpdate } from './commands/update.js'
@@ -80,7 +80,7 @@ async function runArgv(argv: string[], cwd: string): Promise<number> {
 }
 
 async function runDefaultInvocation(argv: string[], cwd: string, terminal: TerminalIO): Promise<number> {
-  const known = new Set(['-u', '--update', '-h', '--help'])
+  const known = new Set(['-u', '--update', '-h', '--help', '--experimental-with-catalog'])
   for (const token of argv) {
     if (!known.has(token)) {
       terminal.error(`error: unknown option '${token}'\n`)
@@ -97,10 +97,20 @@ async function runDefaultInvocation(argv: string[], cwd: string, terminal: Termi
   }
 
   if (argv.includes('-u') || argv.includes('--update')) {
-    return executeUpdate(cwd, terminal, SNAPSHOT_DIR, true)
+    const updateCode = await executeUpdate(cwd, terminal, SNAPSHOT_DIR, true)
+    if (!argv.includes('--experimental-with-catalog')) {
+      return updateCode
+    }
+    const catalogCode = await executeCatalogUpdate(cwd, terminal, SNAPSHOT_DIR)
+    return updateCode !== 0 || catalogCode !== 0 ? 1 : 0
   }
 
-  return executeCheck(cwd, 'summary', terminal, SNAPSHOT_DIR, true)
+  const checkCode = await executeCheck(cwd, 'summary', terminal, SNAPSHOT_DIR, true)
+  if (!argv.includes('--experimental-with-catalog')) {
+    return checkCode
+  }
+  const catalogCode = await executeCatalogCheck(cwd, terminal, SNAPSHOT_DIR)
+  return checkCode !== 0 || catalogCode !== 0 ? 1 : 0
 }
 
 function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: number) => void): Command {
@@ -123,16 +133,32 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .command('check')
     .description('Compare current state against stored snapshots')
     .option('--format <format>', 'Output format: summary|status|diff', parseCheckFormat, 'summary')
-    .action(async (opts: { format: CheckFormat }) => {
-      onActionExit(await executeCheck(cwd, opts.format, terminal, SNAPSHOT_DIR))
+    .option('--experimental-with-catalog', 'Also run catalog baseline check after regular check')
+    .action(async (opts: { format: CheckFormat; experimentalWithCatalog?: boolean }) => {
+      const checkCode = await executeCheck(cwd, opts.format, terminal, SNAPSHOT_DIR)
+      if (!opts.experimentalWithCatalog) {
+        onActionExit(checkCode)
+        return
+      }
+
+      const catalogCode = await executeCatalogCheck(cwd, terminal, SNAPSHOT_DIR)
+      onActionExit(checkCode !== 0 || catalogCode !== 0 ? 1 : 0)
     })
 
   program
     .command('update')
     .alias('snapshot')
     .description('Compute and write snapshots to .eslint-config-snapshot/')
-    .action(async () => {
-      onActionExit(await executeUpdate(cwd, terminal, SNAPSHOT_DIR, true))
+    .option('--experimental-with-catalog', 'Also update catalog baseline after regular update')
+    .action(async (opts: { experimentalWithCatalog?: boolean }) => {
+      const updateCode = await executeUpdate(cwd, terminal, SNAPSHOT_DIR, true)
+      if (!opts.experimentalWithCatalog) {
+        onActionExit(updateCode)
+        return
+      }
+
+      const catalogCode = await executeCatalogUpdate(cwd, terminal, SNAPSHOT_DIR)
+      onActionExit(updateCode !== 0 || catalogCode !== 0 ? 1 : 0)
     })
 
   program
@@ -154,6 +180,20 @@ function createProgram(cwd: string, terminal: TerminalIO, onActionExit: (code: n
     .action(async (opts: { format: CatalogFormat; short?: boolean; missing?: boolean }) => {
       const format: CatalogFormat = opts.short ? 'short' : opts.format
       onActionExit(await executeCatalog(cwd, terminal, SNAPSHOT_DIR, format, Boolean(opts.missing)))
+    })
+
+  program
+    .command('catalog-check')
+    .description('Compare current catalog against stored catalog baseline')
+    .action(async () => {
+      onActionExit(await executeCatalogCheck(cwd, terminal, SNAPSHOT_DIR))
+    })
+
+  program
+    .command('catalog-update')
+    .description('Compute and write catalog baselines to .eslint-config-snapshot/')
+    .action(async () => {
+      onActionExit(await executeCatalogUpdate(cwd, terminal, SNAPSHOT_DIR))
     })
 
   program

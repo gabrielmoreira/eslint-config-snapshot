@@ -234,7 +234,6 @@ no-debugger: off
     const code = await runCli('catalog', fixtureRoot, ['--short', '--missing'])
     expect(code).toBe(0)
     const output = String(writeSpy.mock.calls.at(-1)?.[0] ?? '')
-    expect(output).toContain('🧭 group: default')
     expect(output).toContain('📦 total: 2/5 in use')
     expect(output).toContain('🧱 core: 2/3 in use')
     expect(output).toContain('🔌 plugins tracked: 1')
@@ -300,6 +299,36 @@ no-debugger: off
   it('supports canonical check and update commands', async () => {
     expect(await runCli('update', fixtureRoot)).toBe(0)
     expect(await runCli('check', fixtureRoot)).toBe(0)
+  })
+
+  it('supports catalog baseline update/check and experimental combined mode', async () => {
+    expect(await runCli('catalog-update', fixtureRoot)).toBe(0)
+    expect(await runCli('catalog-check', fixtureRoot)).toBe(0)
+
+    const catalogBaselineRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.catalog.json'), 'utf8')
+    const catalogBaseline = JSON.parse(catalogBaselineRaw) as {
+      formatVersion: number
+      groupId: string
+      totalStats: { totalAvailable: number; inUse: number; error: number; warn: number; off: number }
+    }
+    expect(catalogBaseline.formatVersion).toBe(1)
+    expect(catalogBaseline.groupId).toBe('default')
+    expect(catalogBaseline.totalStats).toMatchObject({
+      totalAvailable: 5,
+      inUse: 2,
+      error: 2,
+      warn: 0,
+      off: 0
+    })
+
+    expect(await runCli(undefined, fixtureRoot, ['--update', '--experimental-with-catalog'])).toBe(0)
+    expect(await runCli(undefined, fixtureRoot, ['--experimental-with-catalog'])).toBe(0)
+
+    await writeFile(
+      path.join(fixtureRoot, 'packages/ws-a/node_modules/eslint/bin/eslint.js'),
+      "console.log(JSON.stringify({ rules: { 'no-console': 1, eqeqeq: [1, 'always'] } }))\n"
+    )
+    expect(await runCli('catalog-check', fixtureRoot)).toBe(1)
   })
 
   it('supports ordered multi-group matching with first match wins', async () => {

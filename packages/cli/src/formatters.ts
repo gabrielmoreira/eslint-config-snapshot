@@ -27,6 +27,9 @@ export type UsageStats = {
   inUse: number
   active: number
   inactive: number
+  error: number
+  warn: number
+  off: number
   missing: number
   inUsePct: number
   activePctOfInUse: number
@@ -191,9 +194,12 @@ export function formatShortConfig(payload: {
 export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boolean): string {
   const lines: string[] = []
   const sorted = [...catalogs].sort((a, b) => a.groupId.localeCompare(b.groupId))
+  const showGroupHeader = sorted.length > 1 || sorted.some((catalog) => catalog.groupId !== 'default')
   for (const catalog of sorted) {
+    if (showGroupHeader) {
+      lines.push(`🧭 group: ${catalog.groupId}`)
+    }
     lines.push(
-      `🧭 group: ${catalog.groupId}`,
       `📦 total: ${formatUsageLine(catalog.totalStats)} | outside catalog observed: ${catalog.totalStats.observedOutsideCatalog}`,
       `🧱 core: ${formatUsageLine(catalog.coreStats)}`,
       `🔌 plugins tracked: ${catalog.pluginStats.length}`
@@ -207,13 +213,18 @@ export function formatShortCatalog(catalogs: RuleCatalogLike[], missingOnly: boo
     for (const ruleName of detailRules) {
       lines.push(`  - ${ruleName}`)
     }
+    if (showGroupHeader) {
+      lines.push('')
+    }
   }
-
+  if (showGroupHeader && lines.at(-1) === '') {
+    lines.pop()
+  }
   return `${lines.join('\n')}\n`
 }
 
 function formatUsageLine(stats: UsageStats): string {
-  return `${stats.inUse}/${stats.totalAvailable} in use (${stats.inUsePct}%) | active ${stats.active} | off ${stats.inactive} | not used ${stats.missing}`
+  return `${stats.inUse}/${stats.totalAvailable} in use (${stats.inUsePct}%) | error ${stats.error} | warn ${stats.warn} | off ${stats.off} | not used ${stats.missing}`
 }
 
 export function formatCommandDisplayLabel(commandLabel: string): string {
