@@ -85,12 +85,18 @@ jobs:
         run: pnpm nx run cli:build
 
       - name: Clone OSS target repository
-        run: git clone --depth 1 --branch "${{ matrix.ref }}" "${{ matrix.repo }}" external-repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            git config --global core.longpaths true
+          fi
+          git clone --depth 1 --branch "${{ matrix.ref }}" "${{ matrix.repo }}" ext
 
       - name: Install OSS repository dependencies (pnpm)
         if: ${{ matrix.package_manager == 'pnpm' }}
         run: pnpm install --frozen-lockfile
-        working-directory: external-repo
+        working-directory: ext
 
       - name: Install OSS repository dependencies (yarn)
         if: ${{ matrix.package_manager == 'yarn' }}
@@ -100,12 +106,12 @@ jobs:
           corepack enable
           yarn --version
           yarn install --frozen-lockfile
-        working-directory: external-repo
+        working-directory: ext
 
       - name: Install OSS repository dependencies (npm)
         if: ${{ matrix.package_manager == 'npm' }}
         run: npm install --no-audit --no-fund
-        working-directory: external-repo
+        working-directory: ext
 
       - name: Snapshot update (zero-config)
         shell: bash
@@ -115,7 +121,7 @@ jobs:
             export DEBUG="eslint-config-snapshot:*"
           fi
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" --update 2>&1 | tee "${RUNNER_TEMP}/snapshot-update.log"
-        working-directory: external-repo
+        working-directory: ext
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
 
@@ -127,7 +133,7 @@ jobs:
             export DEBUG="eslint-config-snapshot:*"
           fi
           node "${GITHUB_WORKSPACE}/packages/cli/dist/index.js" check --format summary 2>&1 | tee "${RUNNER_TEMP}/snapshot-check.log"
-        working-directory: external-repo
+        working-directory: ext
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
 
@@ -136,7 +142,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          snapshot_dir="external-repo/.eslint-config-snapshot"
+          snapshot_dir="ext/.eslint-config-snapshot"
           if [[ ! -d "${snapshot_dir}" ]]; then
             echo "No snapshot directory found at ${snapshot_dir}"
             exit 0

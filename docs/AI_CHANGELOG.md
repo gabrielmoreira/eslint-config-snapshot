@@ -2293,3 +2293,24 @@ Result:
 
 - OSS smoke now validates `next.js` on both Linux and Windows.
 - Common case of an explicit empty/default config no longer forces strict failure mode during workspace extraction.
+
+## 2026-02-14 - Request 107
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Monitor OSS compatibility pipeline, inspect failures, and fix workflow/runtime issues quickly.
+
+Key decisions:
+
+- Investigated the failing run `22009665345` and identified Windows clone checkout failure (`Filename too long`) on `next.js`.
+- Updated `oss-compat.yml` Windows behavior:
+  - enable `git config --global core.longpaths true`,
+  - clone to a shorter path (`ext`) to reduce total path length.
+- Updated all OSS workflow step working directories and snapshot print path to use `ext`.
+
+Result:
+
+- Workflow now avoids the Windows long-path checkout failure mode observed in `next.js`.
+- OSS compatibility jobs remain equivalent in behavior while being more robust on `windows-latest`.
