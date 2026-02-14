@@ -47,7 +47,7 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
   if (!foundConfig) {
     writeDiscoveredWorkspacesSummary(terminal, discoveredWorkspaces)
   }
-  writeSkippedWorkspaceSummary(terminal, skippedWorkspaces)
+  writeSkippedWorkspaceSummary(terminal, cwd, foundConfig?.path, skippedWorkspaces)
   await writeSnapshots(cwd, snapshotDir, currentSnapshots)
 
   if (printSummary) {
@@ -73,18 +73,19 @@ function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
   )
 }
 
-function writeSkippedWorkspaceSummary(terminal: TerminalIO, skippedWorkspaces: SkippedWorkspace[]): void {
+function writeSkippedWorkspaceSummary(
+  terminal: TerminalIO,
+  cwd: string,
+  configPath: string | undefined,
+  skippedWorkspaces: SkippedWorkspace[]
+): void {
   if (skippedWorkspaces.length === 0) {
     return
   }
 
   terminal.subtle(`Skipped workspaces total: ${skippedWorkspaces.length}\n`)
   const suggestedExcludeGlobs = buildSuggestedExcludeGlobs(skippedWorkspaces)
-  terminal.subtle(
-    `Tip: if these workspaces are intentionally out of scope, consider adding this config:\n${formatSamplingExcludeHint(
-      suggestedExcludeGlobs
-    )}`
-  )
+  terminal.subtle(formatScopedConfigHint(cwd, configPath, suggestedExcludeGlobs))
 }
 
 function writeSkippedWorkspaceWarning(terminal: TerminalIO, cwd: string, skippedWorkspace: SkippedWorkspace): void {
@@ -113,9 +114,30 @@ function buildSuggestedExcludeGlobs(skippedWorkspaces: SkippedWorkspace[]): stri
   return [...unique].sort((a, b) => a.localeCompare(b))
 }
 
-function formatSamplingExcludeHint(excludeGlobs: string[]): string {
+function formatScopedConfigHint(cwd: string, configPath: string | undefined, excludeGlobs: string[]): string {
   const lines = excludeGlobs.map((glob) => `      '${glob}',`).join('\n')
-  return `{
+  if (configPath && path.basename(configPath) === 'package.json') {
+    return `Tip: if these workspaces are intentionally out of scope, add this under "eslint-config-snapshot" in package.json:\n{
+  "sampling": {
+    "excludeGlobs": [
+${lines}
+    ]
+  }
+}\n`
+  }
+
+  if (configPath) {
+    const relConfigPath = path.relative(cwd, configPath) || path.basename(configPath)
+    return `Tip: if these workspaces are intentionally out of scope, add this in ${relConfigPath}:\n{
+  sampling: {
+    excludeGlobs: [
+${lines}
+    ]
+  }
+}\n`
+  }
+
+  return `Tip: if these workspaces are intentionally out of scope, run \`eslint-config-snapshot init\` and add this config:\n{
   sampling: {
     excludeGlobs: [
 ${lines}
