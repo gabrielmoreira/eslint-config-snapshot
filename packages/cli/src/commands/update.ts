@@ -1,4 +1,5 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
+import path from 'node:path'
 
 import { countUniqueWorkspaces, summarizeSnapshots } from '../formatters.js'
 import { writeEslintVersionSummary, writeRunContextHeader } from '../run-context.js'
@@ -30,7 +31,7 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
       },
       onWorkspaceSkipped: (skipped) => {
         skippedWorkspaces.push(skipped)
-        writeSkippedWorkspaceWarning(terminal, skipped)
+        writeSkippedWorkspaceWarning(terminal, cwd, skipped)
       }
     })
   } catch (error: unknown) {
@@ -86,8 +87,9 @@ function writeSkippedWorkspaceSummary(terminal: TerminalIO, skippedWorkspaces: S
   )
 }
 
-function writeSkippedWorkspaceWarning(terminal: TerminalIO, skippedWorkspace: SkippedWorkspace): void {
-  const shortenedReason = skippedWorkspace.reason.length > 120 ? `${skippedWorkspace.reason.slice(0, 117)}...` : skippedWorkspace.reason
+function writeSkippedWorkspaceWarning(terminal: TerminalIO, cwd: string, skippedWorkspace: SkippedWorkspace): void {
+  const compactReason = compactSkippedReason(skippedWorkspace.reason, cwd)
+  const shortenedReason = compactReason.length > 120 ? `${compactReason.slice(0, 117)}...` : compactReason
   terminal.warning(
     `Warning: skipped workspace ${skippedWorkspace.workspaceRel} (group: ${skippedWorkspace.groupId}) due to extraction failure: ${shortenedReason}\n`
   )
@@ -128,4 +130,11 @@ function trimTrailingSlashes(value: string): string {
     result = result.slice(0, -1)
   }
   return result
+}
+
+function compactSkippedReason(reason: string, cwd: string): string {
+  const cwdAbs = path.resolve(cwd)
+  const cwdPosix = cwdAbs.replaceAll('\\', '/')
+  const cwdWin = cwdAbs.replaceAll('/', '\\')
+  return reason.replaceAll(cwdAbs, '.').replaceAll(cwdPosix, '.').replaceAll(cwdWin, '.')
 }
