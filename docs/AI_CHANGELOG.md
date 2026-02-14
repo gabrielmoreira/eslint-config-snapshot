@@ -2449,3 +2449,30 @@ Implementation result:
 Follow-up notes:
 
 - Catalog behavior remains staged in `SPEC_ENHANCED.md` pending explicit promotion decision into `SPEC.md`.
+
+## 2026-02-14 - Request 113
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Improve catalog drift UX and baseline counting:
+  - avoid duplicated baseline totals when groups share the same rule names,
+  - always show positive catalog summary context even when drift exists.
+
+Key decisions:
+
+- Updated snapshot summary aggregation to deduplicate by rule name across groups.
+- Severity mix for deduplicated totals now uses highest observed severity per rule (`error > warn > off`) when the same rule appears in multiple groups.
+- Extended catalog command output:
+  - `catalog-update` now prints a full catalog summary block after update.
+  - `catalog-check` now always prints catalog summary in both clean and drift paths.
+  - in drift path, summary is printed first and drift block remains explicit afterward.
+- Added/updated CLI tests to validate:
+  - deduplicated cross-group summary behavior,
+  - enriched `catalog-update` / `catalog-check` output behavior.
+
+Implementation result:
+
+- Baseline counters no longer overcount duplicated rule names across groups.
+- Catalog output is easier to interpret in both stable and drift states, with consistent plugin/group percentages visible.

@@ -87,9 +87,11 @@ export async function executeCatalogUpdate(cwd: string, terminal: TerminalIO, sn
   await writeCatalogBaselineFiles(cwd, snapshotDir, rows)
 
   const groups = rows.length
-  const available = rows.reduce((sum, row) => sum + row.totalStats.totalAvailable, 0)
-  const inUse = rows.reduce((sum, row) => sum + row.totalStats.inUse, 0)
+  const available = countUniqueRules(rows.map((row) => row.availableRules))
+  const inUse = countUniqueRules(rows.map((row) => row.observedRules.filter((ruleName) => row.availableRules.includes(ruleName))))
   terminal.write(`🧪 Catalog baseline updated: ${groups} groups, ${available} available rules, ${inUse} currently in use.\n`)
+  terminal.section('📊 Catalog summary')
+  terminal.write(formatShortCatalog(rows, false))
   return 0
 }
 
@@ -107,9 +109,13 @@ export async function executeCatalogCheck(cwd: string, terminal: TerminalIO, sna
   const diffs = compareCatalogBaselines(stored, current)
   if (diffs.length === 0) {
     terminal.write('Great news: no catalog drift detected.\n')
+    terminal.section('📊 Catalog summary')
+    terminal.write(formatShortCatalog(rows, false))
     return 0
   }
 
+  terminal.section('📊 Catalog summary')
+  terminal.write(formatShortCatalog(rows, false))
   terminal.write(`⚠️ Heads up: catalog drift detected in ${diffs.length} groups.\n`)
   for (const diff of diffs) {
     terminal.write(
@@ -391,4 +397,14 @@ function toPercent(value: number, total: number): number {
     return 0
   }
   return Number(((value / total) * 100).toFixed(1))
+}
+
+function countUniqueRules(ruleLists: string[][]): number {
+  const unique = new Set<string>()
+  for (const rules of ruleLists) {
+    for (const rule of rules) {
+      unique.add(rule)
+    }
+  }
+  return unique.size
 }

@@ -101,7 +101,7 @@ export function summarizeChanges(changes: Array<{ groupId: string; diff: Snapsho
 }
 
 export function summarizeSnapshots(snapshots: Map<string, SnapshotLike>) {
-  const { rules, error, warn, off } = countRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
+  const { rules, error, warn, off } = countUniqueRuleSeverities([...snapshots.values()].map((snapshot) => snapshot.rules))
   return { groups: snapshots.size, rules, error, warn, off }
 }
 
@@ -329,6 +329,39 @@ export function countRuleSeverities(ruleObjects: RuleObject[]) {
   }
 
   return { rules, error, warn, off }
+}
+
+export function countUniqueRuleSeverities(ruleObjects: RuleObject[]) {
+  const severityRank: Record<'off' | 'warn' | 'error', number> = { off: 0, warn: 1, error: 2 }
+  const severityByRule = new Map<string, 'off' | 'warn' | 'error'>()
+
+  for (const rulesObject of ruleObjects) {
+    for (const [ruleName, entry] of Object.entries(rulesObject)) {
+      const nextSeverity = getPrimarySeverity(entry)
+      if (!nextSeverity) {
+        continue
+      }
+      const currentSeverity = severityByRule.get(ruleName)
+      if (!currentSeverity || severityRank[nextSeverity] > severityRank[currentSeverity]) {
+        severityByRule.set(ruleName, nextSeverity)
+      }
+    }
+  }
+
+  let error = 0
+  let warn = 0
+  let off = 0
+  for (const severity of severityByRule.values()) {
+    if (severity === 'error') {
+      error += 1
+    } else if (severity === 'warn') {
+      warn += 1
+    } else {
+      off += 1
+    }
+  }
+
+  return { rules: severityByRule.size, error, warn, off }
 }
 
 function getPrimarySeverity(entry: SnapshotRuleEntry | undefined): 'off' | 'warn' | 'error' | undefined {

@@ -266,11 +266,15 @@ no-debugger: off
     const update = run(['catalog-update'])
     expect(update.status).toBe(0)
     expect(update.stdout).toContain('Catalog baseline updated:')
+    expect(update.stdout).toContain('📦 total:')
+    expect(update.stdout).toContain('🔌 plugins tracked:')
     expect(update.stderr).toBe('')
 
     const check = run(['catalog-check'])
     expect(check.status).toBe(0)
-    expect(check.stdout).toBe('Great news: no catalog drift detected.\n')
+    expect(check.stdout).toContain('Great news: no catalog drift detected.')
+    expect(check.stdout).toContain('📦 total:')
+    expect(check.stdout).toContain('🔌 plugins tracked:')
     expect(check.stderr).toBe('')
   })
 

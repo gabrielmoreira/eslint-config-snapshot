@@ -44,4 +44,35 @@ describe('output helpers', () => {
     )
     expect(summary).toEqual({ groups: 1, rules: 3, error: 1, warn: 1, off: 1 })
   })
+
+  it('deduplicates rules across groups in summary', () => {
+    const summary = summarizeSnapshots(
+      new Map([
+        [
+          'group-a',
+          {
+            groupId: 'group-a',
+            workspaces: ['packages/a'],
+            rules: {
+              shared: ['warn'],
+              onlyA: ['off']
+            }
+          }
+        ],
+        [
+          'group-b',
+          {
+            groupId: 'group-b',
+            workspaces: ['packages/b'],
+            rules: {
+              shared: ['error'],
+              onlyB: ['warn']
+            }
+          }
+        ]
+      ])
+    )
+
+    expect(summary).toEqual({ groups: 2, rules: 3, error: 1, warn: 1, off: 1 })
+  })
 })
