@@ -94,7 +94,7 @@ jobs:
         env:
           OSS_COMPAT_DEBUG: ${{ matrix.debug_default || (github.event_name == 'workflow_dispatch' && github.event.inputs.debug_logs == 'true') }}
 
-      - name: Print discovered snapshots (raw + pretty)
+      - name: Print discovered snapshots (summary + raw)
         if: always()
         shell: bash
         run: |
@@ -113,12 +113,20 @@ jobs:
           fi
 
           for file in "${files[@]}"; do
-            echo "::group::Snapshot $(basename "${file}")"
-            echo "-- raw --"
+            name="$(basename "${file}")"
+
+            echo "::group::Snapshot summary ${name}"
+            jq '{
+              groupId,
+              workspaceCount: (.workspaces | length),
+              ruleCount: (.rules | length),
+              workspaces,
+              rules: (.rules | keys)
+            }' "${file}"
+            echo "::endgroup::"
+
+            echo "::group::Snapshot raw ${name}"
             cat "${file}"
-            echo
-            echo "-- pretty (jq .) --"
-            jq '.' "${file}"
             echo "::endgroup::"
           done
 
