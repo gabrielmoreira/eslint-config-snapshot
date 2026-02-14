@@ -21,9 +21,13 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
 
   let currentSnapshots
   const skippedWorkspaces: SkippedWorkspace[] = []
+  let discoveredWorkspaces: string[] = []
   try {
     currentSnapshots = await computeCurrentSnapshots(cwd, {
       allowWorkspaceExtractionFailure: !foundConfig,
+      onWorkspacesDiscovered: (workspacesRel) => {
+        discoveredWorkspaces = workspacesRel
+      },
       onWorkspaceSkipped: (skipped) => {
         skippedWorkspaces.push(skipped)
         writeSkippedWorkspaceWarning(terminal, skipped)
@@ -38,6 +42,9 @@ export async function executeUpdate(cwd: string, terminal: TerminalIO, snapshotD
     }
 
     throw error
+  }
+  if (!foundConfig) {
+    writeDiscoveredWorkspacesSummary(terminal, discoveredWorkspaces)
   }
   writeSkippedWorkspaceSummary(terminal, skippedWorkspaces)
   await writeSnapshots(cwd, snapshotDir, currentSnapshots)
@@ -84,6 +91,15 @@ function writeSkippedWorkspaceWarning(terminal: TerminalIO, skippedWorkspace: Sk
   terminal.warning(
     `Warning: skipped workspace ${skippedWorkspace.workspaceRel} (group: ${skippedWorkspace.groupId}) due to extraction failure: ${shortenedReason}\n`
   )
+}
+
+function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {
+  if (workspacesRel.length === 0) {
+    terminal.subtle('Auto-discovered workspaces: none\n')
+    return
+  }
+
+  terminal.subtle(`Auto-discovered workspaces (${workspacesRel.length}): ${workspacesRel.join(', ')}\n`)
 }
 
 function buildSuggestedExcludeGlobs(skippedWorkspaces: SkippedWorkspace[]): string[] {

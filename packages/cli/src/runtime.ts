@@ -42,10 +42,12 @@ export async function computeCurrentSnapshots(
   cwd: string,
   options?: {
     allowWorkspaceExtractionFailure?: boolean
+    onWorkspacesDiscovered?: (workspacesRel: string[]) => void
     onWorkspaceSkipped?: (skipped: SkippedWorkspace) => void
   }
 ): Promise<Map<string, BuiltSnapshot>> {
   const allowWorkspaceExtractionFailure = options?.allowWorkspaceExtractionFailure ?? false
+  const onWorkspacesDiscovered = options?.onWorkspacesDiscovered
   const onWorkspaceSkipped = options?.onWorkspaceSkipped
   const computeStartedAt = Date.now()
   const configStartedAt = Date.now()
@@ -54,6 +56,7 @@ export async function computeCurrentSnapshots(
 
   const assignmentStartedAt = Date.now()
   const { discovery, assignments } = await resolveWorkspaceAssignments(cwd, config)
+  onWorkspacesDiscovered?.(discovery.workspacesRel)
   debugTiming('phase=resolveWorkspaceAssignments elapsedMs=%d', Date.now() - assignmentStartedAt)
   debugWorkspace('root=%s groups=%d workspaces=%d', discovery.rootAbs, assignments.length, discovery.workspacesRel.length)
 
