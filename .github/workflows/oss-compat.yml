@@ -50,7 +50,7 @@ jobs:
             ref: master
             package_manager: npm
             debug_default: false
-          - name: serverless
+          - name: oss-serverless
             repo: https://github.com/oss-serverless/serverless.git
             ref: main
             package_manager: npm
