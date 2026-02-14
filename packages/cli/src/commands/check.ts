@@ -1,5 +1,4 @@
 import { findConfigPath } from '@eslint-config-snapshot/api'
-import path from 'node:path'
 
 import {
   countUniqueWorkspaces,
@@ -22,6 +21,7 @@ import {
   writeSnapshots
 } from '../runtime.js'
 import { type TerminalIO } from '../terminal.js'
+import { writeSkippedWorkspaceSummary } from './skipped-workspaces.js'
 
 export type CheckFormat = 'summary' | 'status' | 'diff'
 
@@ -186,22 +186,6 @@ function isWorkspaceDiscoveryDefaultsError(error: unknown): boolean {
   )
 }
 
-function writeSkippedWorkspaceSummary(
-  terminal: TerminalIO,
-  cwd: string,
-  configPath: string | undefined,
-  skippedWorkspaces: SkippedWorkspace[]
-): void {
-  if (skippedWorkspaces.length === 0) {
-    return
-  }
-
-  terminal.warning(
-    `Heads up: ${skippedWorkspaces.length} workspace(s) were skipped because ESLint auto-discovery could not extract an effective config for them.\n`
-  )
-  terminal.subtle(formatScopedConfigHint(cwd, configPath))
-}
-
 function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: string[]): void {
   if (workspacesRel.length === 0) {
     terminal.subtle('Auto-discovered workspaces: none\n')
@@ -209,35 +193,4 @@ function writeDiscoveredWorkspacesSummary(terminal: TerminalIO, workspacesRel: s
   }
 
   terminal.subtle(`Auto-discovered workspaces (${workspacesRel.length}): ${workspacesRel.join(', ')}\n`)
-}
-
-function formatScopedConfigHint(cwd: string, configPath: string | undefined): string {
-  if (configPath && path.basename(configPath) === 'package.json') {
-    return `Tip: if these workspaces are intentionally out of scope, add this under "eslint-config-snapshot" in package.json:\n{
-  "sampling": {
-    "excludeGlobs": [
-      "packages/your-workspace/**"
-    ]
-  }
-}\n`
-  }
-
-  if (configPath) {
-    const relConfigPath = path.relative(cwd, configPath) || path.basename(configPath)
-    return `Tip: if these workspaces are intentionally out of scope, add this in ${relConfigPath}:\n{
-  sampling: {
-    excludeGlobs: [
-      'packages/your-workspace/**'
-    ]
-  }
-}\n`
-  }
-
-  return `Tip: if these workspaces are intentionally out of scope, run \`eslint-config-snapshot init\` and add this config:\n{
-  sampling: {
-    excludeGlobs: [
-      'packages/your-workspace/**'
-    ]
-  }
-}\n`
 }

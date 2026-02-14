@@ -124,8 +124,9 @@ describe.sequential('cli integration', () => {
     expect(writeSpy).toHaveBeenCalledWith(
       expect.stringContaining('workspace(s) were skipped because ESLint auto-discovery could not extract an effective config')
     )
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Skipped workspaces: packages/ws-b'))
     expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('excludeGlobs'))
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('packages/your-workspace/**'))
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('packages/ws-b/**'))
 
     const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
     const snapshot = JSON.parse(snapshotRaw)
