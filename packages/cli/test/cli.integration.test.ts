@@ -156,6 +156,52 @@ describe.sequential('cli integration', () => {
     })
   })
 
+  it('update in zero-config mode skips workspaces when eslint api cannot load next parser', async () => {
+    await rm(path.join(fixtureRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
+    const packageJsonPath = path.join(fixtureRoot, 'package.json')
+    const packageJsonRaw = await readFile(packageJsonPath, 'utf8')
+    const packageJson = JSON.parse(packageJsonRaw) as Record<string, unknown>
+    delete packageJson['eslint-config-snapshot']
+    await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+
+    await writeFile(
+      path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/package.json'),
+      JSON.stringify({ name: 'eslint', version: '9.0.0', main: 'index.js' }, null, 2)
+    )
+    await writeFile(
+      path.join(fixtureRoot, 'packages/ws-b/node_modules/eslint/index.js'),
+      `module.exports = {
+  ESLint: class ESLint {
+    async calculateConfigForFile() {
+      throw new Error("Cannot read config file: /tmp/node_modules/eslint-config-next/dist/core-web-vitals.js\\nError: Cannot find module 'next/dist/compiled/babel/eslint-parser'")
+    }
+  }
+}
+`
+    )
+
+    const writeSpy = vi.spyOn(process.stdout, 'write')
+    const code = await runCli('update', fixtureRoot)
+    expect(code).toBe(0)
+    expect(writeSpy).toHaveBeenCalledWith(
+      expect.stringContaining('workspace(s) were skipped because ESLint auto-discovery could not extract an effective config')
+    )
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('Skipped workspaces: packages/ws-b'))
+
+    const snapshotRaw = await readFile(path.join(fixtureRoot, '.eslint-config-snapshot/default.json'), 'utf8')
+    const snapshot = JSON.parse(snapshotRaw)
+
+    expect(snapshot).toEqual({
+      formatVersion: 1,
+      groupId: 'default',
+      workspaces: ['packages/ws-a'],
+      rules: {
+        eqeqeq: ['error', 'always'],
+        'no-console': ['warn']
+      }
+    })
+  })
+
   it('update treats explicit empty package config as zero-config tolerant mode', async () => {
     await rm(path.join(fixtureRoot, 'eslint-config-snapshot.config.mjs'), { force: true })
     const packageJsonPath = path.join(fixtureRoot, 'package.json')
