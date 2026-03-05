@@ -2509,3 +2509,30 @@ Implementation result:
 - Catalog output is now less noisy by default and explicitly detailed only when requested.
 - State-group visibility is clearer for adoption decisions (strictness vs disabled vs not yet used).
 - Test suite updated to validate `--detailed` behavior and new grouped output.
+
+## 2026-03-05 - Request 115
+
+Author: Gabriel Moreira
+
+Request summary:
+
+- Investigate recurring `OSS Compatibility` failures, identify the root cause for the affected framework jobs (`next.js`, `next.js-windows`), fix with TDD, and keep verification/commits explicit.
+
+Key decisions:
+
+- Traced the failing GitHub run to workspace extraction in zero-config tolerant mode, where `apps/docs` failed with:
+  - `Cannot read config file ...`
+  - `Cannot find module 'next/dist/compiled/babel/eslint-parser'`
+- Added a CLI integration regression test that reproduces this signature through the ESLint API path.
+- Extended skippable-workspace classification in tolerant mode to include `Cannot read config file:` errors.
+
+Implementation result:
+
+- `update` in zero-config/default-equivalent mode now skips these config-load failures as intended, instead of exiting with code 1.
+- Added regression coverage in CLI integration tests for this exact error family.
+- Local impacted quality gates (`build`, `lint`, `typecheck`, `test` for `cli` and dependencies) pass.
+
+Follow-up notes:
+
+- Keep monitoring `OSS Compatibility` for external upstream changes in Next.js/ESLint package topology.
+- If new signatures appear, add regression tests first and extend classification minimally.

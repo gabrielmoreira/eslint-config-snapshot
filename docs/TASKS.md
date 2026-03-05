@@ -26,6 +26,7 @@ If any conflict exists, follow priority from `docs/AGENTS.md`.
 
 ## Recently Completed
 
+- [x] Treat Next.js parser-resolution config-load failures (`Cannot read config file ... Cannot find module 'next/dist/compiled/babel/eslint-parser'`) as skippable workspace errors in zero-config tolerant mode, with integration regression coverage.
 - [x] Validate staged catalog flow end-to-end in OSS matrix (Linux/Windows where configured), including:
   - `--experimental-with-catalog` on update/check,
   - `catalog-update`/`catalog-check`,
