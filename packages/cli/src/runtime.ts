@@ -256,7 +256,8 @@ function isSkippableWorkspaceExtractionFailure(message: string | undefined): boo
     message.startsWith('Failed to load config') ||
     message.includes('Cannot read config file:') ||
     message.startsWith('Failed to run eslint --print-config') ||
-    message.startsWith('Unable to resolve eslint from workspace')
+    message.startsWith('Unable to resolve eslint from workspace') ||
+    message.includes('No ESLint configuration found')
   )
 }
 
